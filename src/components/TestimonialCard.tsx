@@ -1,0 +1,22 @@
+import { Star } from "lucide-react";
+
+interface Props { name: string; role: string; initials: string; quote: string; result: string; }
+
+export function TestimonialCard({ name, role, initials, quote, result }: Props) {
+  return (
+    <figure className="flex h-full flex-col rounded-xl border border-border bg-card p-7 shadow-soft">
+      <div className="flex items-center gap-1 text-primary">
+        {Array.from({ length: 5 }).map((_, i) => (<Star key={i} className="h-4 w-4 fill-current" />))}
+      </div>
+      <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-foreground/90">“{quote}”</blockquote>
+      <div className="mt-6 inline-flex items-center self-start rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground/80">{result}</div>
+      <figcaption className="mt-6 flex items-center gap-3 border-t border-border pt-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold font-serif text-sm">{initials}</div>
+        <div>
+          <p className="text-sm font-medium">{name}</p>
+          <p className="text-xs text-muted-foreground">{role}</p>
+        </div>
+      </figcaption>
+    </figure>
+  );
+}
