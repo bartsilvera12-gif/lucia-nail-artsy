@@ -12,6 +12,10 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   cloudflare: false,
   tanstackStart: {
-    spa: { enabled: true },
+    spa: {
+      enabled: true,
+      // Emit dist/client/index.html so Vercel serves it automatically at "/".
+      prerender: { outputPath: "/index" },
+    },
   },
 });

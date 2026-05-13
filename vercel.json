@@ -3,7 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/client",
   "framework": null,
-  "cleanUrls": true,
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -17,8 +16,8 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.xml).*)",
-      "destination": "/_shell.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
