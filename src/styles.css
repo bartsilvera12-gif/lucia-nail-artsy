@@ -5,18 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Lucía Rojas Studio — Design System
+ * Premium nail academy. Champagne gold + warm ivory + soft black.
+ * All colors in oklch.
  */
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -59,29 +53,60 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-hover: var(--gold-hover);
+  --color-cream: var(--cream);
+  --color-beige: var(--beige);
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.5rem;
+
+  /* Brand palette — champagne, ivory, soft black */
+  --gold: oklch(0.755 0.085 78);          /* #C8A96A champagne */
+  --gold-soft: oklch(0.82 0.07 80);       /* #D8BF8C */
+  --gold-deep: oklch(0.52 0.075 65);      /* #8A6A3F brown gold */
+  --gold-hover: oklch(0.685 0.09 75);     /* #B8924F */
+  --cream: oklch(0.985 0.012 85);         /* #FFFDF8 warm white */
+  --beige: oklch(0.945 0.022 80);         /* #F4EDE1 */
+
+  --background: oklch(0.985 0.012 85);    /* cream */
+  --foreground: oklch(0.21 0.012 50);     /* #1F1B18 soft black */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.21 0.012 50);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: oklch(0.21 0.012 50);
+
+  --primary: oklch(0.755 0.085 78);            /* champagne gold */
+  --primary-foreground: oklch(0.21 0.012 50);  /* soft black */
+
+  --secondary: oklch(0.945 0.022 80);          /* beige */
+  --secondary-foreground: oklch(0.21 0.012 50);
+
+  --muted: oklch(0.96 0.014 80);
+  --muted-foreground: oklch(0.48 0.012 55);    /* #6F6258 */
+
+  --accent: oklch(0.93 0.04 82);
+  --accent-foreground: oklch(0.34 0.05 60);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.985 0.012 85);
+
+  --border: oklch(0.9 0.025 75);               /* #E8DCCB */
+  --input: oklch(0.9 0.025 75);
+  --ring: oklch(0.755 0.085 78);
+
+  /* Gradients & shadows */
+  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.07 80), oklch(0.685 0.09 75));
+  --gradient-cream: linear-gradient(180deg, oklch(0.99 0.01 85), oklch(0.96 0.02 82));
+  --shadow-soft: 0 1px 2px rgb(31 27 24 / 0.04), 0 8px 24px -8px rgb(138 106 63 / 0.12);
+  --shadow-elegant: 0 20px 60px -20px rgb(138 106 63 / 0.25);
+  --shadow-gold: 0 10px 30px -10px rgb(200 169 106 / 0.45);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +165,25 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .bg-gradient-gold { background-image: var(--gradient-gold); }
+  .bg-gradient-cream { background-image: var(--gradient-cream); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-gold { box-shadow: var(--shadow-gold); }
+  .gold-divider {
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    height: 1px;
   }
 }
