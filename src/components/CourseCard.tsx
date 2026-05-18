@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export function CourseCard({ course }: { course: Course }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-soft transition-all hover:shadow-elegant hover:-translate-y-0.5">
-      <Link to="/cursos/$slug" params={{ slug: course.slug }} className="relative block aspect-[4/3] overflow-hidden bg-muted">
+      <Link to="/curso/$slug" params={{ slug: course.slug }} className="relative block aspect-[4/3] overflow-hidden bg-muted">
         <img src={course.image} alt={course.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
         {course.includedInMembership && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-3 py-1 text-[11px] font-medium backdrop-blur">
@@ -28,7 +28,7 @@ export function CourseCard({ course }: { course: Course }) {
             <p className="font-serif text-lg">USD {course.price}</p>
           </div>
           <Button variant="outlineGold" size="sm" asChild>
-            <Link to="/cursos/$slug" params={{ slug: course.slug }}>Ver curso</Link>
+            <Link to="/curso/$slug" params={{ slug: course.slug }}>Ver curso</Link>
           </Button>
         </div>
       </div>
