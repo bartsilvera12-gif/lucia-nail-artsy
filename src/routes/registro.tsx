@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Check } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Input } from "@/components/ui/input";
@@ -9,18 +9,20 @@ import { plans } from "@/data/site";
 
 interface RegistroSearch {
   plan?: PlanId;
+  next?: string;
 }
 
 export const Route = createFileRoute("/registro")({
   head: () => ({ meta: [{ title: "Crear cuenta — Lucía Rojas Studio" }] }),
   validateSearch: (search: Record<string, unknown>): RegistroSearch => ({
     plan: (search.plan as PlanId | undefined),
+    next: (search.next as string | undefined),
   }),
   component: RegistroPage,
 });
 
 function RegistroPage() {
-  const { register } = useAuth();
+  const { register, subscribe, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const search = Route.useSearch();
   const [name, setName] = useState("");
@@ -29,6 +31,17 @@ function RegistroPage() {
   const [plan, setPlan] = useState<PlanId>(search.plan ?? "monthly");
 
   const selectedPlan = plans.find((p) => p.id === plan);
+  const isIndividualCheckout = !!search.next && !search.plan;
+
+  // Si ya está autenticado y vino con ?plan=X, simulamos el cobro y mandamos al panel.
+  useEffect(() => {
+    if (isAuthenticated && search.plan && search.plan !== "individual") {
+      subscribe(search.plan);
+      navigate({ to: "/panel" });
+    } else if (isAuthenticated && search.next) {
+      window.location.href = search.next;
+    }
+  }, [isAuthenticated, search.plan, search.next, subscribe, navigate]);
 
   return (
     <PublicLayout>
@@ -39,10 +52,16 @@ function RegistroPage() {
               <Sparkles className="h-5 w-5 text-primary" />
               <span className="font-serif text-lg">Lucía Rojas Studio</span>
             </div>
-            <h1 className="mt-6 font-serif text-3xl sm:text-4xl">Unite a la academia</h1>
-            <p className="mt-3 text-sm text-muted-foreground">Creá tu cuenta y empezá hoy mismo. Cancelás cuando quieras.</p>
+            <h1 className="mt-6 font-serif text-3xl sm:text-4xl">
+              {isIndividualCheckout ? "Creá tu cuenta para continuar" : "Unite a la academia"}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {isIndividualCheckout
+                ? "Necesitás una cuenta para comprar cursos individuales y acceder a tus clases protegidas."
+                : "Creá tu cuenta y empezá hoy mismo. Cancelás cuando quieras."}
+            </p>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 space-y-3" hidden={isIndividualCheckout}>
               {plans.filter((p) => p.id !== "individual").map((p) => (
                 <button
                   key={p.id}
@@ -68,8 +87,16 @@ function RegistroPage() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!name || !email) return;
-              register(email, name, plan);
-              navigate({ to: "/panel" });
+              register(email, name);
+              // Si vino con plan, simulamos cobro de la membresía
+              if (search.plan && search.plan !== "individual") {
+                subscribe(plan as Exclude<PlanId, "individual">);
+              }
+              if (search.next) {
+                window.location.href = search.next;
+              } else {
+                navigate({ to: "/panel" });
+              }
             }}
           >
             <h2 className="font-serif text-xl">Crear tu cuenta</h2>
@@ -88,7 +115,7 @@ function RegistroPage() {
               </div>
             </div>
 
-            {selectedPlan && (
+            {selectedPlan && !isIndividualCheckout && (
               <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
                 <p className="font-medium">{selectedPlan.name} · USD {selectedPlan.price}{selectedPlan.period}</p>
                 <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
@@ -99,7 +126,9 @@ function RegistroPage() {
               </div>
             )}
 
-            <Button type="submit" variant="gold" className="mt-6 w-full">Crear cuenta y pagar</Button>
+            <Button type="submit" variant="gold" className="mt-6 w-full">
+              {isIndividualCheckout ? "Crear cuenta y continuar" : "Crear cuenta y pagar"}
+            </Button>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               ¿Ya sos alumna? <Link to="/login" className="text-primary underline">Ingresar</Link>
             </p>

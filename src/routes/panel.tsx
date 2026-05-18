@@ -1,9 +1,9 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Crown, BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle } from "lucide-react";
+import { Crown, BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle, AlertTriangle, Calendar, RefreshCw } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
-import { useAuth } from "@/lib/auth";
+import { useAuth, formatExpiry } from "@/lib/auth";
 import { courses } from "@/data/courses";
 
 export const Route = createFileRoute("/panel")({
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/panel")({
 });
 
 function PanelPage() {
-  const { user, isAuthenticated, hasMembership, hasAccessTo, logout } = useAuth();
+  const { user, isAuthenticated, hasMembership, isMembershipExpired, daysUntilExpiry, hasAccessTo, subscribe, logout } = useAuth();
 
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
@@ -33,20 +33,56 @@ function PanelPage() {
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {hasMembership ? (
-              <GoldBadge><Crown className="h-3 w-3" /> Membresía {user.plan === "yearly" ? "anual" : "mensual"} activa</GoldBadge>
-            ) : (
-              <Button variant="gold" size="sm" asChild>
-                <Link to="/planes"><Crown className="h-4 w-4" /> Activar membresía</Link>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              {hasMembership ? (
+                <GoldBadge><Crown className="h-3 w-3" /> Membresía {user.plan === "yearly" ? "anual" : "mensual"} activa</GoldBadge>
+              ) : isMembershipExpired ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
+                  <AlertTriangle className="h-3 w-3" /> Membresía vencida
+                </span>
+              ) : (
+                <Button variant="gold" size="sm" asChild>
+                  <Link to="/planes"><Crown className="h-4 w-4" /> Activar membresía</Link>
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={logout}>
+                <LogOut className="h-4 w-4" /> Salir
               </Button>
+            </div>
+            {hasMembership && user.subscriptionExpiresAt && (
+              <p className="text-[11px] text-muted-foreground">
+                <Calendar className="mr-1 inline h-3 w-3" />
+                Renueva el {formatExpiry(user.subscriptionExpiresAt)}
+                {typeof daysUntilExpiry === "number" && daysUntilExpiry <= 7 && (
+                  <span className="ml-1 text-destructive">· vence en {daysUntilExpiry} día{daysUntilExpiry === 1 ? "" : "s"}</span>
+                )}
+              </p>
             )}
-            <Button variant="ghost" size="sm" onClick={logout}>
-              <LogOut className="h-4 w-4" /> Salir
-            </Button>
           </div>
         </div>
       </section>
+
+      {isMembershipExpired && (
+        <section className="border-b border-destructive/30 bg-destructive/5">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
+              <div>
+                <p className="font-medium">Tu membresía venció el {formatExpiry(user.subscriptionExpiresAt)}</p>
+                <p className="text-xs text-muted-foreground">Perdiste el acceso a los cursos incluidos en la membresía. Renová para volver a verlos.</p>
+              </div>
+            </div>
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={() => subscribe(user.plan === "yearly" ? "yearly" : "monthly")}
+            >
+              <RefreshCw className="h-4 w-4" /> Renovar plan
+            </Button>
+          </div>
+        </section>
+      )}
 
       <section className="py-12">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_280px] lg:px-8">
@@ -119,7 +155,11 @@ function PanelPage() {
 
           <aside className="space-y-4">
             <SidebarCard icon={Award} title="Certificados" body="Completá un curso al 100% para obtener tu certificado digital." />
-            <SidebarCard icon={Settings} title="Tu cuenta" body={`Plan: ${user.plan ?? "ninguno"}`}>
+            <SidebarCard
+              icon={Settings}
+              title="Tu cuenta"
+              body={user.plan ? `Plan ${user.plan === "yearly" ? "anual" : user.plan === "monthly" ? "mensual" : "individual"}${user.subscriptionExpiresAt ? ` · vence ${formatExpiry(user.subscriptionExpiresAt)}` : ""}` : "Sin plan activo"}
+            >
               <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
                 <Link to="/planes">Gestionar plan</Link>
               </Button>

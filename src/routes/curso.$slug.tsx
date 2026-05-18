@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShieldCheck, ShoppingCart } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 const SAMPLE_VIDEO = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
 
 export const Route = createFileRoute("/curso/$slug")({
+  validateSearch: (s: Record<string, unknown>) => ({ buy: s.buy === "1" || s.buy === 1 ? true : undefined }),
   loader: ({ params }) => {
     const course = getCourseBySlug(params.slug);
     if (!course) throw notFound();
@@ -28,8 +29,17 @@ export const Route = createFileRoute("/curso/$slug")({
 
 function CursoDetailPage() {
   const { course } = Route.useLoaderData();
+  const search = Route.useSearch();
   const { user, isAuthenticated, hasAccessTo, purchaseCourse } = useAuth();
   const hasAccess = hasAccessTo(course.slug, course.includedInMembership);
+
+  // Si vuelve del registro con ?buy=1, cerramos la compra individual automáticamente.
+  useEffect(() => {
+    if (search.buy && isAuthenticated && !user?.individualCourses.includes(course.slug)) {
+      purchaseCourse(course.slug);
+    }
+  }, [search.buy, isAuthenticated, user, course.slug, purchaseCourse]);
+
   const allLessons = useMemo(
     () => course.curriculum.flatMap((m, mi) => m.lessons.map((l, li) => ({ id: `${mi}-${li}`, module: m.title, title: l, free: mi === 0 && li === 0 }))),
     [course],
@@ -82,7 +92,7 @@ function CursoDetailPage() {
                     className="w-full"
                     onClick={() => {
                       if (!isAuthenticated) {
-                        window.location.href = "/registro";
+                        window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
                         return;
                       }
                       purchaseCourse(course.slug);
