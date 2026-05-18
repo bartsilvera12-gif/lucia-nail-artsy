@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { site } from "@/data/site";
+import { useAuth } from "@/lib/auth";
 
 const navLinks = [
   { to: "/", label: "Inicio" },
   { to: "/cursos", label: "Cursos" },
+  { to: "/comunidad", label: "Comunidad" },
   { to: "/planes", label: "Planes" },
   { to: "/sobre", label: "Sobre Lucía" },
   { to: "/faq", label: "FAQ" },
@@ -15,6 +17,7 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -39,12 +42,20 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/login">Ingresar</Link>
-          </Button>
-          <Button variant="gold" size="sm" asChild>
-            <Link to="/registro">Unirme ahora</Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button variant="gold" size="sm" asChild>
+              <Link to="/panel"><User className="h-4 w-4" /> {user?.name.split(" ")[0]}</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Ingresar</Link>
+              </Button>
+              <Button variant="gold" size="sm" asChild>
+                <Link to="/registro">Unirme ahora</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -73,12 +84,20 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
-                <Button variant="outlineGold" asChild onClick={() => setOpen(false)}>
-                  <Link to="/login">Ingresar</Link>
-                </Button>
-                <Button variant="gold" asChild onClick={() => setOpen(false)}>
-                  <Link to="/registro">Unirme ahora</Link>
-                </Button>
+                {isAuthenticated ? (
+                  <Button variant="gold" asChild onClick={() => setOpen(false)}>
+                    <Link to="/panel">Ir a mi panel</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outlineGold" asChild onClick={() => setOpen(false)}>
+                      <Link to="/login">Ingresar</Link>
+                    </Button>
+                    <Button variant="gold" asChild onClick={() => setOpen(false)}>
+                      <Link to="/registro">Unirme ahora</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </div>
