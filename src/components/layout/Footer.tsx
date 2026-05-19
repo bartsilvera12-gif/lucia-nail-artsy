@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Sparkles, Instagram, Mail } from "lucide-react";
+import { Instagram, Mail } from "lucide-react";
 import { site } from "@/data/site";
+import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
 export function Footer() {
   return (
@@ -8,9 +9,8 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <span className="font-serif text-xl">{site.name}</span>
+            <Link to="/" className="flex items-center" aria-label={site.name}>
+              <img src={logoUrl} alt={site.name} className="h-14 w-auto" />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
             <p className="mt-4 text-xs text-muted-foreground">{site.admin}</p>

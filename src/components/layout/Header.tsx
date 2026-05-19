@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Sparkles, User } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { site } from "@/data/site";
 import { useAuth } from "@/lib/auth";
+import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
 const navLinks = [
   { to: "/", label: "Inicio" },
@@ -22,9 +23,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <span className="font-serif text-xl tracking-tight">{site.name}</span>
+        <Link to="/" className="flex items-center" aria-label={site.name}>
+          <img src={logoUrl} alt={site.name} className="h-12 w-auto sm:h-14" />
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
