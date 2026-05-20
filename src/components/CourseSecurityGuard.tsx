@@ -247,6 +247,21 @@ export function CourseSecurityGuard({
     .join(" · ");
 
   return (
+    <>
+    {/* Overlay full-viewport mientras hay grabación de pantalla activa.
+        Tapa TODO lo que se ve en la captura, no solo el player. */}
+    {recording && (
+      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-black px-6 text-center text-white">
+        <ShieldAlert className="h-14 w-14 text-primary" />
+        <p className="font-serif text-2xl sm:text-3xl">Grabación de pantalla detectada</p>
+        <p className="max-w-md text-sm text-white/80">
+          Las clases no pueden grabarse. La página queda oculta mientras detectemos una grabación activa. Este intento quedó registrado con tu cuenta.
+        </p>
+        <p className="text-[11px] text-red-300">Detené la grabación para volver al curso.</p>
+        <p className="mt-2 text-[10px] text-white/40">Usuario: {userEmail}{lessonId ? ` · ${lessonId.slice(0, 8)}` : ""}</p>
+      </div>
+    )}
+
     <div
       ref={containerRef}
       data-secure-area
@@ -303,29 +318,18 @@ export function CourseSecurityGuard({
         {isFs ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
 
-      {/* Overlay de advertencia (cubre el video). Se queda permanente mientras
-          haya una grabación de pantalla activa; pulsa 3.5s en otros eventos. */}
-      {(obscured || recording) && (
+      {/* Overlay 3.5s sobre el video por eventos puntuales (right-click,
+          shortcuts, printscreen). NO cubre toda la pantalla. */}
+      {obscured && !recording && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black px-6 text-center text-white animate-fade-in">
-          <ShieldAlert className="h-12 w-12 text-primary" />
-          <p className="font-serif text-xl sm:text-2xl">
-            {recording
-              ? "Grabación de pantalla detectada"
-              : suspicious
-                ? "Sesión marcada como sospechosa"
-                : "Acción no permitida"}
+          <ShieldAlert className="h-10 w-10 text-primary" />
+          <p className="font-serif text-lg sm:text-xl">
+            {suspicious ? "Sesión marcada como sospechosa" : "Acción no permitida"}
           </p>
           <p className="max-w-md text-xs text-white/80 sm:text-sm">
-            {recording
-              ? "Las clases no se pueden grabar. El video va a permanecer oculto mientras detectemos una grabación activa. Este intento quedó registrado con tu cuenta."
-              : `${warning} Este intento quedó registrado junto a tu sesión.`}
+            {warning} Este intento quedó registrado junto a tu sesión.
           </p>
-          {recording && (
-            <p className="mt-2 max-w-md text-[11px] text-red-300">
-              Detené la grabación para volver a ver el video.
-            </p>
-          )}
-          {suspicious && !recording && (
+          {suspicious && (
             <p className="mt-1 max-w-md text-[11px] text-amber-300/90">
               Detectamos varios intentos en poco tiempo. El equipo va a revisar esta sesión.
             </p>
@@ -333,5 +337,6 @@ export function CourseSecurityGuard({
         </div>
       )}
     </div>
+    </>
   );
 }
