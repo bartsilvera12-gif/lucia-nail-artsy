@@ -45,7 +45,10 @@ export function CourseSecurityGuard({
   const [suspicious, setSuspicious] = useState(false);
   const [isFs, setIsFs] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [heuristicRecording, setHeuristicRecording] = useState(false);
+  const heuristicRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
+  const blurTimerRef = useRef<number | null>(null);
 
   const trigger = useCallback(async (eventType: string, why: string, meta: Record<string, unknown> = {}) => {
     setWarning(why);
@@ -139,9 +142,34 @@ export function CourseSecurityGuard({
     };
     const onBlur = () => {
       reportSecurityEvent({ event_type: "window_blur", course_id: courseId, lesson_id: lessonId });
+      // Heurística: si el window pierde foco pero el tab sigue visible
+      // (algo se interpuso encima sin cambiar de pestaña) → probable
+      // herramienta de captura (Snipping Tool, Game Bar, OBS, AnyDesk).
+      if (document.visibilityState === "visible") {
+        if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
+        blurTimerRef.current = window.setTimeout(() => {
+          // Verificamos de nuevo después del delay para evitar falsos positivos
+          if (!document.hasFocus() && document.visibilityState === "visible") {
+            heuristicRef.current = true;
+            setHeuristicRecording(true);
+            reportSecurityEvent({
+              event_type: "displaymedia_active",
+              course_id: courseId,
+              lesson_id: lessonId,
+              metadata: { source: "heuristic_focus_loss" },
+            });
+          }
+        }, 1500);
+      }
     };
     const onFocus = () => {
       reportSecurityEvent({ event_type: "window_focus", course_id: courseId, lesson_id: lessonId });
+      if (blurTimerRef.current) { window.clearTimeout(blurTimerRef.current); blurTimerRef.current = null; }
+      if (heuristicRef.current) {
+        heuristicRef.current = false;
+        setHeuristicRecording(false);
+        reportSecurityEvent({ event_type: "displaymedia_ended", course_id: courseId, lesson_id: lessonId });
+      }
     };
     const onFsChange = () => {
       const inFs = document.fullscreenElement === containerRef.current;
@@ -230,6 +258,7 @@ export function CourseSecurityGuard({
       window.removeEventListener("focus", onWindowFocusBackFromIframe);
       document.removeEventListener("fullscreenchange", onFsChange);
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+      if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
     };
   }, [courseId, lessonId, trigger]);
 
@@ -246,18 +275,26 @@ export function CourseSecurityGuard({
     .filter(Boolean)
     .join(" · ");
 
+  const captureLikely = recording || heuristicRecording;
+
   return (
     <>
-    {/* Overlay full-viewport mientras hay grabación de pantalla activa.
-        Tapa TODO lo que se ve en la captura, no solo el player. */}
-    {recording && (
+    {/* Overlay full-viewport mientras hay grabación de pantalla activa o
+        cuando la heurística cree que hay una herramienta de captura encima. */}
+    {captureLikely && (
       <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-black px-6 text-center text-white">
         <ShieldAlert className="h-14 w-14 text-primary" />
-        <p className="font-serif text-2xl sm:text-3xl">Grabación de pantalla detectada</p>
-        <p className="max-w-md text-sm text-white/80">
-          Las clases no pueden grabarse. La página queda oculta mientras detectemos una grabación activa. Este intento quedó registrado con tu cuenta.
+        <p className="font-serif text-2xl sm:text-3xl">
+          {recording ? "Grabación de pantalla detectada" : "Actividad sospechosa detectada"}
         </p>
-        <p className="text-[11px] text-red-300">Detené la grabación para volver al curso.</p>
+        <p className="max-w-md text-sm text-white/80">
+          {recording
+            ? "Las clases no pueden grabarse. La página queda oculta mientras detectemos una grabación activa. Este intento quedó registrado con tu cuenta."
+            : "Detectamos que algo se interpuso sobre el navegador (herramienta de captura, screen recorder o similar). El video queda oculto hasta que vuelvas a darle foco al curso."}
+        </p>
+        <p className="text-[11px] text-red-300">
+          {recording ? "Detené la grabación para volver al curso." : "Hacé click en cualquier parte del curso para reanudar."}
+        </p>
         <p className="mt-2 text-[10px] text-white/40">Usuario: {userEmail}{lessonId ? ` · ${lessonId.slice(0, 8)}` : ""}</p>
       </div>
     )}
