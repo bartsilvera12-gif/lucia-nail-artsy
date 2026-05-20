@@ -109,27 +109,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (!hasAccess) return new Response("Sin acceso a esta lección", { status: 403 });
 
-  // 4. Pedir OTP a VdoCipher con watermark dinámico (email del usuario
-  //    quemado dentro del stream — se ve en screenshots y grabaciones)
-  const annotate = JSON.stringify([
-    {
-      type: "rtext",
-      text: user.email ?? "alumna",
-      alpha: "0.55",
-      color: "0xFFFFFF",
-      size: "15",
-      interval: "5000",
-    },
-    {
-      type: "rtext",
-      text: "Lucía Rojas Studio",
-      alpha: "0.30",
-      color: "0xFFD580",
-      size: "13",
-      interval: "7000",
-    },
-  ]);
-
+  // 4. Pedir OTP a VdoCipher (sin watermark burned-in)
   const vdoResp = await fetch(`https://dev.vdocipher.com/api/videos/${lesson.video_path}/otp`, {
     method: "POST",
     headers: {
@@ -137,7 +117,7 @@ export default async function handler(req: Request): Promise<Response> {
       Accept: "application/json",
       Authorization: `Apisecret ${VDOCIPHER_API_SECRET}`,
     },
-    body: JSON.stringify({ ttl: 300, annotate }),
+    body: JSON.stringify({ ttl: 300 }),
   });
   if (!vdoResp.ok) {
     const errText = await vdoResp.text();

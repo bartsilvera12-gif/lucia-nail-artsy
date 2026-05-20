@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ShieldAlert, Eye, Maximize2, Minimize2, Radio } from "lucide-react";
+import { ShieldAlert, Maximize2, Minimize2, Radio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface CourseSecurityGuardProps {
@@ -299,10 +299,7 @@ export function CourseSecurityGuard({
     } catch { /* noop */ }
   };
 
-  // Tag para el watermark (rastrea filtraciones)
-  const wmParts = [userEmail, userPhone, new Date().toLocaleString(), lessonId?.slice(0, 8)]
-    .filter(Boolean)
-    .join(" · ");
+  void userPhone;
 
   const captureLikely = recording || heuristicRecording;
 
@@ -340,26 +337,6 @@ export function CourseSecurityGuard({
       onDragStart={(e) => e.preventDefault()}
     >
       {children}
-
-      {/* Watermark dinámico repetido en diagonal */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden text-[11px] font-medium text-white/15"
-        style={{ mixBlendMode: "difference" }}
-      >
-        <div className="absolute inset-0 -rotate-[18deg]">
-          <div className="flex h-[200%] w-[200%] flex-wrap content-start gap-x-12 gap-y-10 p-6">
-            {Array.from({ length: 90 }).map((_, i) => (
-              <span key={i} className="whitespace-nowrap">{wmParts}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Badge con email */}
-      <div className="pointer-events-none absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-medium text-white/90 backdrop-blur">
-        <Eye className="h-3 w-3" /> {userEmail}
-      </div>
 
       {/* Badge rojo solo cuando hay grabación activa detectada */}
       {recording && (
