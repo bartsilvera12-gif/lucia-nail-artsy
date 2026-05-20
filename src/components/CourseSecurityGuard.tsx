@@ -152,23 +152,46 @@ export function CourseSecurityGuard({
       });
     };
 
+    // Cuando el iframe del player tiene foco, los keydown/keyup pueden no
+    // bubblear al window padre. Detectamos blur del window → captura potencial.
+    let blurredByIframe = false;
+    const onWindowBlurForCapture = () => {
+      // Si el activeElement es un iframe, asumimos que el usuario está
+      // interactuando con el player y desde ahí podría disparar PrintScreen.
+      // Mostramos overlay preventivo si el blur dura más de 200 ms
+      // (no penaliza alt+tab cortos).
+      if (document.activeElement?.tagName === "IFRAME") {
+        blurredByIframe = true;
+      }
+    };
+    const onWindowFocusBackFromIframe = () => { blurredByIframe = false; };
+
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
     window.addEventListener("keydown", onKey, { capture: true });
     window.addEventListener("keyup", onKeyUp, { capture: true });
+    document.addEventListener("keydown", onKey, { capture: true });
+    document.addEventListener("keyup", onKeyUp, { capture: true });
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
+    window.addEventListener("blur", onWindowBlurForCapture);
     window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", onWindowFocusBackFromIframe);
     document.addEventListener("fullscreenchange", onFsChange);
 
     return () => {
+      void blurredByIframe;
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("copy", onCopy);
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
       window.removeEventListener("keyup", onKeyUp, { capture: true } as EventListenerOptions);
+      document.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+      document.removeEventListener("keyup", onKeyUp, { capture: true } as EventListenerOptions);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
+      window.removeEventListener("blur", onWindowBlurForCapture);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", onWindowFocusBackFromIframe);
       document.removeEventListener("fullscreenchange", onFsChange);
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
