@@ -30,16 +30,19 @@ function AdminPage() {
   const [tab, setTab] = useState<Tab>("dashboard");
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-400"><p>Cargando…</p></div>;
+    return <div className="flex min-h-screen items-center justify-center bg-gradient-cream text-muted-foreground"><p>Cargando…</p></div>;
   }
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/admin-login" />;
   if (!isAdmin) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 px-4 text-center text-zinc-100">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-gradient-cream px-4 text-center">
         <Sparkles className="h-8 w-8 text-primary" />
         <h1 className="font-serif text-2xl">Acceso restringido</h1>
-        <p className="max-w-md text-sm text-zinc-400">Necesitás permisos de administrador para entrar a esta sección.</p>
-        <Button asChild variant="gold"><Link to="/panel">Volver a mi panel</Link></Button>
+        <p className="max-w-md text-sm text-muted-foreground">Necesitás permisos de administrador para entrar a esta sección.</p>
+        <div className="flex gap-2">
+          <Button asChild variant="gold"><Link to="/panel">Volver a mi panel</Link></Button>
+          <Button asChild variant="ghost" onClick={logout}><Link to="/admin-login">Cambiar de cuenta</Link></Button>
+        </div>
       </div>
     );
   }
@@ -55,14 +58,14 @@ function AdminPage() {
   const currentTab = tabs.find((t) => t.id === tab);
 
   return (
-    <div className="flex min-h-screen bg-zinc-100 dark:bg-zinc-950">
-      {/* Sidebar oscuro */}
-      <aside className="hidden w-64 flex-col bg-zinc-900 text-zinc-300 lg:flex">
-        <div className="flex h-16 items-center gap-2 border-b border-zinc-800 px-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-gold text-zinc-900 font-serif text-sm">LR</span>
+    <div className="flex min-h-screen bg-secondary/40">
+      {/* Sidebar claro */}
+      <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex">
+        <div className="flex h-16 items-center gap-2 border-b border-border px-5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-gold font-serif text-sm text-foreground shadow-gold">LR</span>
           <div className="leading-tight">
-            <p className="text-[11px] uppercase tracking-wider text-zinc-500">Panel</p>
-            <p className="text-sm font-medium text-zinc-100">Administración</p>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Panel</p>
+            <p className="text-sm font-medium">Administración</p>
           </div>
         </div>
 
@@ -76,34 +79,33 @@ function AdminPage() {
                 className={
                   "group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors " +
                   (active
-                    ? "bg-zinc-800 text-zinc-50"
-                    : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100")
+                    ? "bg-gradient-gold text-foreground shadow-soft"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground")
                 }
               >
-                <Icon className={"h-4 w-4 " + (active ? "text-primary" : "text-zinc-500 group-hover:text-zinc-300")} />
+                <Icon className={"h-4 w-4 " + (active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")} />
                 <span className="flex-1">{label}</span>
-                {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-                {!active && hint && <span className="text-[10px] text-zinc-600">{hint.split(" ")[0]}</span>}
+                {!active && hint && <span className="text-[10px] text-muted-foreground/60">{hint.split(" ")[0]}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div className="border-t border-zinc-800 p-3">
-          <div className="flex items-center gap-3 rounded-md bg-zinc-800/60 p-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-gold text-xs font-medium text-zinc-900">
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-3 rounded-lg bg-secondary/60 p-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-gold text-xs font-medium text-foreground shadow-gold">
               {user.name.slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-xs font-medium text-zinc-100">{user.name}</p>
-              <p className="truncate text-[10px] text-zinc-500">{user.email}</p>
+              <p className="truncate text-xs font-medium">{user.name}</p>
+              <p className="truncate text-[10px] text-muted-foreground">{user.email}</p>
             </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-1">
-            <Button size="sm" variant="ghost" asChild className="h-8 justify-center text-[11px] text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+            <Button size="sm" variant="ghost" asChild className="h-8 justify-center text-[11px]">
               <Link to="/panel">Mi panel</Link>
             </Button>
-            <Button size="sm" variant="ghost" onClick={logout} className="h-8 justify-center text-[11px] text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+            <Button size="sm" variant="ghost" onClick={logout} className="h-8 justify-center text-[11px]">
               <LogOut className="h-3.5 w-3.5" /> Salir
             </Button>
           </div>
@@ -113,39 +115,39 @@ function AdminPage() {
       {/* Área principal */}
       <div className="flex flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 lg:px-8 dark:border-zinc-800 dark:bg-zinc-900">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-border bg-card px-4 lg:px-8">
           <div className="flex items-center gap-3 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-gold text-zinc-900 font-serif text-sm">LR</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-gold font-serif text-sm text-foreground">LR</span>
             <select
               value={tab}
               onChange={(e) => setTab(e.target.value as Tab)}
-              className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-md border border-border bg-background px-3 py-1 text-sm"
             >
               {tabs.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </div>
 
-          <div className="hidden items-center gap-2 text-xs text-zinc-500 lg:flex">
+          <div className="hidden items-center gap-2 text-xs text-muted-foreground lg:flex">
             <span>Admin</span>
             <span>/</span>
-            <span className="text-zinc-900 dark:text-zinc-100">{currentTab?.label}</span>
+            <span className="text-foreground">{currentTab?.label}</span>
             {currentTab?.hint && (
               <>
-                <span className="text-zinc-300">·</span>
+                <span className="text-muted-foreground/40">·</span>
                 <span>{currentTab.hint}</span>
               </>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden text-xs text-zinc-500 sm:inline">{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <span className="hidden text-xs text-muted-foreground sm:inline">{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Conectado
             </span>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto bg-zinc-100 p-6 text-zinc-900 lg:p-10 dark:bg-zinc-950 dark:text-zinc-100">
+        <main className="flex-1 overflow-auto bg-secondary/40 p-6 text-foreground lg:p-10">
           {tab === "dashboard" && <DashboardTab />}
           {tab === "cursos" && <CoursesTab />}
           {tab === "alumnas" && <StudentsTab />}
@@ -215,8 +217,8 @@ function DashboardTab() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">{label}</p>
+    <div className="rounded-lg border border-border bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
     </div>
   );
@@ -224,7 +226,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-border bg-white p-6 shadow-sm">
       <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
       <div className="mt-4">{children}</div>
     </div>
@@ -313,16 +315,16 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   const [tab, setTab] = useState<"data" | "curriculum">("data");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border border-zinc-200 bg-white shadow-elegant dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+      <div onClick={(e) => e.stopPropagation()} className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-elegant">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h2 className="font-serif text-xl">{course.id ? "Editar curso" : "Nuevo curso"}</h2>
-            {course.title && <p className="text-xs text-zinc-500">{course.title}</p>}
+            {course.title && <p className="text-xs text-muted-foreground">{course.title}</p>}
           </div>
           <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
         </div>
 
-        <div className="flex gap-1 border-b border-zinc-200 px-6 dark:border-zinc-800">
+        <div className="flex gap-1 border-b border-border px-6">
           {([
             { id: "data", label: "Datos del curso" },
             { id: "curriculum", label: "Lecciones y videos" },
@@ -334,8 +336,8 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
               className={
                 "border-b-2 px-3 py-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 " +
                 (tab === t.id
-                  ? "border-primary text-zinc-900 dark:text-zinc-100"
-                  : "border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200")
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground")
               }
             >
               {t.label}
@@ -352,8 +354,8 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         </div>
 
         {tab === "data" && (
-          <div className="flex items-center justify-between border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <p className="text-xs text-zinc-500">
+          <div className="flex items-center justify-between border-t border-border px-6 py-4">
+            <p className="text-xs text-muted-foreground">
               {course.id ? "Tip: guardá los datos y después abrí la pestaña Lecciones para subir videos." : "Guardá el curso para empezar a cargar módulos y videos."}
             </p>
             <div className="flex gap-2">
@@ -441,20 +443,20 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
 
   const [newModule, setNewModule] = useState("");
 
-  if (isLoading) return <p className="text-sm text-zinc-500">Cargando estructura…</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">Cargando estructura…</p>;
   const modules = data?.modules ?? [];
   const lessons = data?.lessons ?? [];
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/40">
+      <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <FolderPlus className="h-4 w-4 text-primary" />
           <Input
             placeholder="Nuevo módulo (ej: Día 1 — Teoría)"
             value={newModule}
             onChange={(e) => setNewModule(e.target.value)}
-            className="flex-1 min-w-[200px] bg-white dark:bg-zinc-900"
+            className="flex-1 min-w-[200px] bg-white"
           />
           <Button
             variant="gold"
@@ -475,7 +477,7 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
       </div>
 
       {modules.length === 0 && (
-        <p className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/40">
+        <p className="rounded-md border border-dashed border-border bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
           Todavía no hay módulos. Creá el primero arriba.
         </p>
       )}
@@ -523,21 +525,21 @@ function ModuleBlock({
   const [newLesson, setNewLesson] = useState("");
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <GripVertical className="h-4 w-4 text-zinc-400" />
+    <div className="rounded-xl border border-border bg-white shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => { if (title.trim() && title !== mod.title) onRenameModule(title.trim()); }}
-          className="flex-1 border-transparent bg-transparent text-sm font-medium shadow-none focus:border-zinc-300"
+          className="flex-1 border-transparent bg-transparent text-sm font-medium shadow-none focus:border-border"
         />
         <Button size="sm" variant="ghost" onClick={onDeleteModule}><Trash2 className="h-4 w-4 text-destructive" /></Button>
       </div>
 
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div className="divide-y divide-border">
         {lessons.length === 0 && (
-          <p className="px-4 py-3 text-xs text-zinc-500">Sin lecciones todavía.</p>
+          <p className="px-4 py-3 text-xs text-muted-foreground">Sin lecciones todavía.</p>
         )}
         {lessons.map((l) => (
           <LessonRowItem
@@ -550,13 +552,13 @@ function ModuleBlock({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-zinc-200 bg-zinc-50/60 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/30">
+      <div className="flex items-center gap-2 border-t border-border bg-secondary/60 px-4 py-3">
         <FilePlus className="h-4 w-4 text-primary" />
         <Input
           placeholder="Nueva lección…"
           value={newLesson}
           onChange={(e) => setNewLesson(e.target.value)}
-          className="flex-1 bg-white dark:bg-zinc-900"
+          className="flex-1 bg-white"
         />
         <Button
           size="sm"
@@ -591,14 +593,14 @@ function LessonRowItem({
   return (
     <div className="px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <GripVertical className="h-4 w-4 text-zinc-300" />
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => { if (title.trim() && title !== lesson.title) onUpdate({ title: title.trim() }); }}
-          className="flex-1 min-w-[180px] border-transparent bg-transparent text-sm shadow-none focus:border-zinc-300"
+          className="flex-1 min-w-[180px] border-transparent bg-transparent text-sm shadow-none focus:border-border"
         />
-        <label className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
+        <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={lesson.is_free_preview}
@@ -608,11 +610,11 @@ function LessonRowItem({
         </label>
 
         {lesson.video_path ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" title={lesson.video_path}>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700" title={lesson.video_path}>
             <Film className="h-3 w-3" /> VdoCipher · {lesson.video_path.slice(0, 8)}…
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2 py-1 text-[10px] text-zinc-500 dark:bg-zinc-800">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">
             <Video className="h-3 w-3" /> Sin video
           </span>
         )}
@@ -624,12 +626,12 @@ function LessonRowItem({
       </div>
 
       {editing && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-800/40">
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary/40 p-2">
           <Input
             placeholder="VdoCipher Video ID (ej: 1a2b3c4d5e6f7g8h9i0j)"
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            className="flex-1 min-w-[260px] bg-white font-mono text-xs dark:bg-zinc-900"
+            className="flex-1 min-w-[260px] bg-white font-mono text-xs"
           />
           <Button size="sm" variant="outlineGold" onClick={saveVideoId}>Guardar</Button>
           <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setVideoId(lesson.video_path ?? ""); }}>Cancelar</Button>
