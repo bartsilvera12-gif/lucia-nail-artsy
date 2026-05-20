@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import {
   Sparkles,
   GraduationCap,
@@ -11,6 +12,7 @@ import {
   Pin,
   Heart,
   ArrowRight,
+  ArrowLeft,
   Play,
 } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -21,10 +23,10 @@ import { CourseCard } from "@/components/CourseCard";
 import { PlanCard } from "@/components/PlanCard";
 import { TestimonialCard } from "@/components/TestimonialCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
-import { featuredCourses } from "@/data/courses";
+import { useCourses } from "@/hooks/useCourses";
 import { plans, testimonials, faqs } from "@/data/site";
-import heroImg from "@/assets/hero-nails.jpg";
 import aboutImg from "@/assets/about-studio.jpg";
+import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,14 +48,12 @@ function HomePage() {
   return (
     <PublicLayout>
       <Hero />
-      <ValueProps />
-      <SkoolStyle />
       <FeaturedCourses />
-      <Benefits />
+      <ValueProps />
       <PlansSection />
+      <Benefits />
+      <SkoolStyle />
       <Testimonials />
-      <AboutSection />
-      <FAQSection />
       <FinalCTA />
     </PublicLayout>
   );
@@ -62,12 +62,9 @@ function HomePage() {
 function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-cream">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-24">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-12">
         <div className="flex flex-col justify-center">
-          <GoldBadge>
-            <Sparkles className="h-3 w-3" /> Academia privada de uñas online
-          </GoldBadge>
-          <h1 className="mt-6 font-serif text-4xl leading-[1.05] text-balance sm:text-5xl lg:text-6xl">
+          <h1 className="font-serif text-4xl leading-[1.05] text-balance sm:text-5xl lg:text-6xl">
             Aprendé uñas profesionales y construí tu camino en la belleza
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -91,13 +88,25 @@ function Hero() {
           </div>
         </div>
 
-        <div className="relative">
-          <div className="relative overflow-hidden rounded-2xl shadow-elegant">
-            <img src={heroImg} alt="Manicura premium" className="h-full w-full object-cover" width={1280} height={1280} />
-          </div>
+        <div className="relative flex items-center justify-center">
+          {/* halo dorado de fondo */}
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-0 mx-auto my-auto h-[78%] w-[78%] rounded-full bg-gradient-gold opacity-30 blur-3xl animate-glow"
+          />
+          {/* anillo decorativo girando */}
+          <div
+            aria-hidden
+            className="absolute inset-6 -z-0 hidden rounded-full border border-primary/30 animate-spin-slow sm:block"
+          />
+          <img
+            src={heroLogo}
+            alt="Lucía Rojas Studio"
+            className="relative z-10 mx-auto w-full max-w-sm animate-float drop-shadow-2xl lg:max-w-md"
+          />
 
-          <div className="absolute -bottom-6 -left-6 hidden w-64 rounded-xl border border-border bg-card p-5 shadow-elegant sm:block">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="absolute -bottom-4 left-4 hidden w-60 rounded-xl border border-border bg-card/95 p-4 shadow-elegant backdrop-blur animate-fade-up sm:block lg:-bottom-6 lg:-left-6" style={{ animationDelay: "400ms" }}>
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: Crown, label: "Cursos premium" },
                 { icon: Users, label: "Comunidad privada" },
@@ -119,24 +128,50 @@ function Hero() {
 
 function ValueProps() {
   const items = [
-    { icon: GraduationCap, title: "Cursos paso a paso", desc: "Estructurados por módulos para que avances con seguridad desde tu primera clase." },
-    { icon: Users, title: "Comunidad privada", desc: "Compartí trabajos, resolvé dudas y crecé junto a otras alumnas." },
-    { icon: Award, title: "Certificado al completar", desc: "Recibí un certificado digital con código único de validación." },
-    { icon: Smartphone, title: "Acceso flexible", desc: "Mirá las clases desde celular, tablet o computadora cuando quieras." },
+    { icon: GraduationCap, title: "Cursos paso a paso", desc: "Estructurados por módulos para que avances con seguridad desde tu primera clase.", accent: "01" },
+    { icon: Users,         title: "Comunidad privada", desc: "Compartí trabajos, resolvé dudas y crecé junto a otras alumnas.",                      accent: "02" },
+    { icon: Award,         title: "Certificado al completar", desc: "Recibí un certificado digital con código único de validación.",                accent: "03" },
+    { icon: Smartphone,    title: "Acceso flexible", desc: "Mirá las clases desde celular, tablet o computadora cuando quieras.",                    accent: "04" },
   ];
   return (
-    <section className="py-20 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden py-24 sm:py-32">
+      {/* Halos decorativos */}
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-gradient-gold opacity-15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="Propuesta de valor" title="Todo lo que necesitás para aprender, practicar y crecer" />
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="rounded-xl border border-border bg-card p-6 shadow-soft transition-all hover:shadow-elegant">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-gold">
-                <Icon className="h-5 w-5 text-foreground" />
+
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map(({ icon: Icon, title, desc, accent }, i) => (
+            <article
+              key={title}
+              style={{ animationDelay: `${i * 120}ms` }}
+              className="group relative animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
+            >
+              {/* Brillo dorado al hover */}
+              <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
+
+              {/* Número decorativo grande al fondo */}
+              <span aria-hidden className="absolute -right-1 -top-3 select-none font-serif text-7xl leading-none text-primary/10 transition-colors group-hover:text-primary/20">
+                {accent}
+              </span>
+
+              {/* Icono con doble capa */}
+              <div className="relative inline-flex">
+                <span aria-hidden className="absolute inset-0 rounded-2xl bg-gradient-gold opacity-30 blur-md transition-all duration-500 group-hover:opacity-60 group-hover:blur-xl" />
+                <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold transition-transform duration-500 group-hover:rotate-[-6deg] group-hover:scale-110">
+                  <Icon className="h-6 w-6 text-foreground" strokeWidth={1.75} />
+                </span>
               </div>
-              <h3 className="mt-5 font-serif text-lg">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
-            </div>
+
+              <h3 className="mt-6 font-serif text-xl">{title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+
+              {/* línea dorada inferior animada */}
+              <span aria-hidden className="absolute inset-x-7 bottom-0 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover:scale-x-100" />
+            </article>
           ))}
         </div>
       </div>
@@ -219,25 +254,121 @@ function FeaturedCourses() {
             <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-4 w-4" /></Link>
           </Button>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {featuredCourses.map((course) => (<CourseCard key={course.slug} course={course} />))}
-        </div>
+        <FeaturedCoursesCarousel />
       </div>
     </section>
   );
 }
 
-function Benefits() {
-  const items = ["Acceso inmediato después del pago","Clases organizadas por módulos","Progreso guardado automáticamente","Continuá desde la última clase vista","Comunidad privada de alumnas","Certificado con código único","Bonos descargables","Soporte y novedades internas"];
+function FeaturedCoursesCarousel() {
+  const { data: courses = [] } = useCourses();
+  const featured = courses.slice(0, 6);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-card]");
+    const step = card ? card.offsetWidth + 24 : 320;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  // Auto-scroll continuo a ~50px/s; al alcanzar la mitad (segunda copia), resetea sin saltos.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      if (!pausedRef.current && el) {
+        el.scrollLeft += (dt / 1000) * 50;
+        const half = el.scrollWidth / 2;
+        if (el.scrollLeft >= half) el.scrollLeft -= half;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
-    <section className="bg-gradient-cream py-20 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div
+      className="group relative mt-12"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-background to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background to-transparent" />
+
+      <button
+        type="button"
+        aria-label="Anterior"
+        onClick={() => scrollByCard(-1)}
+        className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-left-4"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Siguiente"
+        onClick={() => scrollByCard(1)}
+        className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-right-4"
+      >
+        <ArrowRight className="h-5 w-5" />
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className="flex gap-6 overflow-x-auto px-2 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {[...featured, ...featured].map((course, i) => (
+          <div
+            key={`${course.slug}-${i}`}
+            data-card
+            className="h-auto w-[280px] shrink-0 transition-transform duration-300 hover:-translate-y-2 sm:w-[320px] lg:w-[360px]"
+          >
+            <CourseCard course={course} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Benefits() {
+  const items: { icon: typeof Crown; title: string; desc: string }[] = [
+    { icon: Sparkles,       title: "Acceso inmediato",     desc: "Apenas confirmás tu pago empezás a ver tus clases." },
+    { icon: GraduationCap,  title: "Por módulos",          desc: "Clases organizadas con un orden claro y progresivo." },
+    { icon: CheckCircle2,   title: "Progreso guardado",    desc: "Tu avance queda registrado en cada clase automáticamente." },
+    { icon: Play,           title: "Retomá donde dejaste", desc: "Volvé a la última clase vista en un solo clic." },
+    { icon: Users,          title: "Comunidad privada",    desc: "Crecé acompañada por otras alumnas y por Lucía." },
+    { icon: Award,          title: "Certificado único",    desc: "Recibí tu certificado digital con código de validación." },
+    { icon: Heart,          title: "Bonos descargables",   desc: "Plantillas, checklists y guías para tu mesa de trabajo." },
+    { icon: MessageCircle,  title: "Soporte real",         desc: "Novedades, anuncios y soporte directo todo el mes." },
+  ];
+  return (
+    <section className="relative overflow-hidden bg-gradient-cream py-24 sm:py-28">
+      <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-72 w-72 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 left-0 h-72 w-72 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="Beneficios" title="Una experiencia premium pensada para alumnas que quieren avanzar" />
-        <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((b) => (
-            <div key={b} className="flex items-start gap-3 rounded-lg border border-border bg-card p-5 shadow-soft">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <p className="text-sm leading-relaxed">{b}</p>
+
+        <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map(({ icon: Icon, title, desc }, i) => (
+            <div
+              key={title}
+              style={{ animationDelay: `${i * 80}ms` }}
+              className="group relative flex animate-fade-up flex-col rounded-2xl border border-border bg-card/80 p-6 shadow-soft backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-elegant"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-gold shadow-gold transition-transform duration-500 group-hover:scale-110">
+                <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
+              </span>
+              <h3 className="mt-5 font-serif text-base">{title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>
@@ -248,14 +379,36 @@ function Benefits() {
 
 function PlansSection() {
   return (
-    <section className="py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow="Planes" title="Elegí cómo aprender" description="Membresía con todo incluido o compra individual del curso que necesites." />
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <PlanCard key={plan.id} {...plan} to={plan.id === "individual" ? "/cursos" : "/registro"} />
+    <section className="relative overflow-hidden py-24 sm:py-32">
+      {/* decoración */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-20 -z-10 h-96 w-[90%] -translate-x-1/2 rounded-full bg-gradient-gold opacity-10 blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Planes"
+          title="Elegí cómo aprender"
+          description="Membresía con todo incluido o compra individual del curso que necesites. Cancelás cuando quieras."
+        />
+        <div className="mt-16 grid items-stretch gap-8 lg:grid-cols-3 lg:gap-6">
+          {plans.map((plan, i) => (
+            <div
+              key={plan.id}
+              className="animate-fade-up"
+              style={{ animationDelay: `${i * 120}ms` }}
+            >
+              <PlanCard {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
+            </div>
           ))}
         </div>
+
+        <p className="mt-10 text-center text-xs text-muted-foreground">
+          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> 7 días de garantía
+          <span className="mx-3">·</span>
+          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Acceso inmediato después del pago
+          <span className="mx-3">·</span>
+          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Pago seguro
+        </p>
       </div>
     </section>
   );
@@ -331,7 +484,12 @@ function FinalCTA() {
           <Button variant="hero" size="xl" asChild>
             <Link to="/registro">Unirme ahora <ArrowRight className="h-4 w-4" /></Link>
           </Button>
-          <Button variant="outline" size="xl" asChild className="border-background/20 bg-transparent text-background hover:bg-background/10">
+          <Button
+            variant="outline"
+            size="xl"
+            asChild
+            className="border border-background/30 bg-transparent text-background hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary/60"
+          >
             <Link to="/cursos"><Play className="h-4 w-4" /> Ver cursos</Link>
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, AlertCircle } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   return (
     <PublicLayout>
@@ -31,10 +33,13 @@ function LoginPage() {
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                if (!email) return;
-                login(email);
+                setError(null);
+                setLoading(true);
+                const { error } = await login(email, password);
+                setLoading(false);
+                if (error) { setError(error); return; }
                 navigate({ to: "/panel" });
               }}
             >
@@ -46,7 +51,14 @@ function LoginPage() {
                 <label className="text-xs text-muted-foreground">Contraseña</label>
                 <Input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
               </div>
-              <Button type="submit" variant="gold" className="w-full">Ingresar</Button>
+              {error && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4" /> {error}
+                </div>
+              )}
+              <Button type="submit" variant="gold" className="w-full" disabled={loading}>
+                {loading ? "Ingresando…" : "Ingresar"}
+              </Button>
             </form>
 
             <p className="mt-6 text-center text-xs text-muted-foreground">

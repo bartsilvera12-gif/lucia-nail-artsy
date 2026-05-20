@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, AlertCircle } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,18 +29,22 @@ function RegistroPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [plan, setPlan] = useState<PlanId>(search.plan ?? "monthly");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const selectedPlan = plans.find((p) => p.id === plan);
   const isIndividualCheckout = !!search.next && !search.plan;
 
-  // Si ya está autenticado y vino con ?plan=X, simulamos el cobro y mandamos al panel.
+  // Usuario ya autenticado: pasamos directo al cobro
   useEffect(() => {
-    if (isAuthenticated && search.plan && search.plan !== "individual") {
-      subscribe(search.plan);
-      navigate({ to: "/panel" });
-    } else if (isAuthenticated && search.next) {
-      window.location.href = search.next;
-    }
+    if (!isAuthenticated) return;
+    (async () => {
+      if (search.plan && search.plan !== "individual") {
+        await subscribe(search.plan);
+      }
+      if (search.next) window.location.href = search.next;
+      else navigate({ to: "/panel" });
+    })();
   }, [isAuthenticated, search.plan, search.next, subscribe, navigate]);
 
   return (
@@ -84,19 +88,20 @@ function RegistroPage() {
 
           <form
             className="rounded-2xl border border-border bg-card p-8 shadow-elegant"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              if (!name || !email) return;
-              register(email, name);
-              // Si vino con plan, simulamos cobro de la membresía
+              if (!name || !email || !password) return;
+              setError(null);
+              setLoading(true);
+              const { error: regError } = await register(email, name, password);
+              if (regError) { setLoading(false); setError(regError); return; }
               if (search.plan && search.plan !== "individual") {
-                subscribe(plan as Exclude<PlanId, "individual">);
+                const { error: subError } = await subscribe(plan as Exclude<PlanId, "individual">);
+                if (subError) { setLoading(false); setError(subError); return; }
               }
-              if (search.next) {
-                window.location.href = search.next;
-              } else {
-                navigate({ to: "/panel" });
-              }
+              setLoading(false);
+              if (search.next) window.location.href = search.next;
+              else navigate({ to: "/panel" });
             }}
           >
             <h2 className="font-serif text-xl">Crear tu cuenta</h2>
@@ -110,8 +115,8 @@ function RegistroPage() {
                 <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1" placeholder="vos@email.com" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Contraseña</label>
-                <Input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
+                <label className="text-xs text-muted-foreground">Contraseña (mínimo 6)</label>
+                <Input required minLength={6} type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
               </div>
             </div>
 
@@ -126,8 +131,14 @@ function RegistroPage() {
               </div>
             )}
 
-            <Button type="submit" variant="gold" className="mt-6 w-full">
-              {isIndividualCheckout ? "Crear cuenta y continuar" : "Crear cuenta y pagar"}
+            {error && (
+              <div className="mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4" /> {error}
+              </div>
+            )}
+
+            <Button type="submit" variant="gold" className="mt-6 w-full" disabled={loading}>
+              {loading ? "Procesando…" : isIndividualCheckout ? "Crear cuenta y continuar" : "Crear cuenta y pagar"}
             </Button>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               ¿Ya sos alumna? <Link to="/login" className="text-primary underline">Ingresar</Link>

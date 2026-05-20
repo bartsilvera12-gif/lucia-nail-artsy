@@ -1,178 +1,249 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
 
 export type PlanId = "monthly" | "yearly" | "individual";
+export type UserRole = "student" | "admin";
 
 export interface AuthUser {
+  id: string;
   email: string;
   name: string;
-  plan: PlanId | null;
-  /** ISO string del último pago de la membresía */
+  role: UserRole;
+  plan: Exclude<PlanId, "individual"> | null;
   subscriptionStartedAt: string | null;
-  /** ISO string en el que vence la membresía actual */
   subscriptionExpiresAt: string | null;
-  /** Slugs de cursos comprados individualmente (acceso permanente) */
   individualCourses: string[];
   joinedAt: string;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
+  loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   hasMembership: boolean;
   isMembershipExpired: boolean;
   daysUntilExpiry: number | null;
-  hasAccessTo: (courseSlug: string, includedInMembership: boolean) => boolean;
-  login: (email: string, name?: string) => void;
-  register: (email: string, name: string) => void;
-  subscribe: (plan: Exclude<PlanId, "individual">) => void;
-  purchaseCourse: (slug: string) => void;
-  logout: () => void;
+  hasAccessTo: (courseId: string, includedInMembership: boolean) => boolean;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  register: (email: string, name: string, password: string) => Promise<{ error?: string }>;
+  subscribe: (plan: Exclude<PlanId, "individual">) => Promise<{ error?: string }>;
+  purchaseCourse: (courseId: string, price: number) => Promise<{ error?: string }>;
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-const STORAGE_KEY = "lrs-auth-user";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PLAN_DURATION_DAYS: Record<Exclude<PlanId, "individual">, number> = {
-  monthly: 30,
-  yearly: 365,
-};
-
-function addDays(iso: string, days: number) {
-  const d = new Date(iso);
-  d.setDate(d.getDate() + days);
-  return d.toISOString();
+interface ProfileRow {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  joined_at: string;
 }
 
-function read(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<AuthUser>;
-    // Migración suave para usuarios viejos sin los nuevos campos
-    return {
-      email: parsed.email ?? "",
-      name: parsed.name ?? "",
-      plan: parsed.plan ?? null,
-      subscriptionStartedAt: parsed.subscriptionStartedAt ?? null,
-      subscriptionExpiresAt: parsed.subscriptionExpiresAt ?? null,
-      individualCourses: parsed.individualCourses ?? [],
-      joinedAt: parsed.joinedAt ?? new Date().toISOString(),
-    };
-  } catch {
-    return null;
-  }
+interface SubscriptionRow {
+  id: string;
+  plan: "monthly" | "yearly";
+  started_at: string;
+  expires_at: string;
+  status: "active" | "expired" | "canceled";
 }
 
-function write(user: AuthUser | null) {
-  if (typeof window === "undefined") return;
-  if (user) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  else window.localStorage.removeItem(STORAGE_KEY);
+interface PurchaseRow {
+  course_id: string;
+}
+
+async function loadUser(session: Session): Promise<AuthUser | null> {
+  const userId = session.user.id;
+  const [{ data: profile }, { data: sub }, { data: purchases }] = await Promise.all([
+    supabase.from("profiles").select("id,email,name,role,joined_at").eq("id", userId).maybeSingle<ProfileRow>(),
+    supabase
+      .from("subscriptions")
+      .select("id,plan,started_at,expires_at,status")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<SubscriptionRow>(),
+    supabase.from("course_purchases").select("course_id").eq("user_id", userId),
+  ]);
+
+  if (!profile) return null;
+  return {
+    id: profile.id,
+    email: profile.email,
+    name: profile.name || profile.email.split("@")[0],
+    role: profile.role,
+    plan: sub?.plan ?? null,
+    subscriptionStartedAt: sub?.started_at ?? null,
+    subscriptionExpiresAt: sub?.expires_at ?? null,
+    individualCourses: (purchases as PurchaseRow[] | null)?.map((p) => p.course_id) ?? [],
+    joinedAt: profile.joined_at,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [, force] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0);
 
-  useEffect(() => {
-    setUser(read());
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) { setUser(null); setLoading(false); return; }
+    const u = await loadUser(data.session);
+    setUser(u);
+    setLoading(false);
   }, []);
 
-  // Re-render cada minuto para reflejar vencimiento de membresía en vivo
   useEffect(() => {
-    const id = window.setInterval(() => force((n) => n + 1), 60_000);
+    refresh();
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (!session) { setUser(null); return; }
+      loadUser(session).then(setUser);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [refresh]);
+
+  // re-render para reflejar vencimiento sin reload
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 60_000);
     return () => window.clearInterval(id);
   }, []);
+  void tick;
 
-  const persist = useCallback((next: AuthUser | null) => {
-    write(next);
-    setUser(next);
+  const login = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    await refresh();
+    return {};
+  }, [refresh]);
+
+  const register = useCallback(async (email: string, name: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+    if (error) return { error: error.message };
+    // Inicia sesión automáticamente si autoconfirm está activo
+    await supabase.auth.signInWithPassword({ email, password });
+    await refresh();
+    return {};
+  }, [refresh]);
+
+  const subscribe = useCallback(async (plan: Exclude<PlanId, "individual">) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+    if (!userId) return { error: "No autenticado" };
+
+    // Toma la duración del plan
+    const { data: planRow } = await supabase
+      .from("plans")
+      .select("price,duration_days")
+      .eq("id", plan)
+      .maybeSingle<{ price: number; duration_days: number }>();
+    if (!planRow) return { error: "Plan no encontrado" };
+
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setDate(expires.getDate() + planRow.duration_days);
+
+    // Cancelar suscripciones activas previas
+    await supabase
+      .from("subscriptions")
+      .update({ status: "canceled" })
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    const { data: newSub, error } = await supabase
+      .from("subscriptions")
+      .insert({
+        user_id: userId,
+        plan,
+        started_at: now.toISOString(),
+        expires_at: expires.toISOString(),
+        status: "active",
+        payment_method: "manual",
+      })
+      .select("id")
+      .single<{ id: string }>();
+    if (error) return { error: error.message };
+
+    await supabase.from("payments").insert({
+      user_id: userId,
+      amount: planRow.price,
+      type: "subscription",
+      status: "succeeded",
+      reference_id: newSub.id,
+      method: "manual",
+    });
+
+    await refresh();
+    return {};
+  }, [refresh]);
+
+  const purchaseCourse = useCallback(async (courseId: string, price: number) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+    if (!userId) return { error: "No autenticado" };
+
+    const { data: purchase, error } = await supabase
+      .from("course_purchases")
+      .insert({ user_id: userId, course_id: courseId, price_paid: price, payment_method: "manual" })
+      .select("id")
+      .single<{ id: string }>();
+    if (error) return { error: error.message };
+
+    await supabase.from("payments").insert({
+      user_id: userId,
+      amount: price,
+      type: "course_purchase",
+      status: "succeeded",
+      reference_id: purchase.id,
+      method: "manual",
+    });
+
+    await refresh();
+    return {};
+  }, [refresh]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   }, []);
-
-  const login = useCallback((email: string, name?: string) => {
-    const existing = read();
-    if (existing && existing.email === email) {
-      persist(existing);
-      return;
-    }
-    persist({
-      email,
-      name: name ?? email.split("@")[0],
-      plan: null,
-      subscriptionStartedAt: null,
-      subscriptionExpiresAt: null,
-      individualCourses: [],
-      joinedAt: new Date().toISOString(),
-    });
-  }, [persist]);
-
-  const register = useCallback((email: string, name: string) => {
-    // El registro NO activa la membresía. Recién se activa al pagar (subscribe / purchaseCourse).
-    persist({
-      email,
-      name,
-      plan: null,
-      subscriptionStartedAt: null,
-      subscriptionExpiresAt: null,
-      individualCourses: [],
-      joinedAt: new Date().toISOString(),
-    });
-  }, [persist]);
-
-  const subscribe = useCallback((plan: Exclude<PlanId, "individual">) => {
-    const u = read();
-    if (!u) return;
-    const now = new Date().toISOString();
-    persist({
-      ...u,
-      plan,
-      subscriptionStartedAt: now,
-      subscriptionExpiresAt: addDays(now, PLAN_DURATION_DAYS[plan]),
-    });
-  }, [persist]);
-
-  const purchaseCourse = useCallback((slug: string) => {
-    const u = read();
-    if (!u) return;
-    if (u.individualCourses.includes(slug)) return;
-    persist({ ...u, individualCourses: [...u.individualCourses, slug] });
-  }, [persist]);
-
-  const logout = useCallback(() => persist(null), [persist]);
 
   const value = useMemo<AuthContextValue>(() => {
     const now = Date.now();
     const expiresAt = user?.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).getTime() : null;
-    const hasMembership =
-      !!user &&
-      (user.plan === "monthly" || user.plan === "yearly") &&
-      !!expiresAt &&
-      expiresAt > now;
-    const isMembershipExpired =
-      !!user &&
-      (user.plan === "monthly" || user.plan === "yearly") &&
-      !!expiresAt &&
-      expiresAt <= now;
+    const hasMembership = !!user && !!user.plan && !!expiresAt && expiresAt > now;
+    const isMembershipExpired = !!user && !!user.plan && !!expiresAt && expiresAt <= now;
     const daysUntilExpiry = expiresAt ? Math.max(0, Math.ceil((expiresAt - now) / 86_400_000)) : null;
 
     return {
       user,
+      loading,
       isAuthenticated: !!user,
+      isAdmin: user?.role === "admin",
       hasMembership,
       isMembershipExpired,
       daysUntilExpiry,
-      hasAccessTo: (slug, included) => {
+      hasAccessTo: (courseId, included) => {
         if (!user) return false;
+        if (user.role === "admin") return true;
         if (hasMembership && included) return true;
-        return user.individualCourses.includes(slug);
+        return user.individualCourses.includes(courseId);
       },
       login,
       register,
       subscribe,
       purchaseCourse,
+      refresh,
       logout,
     };
-  }, [user, login, register, subscribe, purchaseCourse, logout]);
+  }, [user, loading, login, register, subscribe, purchaseCourse, refresh, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

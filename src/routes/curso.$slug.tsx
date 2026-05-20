@@ -6,47 +6,82 @@ import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Paywall } from "@/components/Paywall";
-import { getCourseBySlug } from "@/data/courses";
+import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
-const SAMPLE_VIDEO = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+interface CursoSearch { buy?: boolean }
 
 export const Route = createFileRoute("/curso/$slug")({
-  validateSearch: (s: Record<string, unknown>) => ({ buy: s.buy === "1" || s.buy === 1 ? true : undefined }),
-  loader: ({ params }) => {
-    const course = getCourseBySlug(params.slug);
-    if (!course) throw notFound();
-    return { course };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.course.title ?? "Curso"} — Lucía Rojas Studio` },
-      { name: "description", content: loaderData?.course.shortDescription },
-    ],
+  validateSearch: (s: Record<string, unknown>): CursoSearch => ({
+    buy: s.buy === "1" || s.buy === 1 || s.buy === true ? true : undefined,
   }),
+  head: ({ params }) => ({ meta: [{ title: `${params.slug} — Lucía Rojas Studio` }] }),
   component: CursoDetailPage,
 });
 
 function CursoDetailPage() {
-  const { course } = Route.useLoaderData();
+  const { slug } = Route.useParams();
   const search = Route.useSearch();
+  const { data, isLoading } = useCourseBySlug(slug);
   const { user, isAuthenticated, hasAccessTo, purchaseCourse } = useAuth();
-  const hasAccess = hasAccessTo(course.slug, course.includedInMembership);
+  const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
 
-  // Si vuelve del registro con ?buy=1, cerramos la compra individual automáticamente.
+  const allLessons = useMemo(() => {
+    if (!data) return [];
+    return data.modules.flatMap((m) =>
+      data.lessons
+        .filter((l) => l.module_id === m.id)
+        .map((l) => ({ ...l, moduleTitle: m.title })),
+    );
+  }, [data]);
+
   useEffect(() => {
-    if (search.buy && isAuthenticated && !user?.individualCourses.includes(course.slug)) {
-      purchaseCourse(course.slug);
-    }
-  }, [search.buy, isAuthenticated, user, course.slug, purchaseCourse]);
+    if (!currentLessonId && allLessons[0]) setCurrentLessonId(allLessons[0].id);
+  }, [allLessons, currentLessonId]);
 
-  const allLessons = useMemo(
-    () => course.curriculum.flatMap((m, mi) => m.lessons.map((l, li) => ({ id: `${mi}-${li}`, module: m.title, title: l, free: mi === 0 && li === 0 }))),
-    [course],
-  );
-  const [currentId, setCurrentId] = useState(allLessons[0]?.id);
-  const current = allLessons.find((l) => l.id === currentId) ?? allLessons[0];
-  const canPlay = hasAccess || current?.free;
+  useEffect(() => {
+    if (!data) return;
+    const courseId = data.course.id;
+    if (search.buy && isAuthenticated && user && !user.individualCourses.includes(courseId)) {
+      purchaseCourse(courseId, Number(data.course.price));
+    }
+  }, [search.buy, isAuthenticated, user, data, purchaseCourse]);
+
+  // Pedir OTP de VdoCipher para la lección actual
+  const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
+  const [vdoError, setVdoError] = useState<string | null>(null);
+  const currentForVideo = allLessons.find((l) => l.id === currentLessonId);
+  const currentVideoPath = currentForVideo?.video_path ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    setVdo(null);
+    setVdoError(null);
+    if (!currentLessonId || !currentVideoPath) return;
+    getVdoCipherOtp(currentLessonId).then((res) => {
+      if (cancelled) return;
+      if (res) setVdo(res);
+      else setVdoError("No pudimos cargar este video. Verificá tu acceso o intentá de nuevo.");
+    });
+    return () => { cancelled = true; };
+  }, [currentLessonId, currentVideoPath]);
+
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <p className="text-sm text-muted-foreground">Cargando curso…</p>
+        </div>
+      </PublicLayout>
+    );
+  }
+  if (!data) throw notFound();
+
+  const { course, modules, lessons } = data;
+  const hasAccess = hasAccessTo(course.id, course.included_in_membership);
+  const current = allLessons.find((l) => l.id === currentLessonId) ?? allLessons[0];
+  const canPlay = !!current && (hasAccess || current.is_free_preview);
+  const heroImg = resolveCourseImage(course.image_path);
 
   return (
     <PublicLayout>
@@ -63,15 +98,20 @@ function CursoDetailPage() {
               <h1 className="mt-4 font-serif text-3xl text-balance sm:text-4xl">{course.title}</h1>
               <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">{course.description}</p>
               <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><BookOpen className="h-4 w-4 text-primary" /> {course.modules} módulos · {course.lessons} clases</span>
+                <span className="inline-flex items-center gap-1"><BookOpen className="h-4 w-4 text-primary" /> {modules.length} módulos · {lessons.length} clases</span>
                 <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4 text-primary" /> {course.duration}</span>
-                {course.includedInMembership && (
+                {course.included_in_membership && (
                   <span className="inline-flex items-center gap-1 text-primary"><Crown className="h-4 w-4" /> Incluido en la membresía</span>
                 )}
               </div>
             </div>
 
             <aside className="rounded-xl border border-border bg-card p-6 shadow-elegant">
+              {heroImg && (
+                <div className="mb-4 aspect-video overflow-hidden rounded-lg">
+                  <img src={heroImg} alt="" className="h-full w-full object-cover" />
+                </div>
+              )}
               <div className="flex items-end gap-1">
                 <span className="font-serif text-3xl">USD {course.price}</span>
                 <span className="pb-1 text-xs text-muted-foreground">pago único</span>
@@ -82,7 +122,7 @@ function CursoDetailPage() {
                 </div>
               ) : (
                 <div className="mt-5 space-y-2" id="comprar">
-                  {course.includedInMembership && (
+                  {course.included_in_membership && (
                     <Button variant="hero" className="w-full" asChild>
                       <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
                     </Button>
@@ -95,7 +135,7 @@ function CursoDetailPage() {
                         window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
                         return;
                       }
-                      purchaseCourse(course.slug);
+                      purchaseCourse(course.id, Number(course.price));
                     }}
                   >
                     <ShoppingCart className="h-4 w-4" /> Comprar individual
@@ -115,31 +155,45 @@ function CursoDetailPage() {
       <section className="py-12">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
           <div>
-            {canPlay ? (
-              <ProtectedVideo
-                src={SAMPLE_VIDEO}
-                userEmail={user?.email ?? "preview@invitado"}
-                title={current?.title}
-              />
+            {canPlay && current ? (
+              vdo ? (
+                <ProtectedVideo
+                  otp={vdo.otp}
+                  playbackInfo={vdo.playbackInfo}
+                  userEmail={user?.email ?? "preview@invitado"}
+                  title={current.title}
+                />
+              ) : currentVideoPath ? (
+                <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-black text-center text-sm text-white/70">
+                  {vdoError ?? "Cargando video…"}
+                </div>
+              ) : (
+                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 text-center text-sm text-muted-foreground">
+                  <p className="font-serif text-base text-foreground">Video todavía no disponible</p>
+                  <p>La profe está cargando esta clase. Volvé pronto.</p>
+                </div>
+              )
             ) : (
               <Paywall
                 courseSlug={course.slug}
                 courseTitle={course.title}
-                price={course.price}
-                includedInMembership={course.includedInMembership}
+                price={Number(course.price)}
+                includedInMembership={course.included_in_membership}
                 authenticated={isAuthenticated}
               />
             )}
 
-            <div className="mt-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-primary">{current?.module}</p>
-                <h2 className="mt-1 font-serif text-xl">{current?.title}</h2>
+            {current && (
+              <div className="mt-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-primary">{current.moduleTitle}</p>
+                  <h2 className="mt-1 font-serif text-xl">{current.title}</h2>
+                </div>
+                {current.is_free_preview && !hasAccess && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-[11px]"><Sparkles className="h-3 w-3 text-primary" /> Clase de muestra</span>
+                )}
               </div>
-              {current?.free && !hasAccess && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-[11px]"><Sparkles className="h-3 w-3 text-primary" /> Clase de muestra</span>
-              )}
-            </div>
+            )}
 
             <div className="mt-10 grid gap-8 md:grid-cols-2">
               <div>
@@ -174,32 +228,26 @@ function CursoDetailPage() {
 
           <aside className="rounded-xl border border-border bg-card p-5 shadow-soft lg:sticky lg:top-24 lg:self-start">
             <p className="font-serif text-base">Contenido del curso</p>
-            <p className="mt-1 text-xs text-muted-foreground">{course.modules} módulos · {course.lessons} clases</p>
+            <p className="mt-1 text-xs text-muted-foreground">{modules.length} módulos · {lessons.length} clases</p>
             <div className="mt-4 max-h-[600px] space-y-4 overflow-y-auto pr-1">
-              {course.curriculum.map((mod, mi) => (
-                <div key={mod.title}>
+              {modules.map((mod, mi) => (
+                <div key={mod.id}>
                   <p className="text-[11px] font-medium uppercase tracking-wider text-primary">Módulo {mi + 1} · {mod.title}</p>
                   <ul className="mt-2 space-y-1">
-                    {mod.lessons.map((l, li) => {
-                      const id = `${mi}-${li}`;
-                      const free = mi === 0 && li === 0;
-                      const locked = !canPlay && !free && !hasAccess;
-                      const active = id === currentId;
+                    {lessons.filter((l) => l.module_id === mod.id).map((l) => {
+                      const locked = !hasAccess && !l.is_free_preview;
+                      const active = l.id === currentLessonId;
                       return (
-                        <li key={id}>
+                        <li key={l.id}>
                           <button
-                            onClick={() => setCurrentId(id)}
+                            onClick={() => setCurrentLessonId(l.id)}
                             className={"flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors " + (active ? "bg-primary/15 text-foreground" : "hover:bg-secondary/60")}
                           >
                             <span className="flex items-center gap-2 truncate">
-                              {locked ? (
-                                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                              ) : (
-                                <PlayCircle className="h-3.5 w-3.5 text-primary" />
-                              )}
-                              <span className="truncate">{l}</span>
+                              {locked ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <PlayCircle className="h-3.5 w-3.5 text-primary" />}
+                              <span className="truncate">{l.title}</span>
                             </span>
-                            {free && !hasAccess && (
+                            {l.is_free_preview && !hasAccess && (
                               <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Gratis</span>
                             )}
                           </button>

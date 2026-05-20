@@ -1,10 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Crown, BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle, AlertTriangle, Calendar, RefreshCw } from "lucide-react";
+import { Crown, BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle, AlertTriangle, Calendar, RefreshCw, Shield } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
 import { useAuth, formatExpiry } from "@/lib/auth";
-import { courses } from "@/data/courses";
+import { useCourses, resolveCourseImage } from "@/hooks/useCourses";
 
 export const Route = createFileRoute("/panel")({
   head: () => ({ meta: [{ title: "Mi panel — Lucía Rojas Studio" }] }),
@@ -12,12 +12,20 @@ export const Route = createFileRoute("/panel")({
 });
 
 function PanelPage() {
-  const { user, isAuthenticated, hasMembership, isMembershipExpired, daysUntilExpiry, hasAccessTo, subscribe, logout } = useAuth();
+  const { user, loading, isAuthenticated, hasMembership, isMembershipExpired, daysUntilExpiry, hasAccessTo, subscribe, logout, isAdmin } = useAuth();
+  const { data: courses = [] } = useCourses();
 
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="flex min-h-[60vh] items-center justify-center"><p className="text-muted-foreground">Cargando…</p></div>
+      </PublicLayout>
+    );
+  }
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
-  const myCourses = courses.filter((c) => hasAccessTo(c.slug, c.includedInMembership));
-  const lockedCourses = courses.filter((c) => !hasAccessTo(c.slug, c.includedInMembership));
+  const myCourses = courses.filter((c) => hasAccessTo(c.id, c.included_in_membership));
+  const lockedCourses = courses.filter((c) => !hasAccessTo(c.id, c.included_in_membership));
 
   return (
     <PublicLayout>
@@ -35,6 +43,11 @@ function PanelPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outlineGold" size="sm" asChild>
+                  <Link to="/admin"><Shield className="h-4 w-4" /> Admin</Link>
+                </Button>
+              )}
               {hasMembership ? (
                 <GoldBadge><Crown className="h-3 w-3" /> Membresía {user.plan === "yearly" ? "anual" : "mensual"} activa</GoldBadge>
               ) : isMembershipExpired ? (
@@ -73,11 +86,7 @@ function PanelPage() {
                 <p className="text-xs text-muted-foreground">Perdiste el acceso a los cursos incluidos en la membresía. Renová para volver a verlos.</p>
               </div>
             </div>
-            <Button
-              variant="gold"
-              size="sm"
-              onClick={() => subscribe(user.plan === "yearly" ? "yearly" : "monthly")}
-            >
+            <Button variant="gold" size="sm" onClick={() => subscribe(user.plan === "yearly" ? "yearly" : "monthly")}>
               <RefreshCw className="h-4 w-4" /> Renovar plan
             </Button>
           </div>
@@ -104,29 +113,32 @@ function PanelPage() {
               </div>
             ) : (
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {myCourses.map((c) => (
-                  <Link
-                    key={c.slug}
-                    to="/curso/$slug"
-                    params={{ slug: c.slug }}
-                    className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft transition-all hover:shadow-elegant"
-                  >
-                    <div className="relative aspect-video overflow-hidden">
-                      <img src={c.image} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                        <PlayCircle className="h-12 w-12 text-white" />
+                {myCourses.map((c) => {
+                  const img = resolveCourseImage(c.image_path);
+                  return (
+                    <Link
+                      key={c.id}
+                      to="/curso/$slug"
+                      params={{ slug: c.slug }}
+                      className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft transition-all hover:shadow-elegant"
+                    >
+                      <div className="relative aspect-video overflow-hidden">
+                        {img && <img src={img} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                          <PlayCircle className="h-12 w-12 text-white" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-[10px] uppercase tracking-wider text-primary">{c.category}</p>
-                      <p className="mt-1 font-serif text-base">{c.title}</p>
-                      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{c.lessons} clases · {c.duration}</span>
-                        <span className="inline-flex items-center gap-1 text-primary">Continuar <ArrowRight className="h-3 w-3" /></span>
+                      <div className="p-4">
+                        <p className="text-[10px] uppercase tracking-wider text-primary">{c.category}</p>
+                        <p className="mt-1 font-serif text-base">{c.title}</p>
+                        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{c.duration}</span>
+                          <span className="inline-flex items-center gap-1 text-primary">Continuar <ArrowRight className="h-3 w-3" /></span>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
 
@@ -134,20 +146,23 @@ function PanelPage() {
               <div className="mt-12">
                 <h3 className="font-serif text-lg">También podrías sumar</h3>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {lockedCourses.map((c) => (
-                    <Link
-                      key={c.slug}
-                      to="/curso/$slug"
-                      params={{ slug: c.slug }}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-soft transition-all hover:shadow-elegant"
-                    >
-                      <img src={c.image} alt="" className="h-14 w-20 rounded object-cover opacity-80" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{c.title}</p>
-                        <p className="text-[11px] text-muted-foreground">{c.includedInMembership ? "Incluido con membresía" : `Solo individual · USD ${c.price}`}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  {lockedCourses.map((c) => {
+                    const img = resolveCourseImage(c.image_path);
+                    return (
+                      <Link
+                        key={c.id}
+                        to="/curso/$slug"
+                        params={{ slug: c.slug }}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-soft transition-all hover:shadow-elegant"
+                      >
+                        {img && <img src={img} alt="" className="h-14 w-20 rounded object-cover opacity-80" />}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{c.title}</p>
+                          <p className="text-[11px] text-muted-foreground">{c.included_in_membership ? "Incluido con membresía" : `Solo individual · USD ${c.price}`}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -158,7 +173,7 @@ function PanelPage() {
             <SidebarCard
               icon={Settings}
               title="Tu cuenta"
-              body={user.plan ? `Plan ${user.plan === "yearly" ? "anual" : user.plan === "monthly" ? "mensual" : "individual"}${user.subscriptionExpiresAt ? ` · vence ${formatExpiry(user.subscriptionExpiresAt)}` : ""}` : "Sin plan activo"}
+              body={user.plan ? `Plan ${user.plan === "yearly" ? "anual" : "mensual"}${user.subscriptionExpiresAt ? ` · vence ${formatExpiry(user.subscriptionExpiresAt)}` : ""}` : "Sin plan activo"}
             >
               <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
                 <Link to="/planes">Gestionar plan</Link>

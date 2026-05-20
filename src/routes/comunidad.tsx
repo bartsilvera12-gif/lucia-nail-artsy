@@ -19,8 +19,10 @@ export const Route = createFileRoute("/comunidad")({
 function ComunidadPage() {
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-gradient-cream py-10">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-12">
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
             <div className="relative aspect-[16/6] w-full bg-gradient-gold">
               <img src={aboutImg} alt="Comunidad" className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />

@@ -232,7 +232,134 @@ export const courses: Course[] = [
   },
 ];
 
-export const featuredCourses = courses.slice(0, 3);
+courses.push(
+  {
+    slug: "esculpidas-en-molde",
+    title: "Uñas Esculpidas en Molde",
+    category: "Avanzado",
+    level: "Avanzado",
+    shortDescription: "La técnica más versátil para crear largo y formas imposibles con molde.",
+    description:
+      "Aprendé a esculpir uñas extra largas con molde y dominar las formas más demandadas: stiletto, ballerina, coffin y edge.",
+    image: acrilicasImg,
+    modules: 5,
+    lessons: 24,
+    duration: "4h 50m",
+    price: 99,
+    includedInMembership: true,
+    status: "available",
+    learnings: [
+      "Colocación perfecta del molde",
+      "Construcción del arco C",
+      "Esculpido en stiletto, ballerina y coffin",
+      "Equilibrio y simetría",
+    ],
+    audience: ["Manicuristas con experiencia básica", "Profesionales que quieren ofrecer largos extremos"],
+    bonuses: ["Plantillas de moldes imprimibles", "Tabla de pricing para largo extra"],
+    curriculum: [
+      { title: "Introducción al molde", lessons: ["Tipos de molde", "Cuándo usar molde vs. tip"] },
+      { title: "Apoyo y colocación", lessons: ["Ajuste sin levantar", "Ángulo correcto"] },
+      { title: "Construcción", lessons: ["Bolita de arco", "Modelado del cuerpo"] },
+      { title: "Formas avanzadas", lessons: ["Stiletto", "Ballerina", "Coffin"] },
+      { title: "Acabado", lessons: ["Limado de forma", "Pulido espejo"] },
+    ],
+  },
+  {
+    slug: "pedicuria-spa",
+    title: "Pedicuría Spa Profesional",
+    category: "Intermedio",
+    level: "Intermedio",
+    shortDescription: "Servicio de pedicuría de salón premium que tus clientas van a amar.",
+    description:
+      "Una rutina completa de pedicuría spa: desde el diagnóstico hasta el masaje y el esmaltado impecable que dura semanas.",
+    image: semiImg,
+    modules: 5,
+    lessons: 20,
+    duration: "3h 50m",
+    price: 75,
+    includedInMembership: true,
+    status: "available",
+    learnings: [
+      "Diagnóstico y bioseguridad",
+      "Tratamiento de callos y durezas",
+      "Masaje relajante con técnica",
+      "Esmaltado semipermanente en pies",
+    ],
+    audience: ["Manicuristas que quieren sumar pedicuría", "Profesionales que quieren elevar su servicio"],
+    bonuses: ["Lista de insumos spa", "Protocolo paso a paso"],
+    curriculum: [
+      { title: "Bioseguridad", lessons: ["Esterilización", "Patologías comunes"] },
+      { title: "Tratamiento", lessons: ["Cutícula", "Callos"] },
+      { title: "Masaje", lessons: ["Maniobras", "Aceites"] },
+      { title: "Esmaltado", lessons: ["Preparación", "Color"] },
+      { title: "Cierre del servicio", lessons: ["Pago", "Recomendaciones"] },
+    ],
+  },
+  {
+    slug: "diseno-3d-encapsulado",
+    title: "Diseño 3D y Encapsulados de Lujo",
+    category: "Nail Art",
+    level: "Avanzado",
+    shortDescription: "Flores secas, gemas, acrigel y encapsulados que se vuelven virales en Instagram.",
+    description:
+      "Aprendé a crear diseños 3D y encapsulados de alta gama: flores secas, foils metalizados, gemas y composiciones premium.",
+    image: nailartImg,
+    modules: 6,
+    lessons: 28,
+    duration: "5h 30m",
+    price: 109,
+    includedInMembership: false,
+    status: "available",
+    learnings: [
+      "Encapsulado limpio sin burbujas",
+      "Composición visual de un diseño",
+      "Foil y cromados profesionales",
+      "Aplicación de gemas duraderas",
+    ],
+    audience: ["Nail techs avanzadas", "Profesionales del nail art"],
+    bonuses: ["Catálogo de proveedores premium", "100 referencias de diseño"],
+    curriculum: [
+      { title: "Materiales", lessons: ["Acrigel", "Flores secas", "Foils"] },
+      { title: "Encapsulado", lessons: ["Capa fina", "Sellado de borde"] },
+      { title: "Composición", lessons: ["Centro de interés", "Espacios negativos"] },
+      { title: "Foils y cromados", lessons: ["Aplicación", "Top coat compatible"] },
+      { title: "Gemas y 3D", lessons: ["Pegado durable", "Pirámide de tamaños"] },
+      { title: "Foto y portfolio", lessons: ["Luz natural", "Edición rápida"] },
+    ],
+  },
+  {
+    slug: "instagram-para-manicuristas",
+    title: "Instagram para Manicuristas",
+    category: "Negocio",
+    level: "Negocio",
+    shortDescription: "Atraé clientas ideales sin bailar reels. Estrategia simple y constante.",
+    description:
+      "Una estrategia simple y replicable para llenar tu agenda usando Instagram, sin depender de algoritmos ni tendencias virales.",
+    image: negocioImg,
+    modules: 4,
+    lessons: 18,
+    duration: "3h 20m",
+    price: 65,
+    includedInMembership: true,
+    status: "available",
+    learnings: [
+      "Bio que convierte en 5 segundos",
+      "Plan de contenido de 30 días",
+      "Reels rápidos sin bailar",
+      "Cierre por DM sin parecer pesada",
+    ],
+    audience: ["Manicuristas con cuenta nueva", "Profesionales con poca constancia en Instagram"],
+    bonuses: ["Calendario editorial editable", "Plantillas Canva premium"],
+    curriculum: [
+      { title: "Perfil que vende", lessons: ["Foto", "Bio", "Highlights"] },
+      { title: "Contenido", lessons: ["Reels", "Carruseles", "Stories"] },
+      { title: "Constancia", lessons: ["Bloques de creación", "Banco de ideas"] },
+      { title: "Cierre por DM", lessons: ["Plantilla de mensajes", "Seguimiento"] },
+    ],
+  },
+);
+
+export const featuredCourses = courses.slice(0, 6);
 
 export function getCourseBySlug(slug: string) {
   return courses.find((c) => c.slug === slug);

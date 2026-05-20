@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Heart, Award, Users, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, Award, Users, ArrowRight } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { SectionHeader } from "@/components/SectionHeader";
 import { GoldBadge } from "@/components/Badge";
@@ -19,8 +19,13 @@ export const Route = createFileRoute("/sobre")({
 function SobrePage() {
   return (
     <PublicLayout>
-      <section className="bg-gradient-cream py-16 sm:py-24">
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-16 sm:py-24">
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
           <div>
             <GoldBadge>Sobre Lucía Rojas Studio</GoldBadge>
             <h1 className="mt-6 font-serif text-4xl text-balance sm:text-5xl">
@@ -66,15 +71,6 @@ function SobrePage() {
         </div>
       </section>
 
-      <section className="bg-secondary/40 py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <Sparkles className="mx-auto h-6 w-6 text-primary" />
-          <h2 className="mt-4 font-serif text-3xl sm:text-4xl">Administrada por HorizontesWebIA</h2>
-          <p className="mt-4 text-base text-muted-foreground">
-            La plataforma técnica está desarrollada y mantenida por HorizontesWebIA, garantizando una experiencia segura, rápida y estable para vos y tus clases.
-          </p>
-        </div>
-      </section>
     </PublicLayout>
   );
 }

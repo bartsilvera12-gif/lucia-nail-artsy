@@ -18,6 +18,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CursosRouteImport } from './routes/cursos'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as ComunidadRouteImport } from './routes/comunidad'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
 
@@ -66,6 +67,11 @@ const ComunidadRoute = ComunidadRouteImport.update({
   path: '/comunidad',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -79,6 +85,7 @@ const CursoSlugRoute = CursoSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/comunidad'
     | '/contacto'
     | '/cursos'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/comunidad'
     | '/contacto'
     | '/cursos'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/comunidad'
     | '/contacto'
     | '/cursos'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   ComunidadRoute: typeof ComunidadRoute
   ContactoRoute: typeof ContactoRoute
   CursosRoute: typeof CursosRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComunidadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -257,6 +277,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   ComunidadRoute: ComunidadRoute,
   ContactoRoute: ContactoRoute,
   CursosRoute: CursosRoute,

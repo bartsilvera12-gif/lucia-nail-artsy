@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ArrowRight, Crown, ShieldCheck } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { PageHero } from "@/components/PageHero";
 import { SectionHeader } from "@/components/SectionHeader";
 import { PlanCard } from "@/components/PlanCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
@@ -20,15 +21,23 @@ export const Route = createFileRoute("/planes")({
 function PlanesPage() {
   return (
     <PublicLayout>
-      <section className="bg-gradient-cream py-16 sm:py-20">
+      <PageHero
+        eyebrow="Planes"
+        title="Elegí cómo aprender"
+        description="Membresía con todo incluido o compra individual del curso que necesites."
+        icon={<div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold"><Crown className="h-5 w-5 text-foreground" strokeWidth={1.75} /></div>}
+      />
+
+      <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Planes" title="Elegí cómo aprender" description="Membresía con todo incluido o compra individual del curso que necesites." />
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <PlanCard key={plan.id} {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
+          <div className="grid items-stretch gap-8 lg:grid-cols-3 lg:gap-6">
+            {plans.map((plan, i) => (
+              <div key={plan.id} className="animate-fade-up" style={{ animationDelay: `${i * 120}ms` }}>
+                <PlanCard {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
+              </div>
             ))}
           </div>
-          <p className="mt-8 text-center text-xs text-muted-foreground">Precios en USD. Podés cancelar la membresía cuando quieras desde tu panel.</p>
+          <p className="mt-10 text-center text-xs text-muted-foreground">Precios en USD. Podés cancelar la membresía cuando quieras desde tu panel.</p>
         </div>
       </section>
 

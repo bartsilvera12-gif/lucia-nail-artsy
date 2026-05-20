@@ -10,7 +10,7 @@
  * All colors in oklch.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap");
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -59,18 +59,18 @@
   --color-gold-hover: var(--gold-hover);
   --color-cream: var(--cream);
   --color-beige: var(--beige);
-  --font-serif: "Playfair Display", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "DM Serif Display", "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 }
 
 :root {
   --radius: 0.5rem;
 
-  /* Brand palette — champagne, ivory, soft black */
-  --gold: oklch(0.755 0.085 78);          /* #C8A96A champagne */
-  --gold-soft: oklch(0.82 0.07 80);       /* #D8BF8C */
-  --gold-deep: oklch(0.52 0.075 65);      /* #8A6A3F brown gold */
-  --gold-hover: oklch(0.685 0.09 75);     /* #B8924F */
+  /* Brand palette — richer luxe gold inspirado en el logo */
+  --gold: oklch(0.74 0.13 82);            /* gold saturado tipo logo */
+  --gold-soft: oklch(0.87 0.09 86);       /* highlight champán claro */
+  --gold-deep: oklch(0.48 0.09 60);       /* bronce profundo */
+  --gold-hover: oklch(0.66 0.14 78);      /* dorado intenso hover */
   --cream: oklch(0.985 0.012 85);         /* #FFFDF8 warm white */
   --beige: oklch(0.945 0.022 80);         /* #F4EDE1 */
 
@@ -81,7 +81,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.012 50);
 
-  --primary: oklch(0.755 0.085 78);            /* champagne gold */
+  --primary: oklch(0.74 0.13 82);              /* gold saturado tipo logo */
   --primary-foreground: oklch(0.21 0.012 50);  /* soft black */
 
   --secondary: oklch(0.945 0.022 80);          /* beige */
@@ -101,7 +101,7 @@
   --ring: oklch(0.755 0.085 78);
 
   /* Gradients & shadows */
-  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.07 80), oklch(0.685 0.09 75));
+  --gradient-gold: linear-gradient(135deg, oklch(0.87 0.09 86) 0%, oklch(0.74 0.13 82) 45%, oklch(0.58 0.12 70) 100%);
   --gradient-cream: linear-gradient(180deg, oklch(0.99 0.01 85), oklch(0.96 0.02 82));
   --shadow-soft: 0 1px 2px rgb(31 27 24 / 0.04), 0 8px 24px -8px rgb(138 106 63 / 0.12);
   --shadow-elegant: 0 20px 60px -20px rgb(138 106 63 / 0.25);
@@ -187,3 +187,47 @@
     height: 1px;
   }
 }
+
+/* ---------------------------------------------------------- */
+/* Animaciones custom                                          */
+/* ---------------------------------------------------------- */
+
+@keyframes lrs-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+@keyframes lrs-glow {
+  0%, 100% { filter: drop-shadow(0 12px 32px rgba(196, 161, 90, 0.25)); }
+  50%      { filter: drop-shadow(0 22px 44px rgba(196, 161, 90, 0.45)); }
+}
+
+@keyframes lrs-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lrs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes lrs-spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes lrs-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@layer utilities {
+  .animate-float      { animation: lrs-float 6s ease-in-out infinite; }
+  .animate-glow       { animation: lrs-glow  4s ease-in-out infinite; }
+  .animate-fade-up    { animation: lrs-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .animate-fade-in    { animation: lrs-fade-in 700ms ease-out both; }
+  .animate-spin-slow  { animation: lrs-spin-slow 24s linear infinite; }
+  .animate-marquee    { animation: lrs-marquee 40s linear infinite; }
+  .marquee-pause:hover .animate-marquee { animation-play-state: paused; }
+}
+

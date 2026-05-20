@@ -5,15 +5,14 @@ import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-secondary/40 mt-24">
+    <footer className="border-t border-border bg-secondary/40">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center" aria-label={site.name}>
-              <img src={logoUrl} alt={site.name} className="h-14 w-auto" />
+              <img src={logoUrl} alt={site.name} className="h-24 w-auto sm:h-28" />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
-            <p className="mt-4 text-xs text-muted-foreground">{site.admin}</p>
           </div>
           <div>
             <h4 className="text-sm font-medium">Plataforma</h4>
@@ -44,8 +43,19 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} {site.name}. Todos los derechos reservados.
+        <div className="mt-12 flex flex-col items-center justify-between gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+          <span>© {new Date().getFullYear()} {site.name}. Todos los derechos reservados.</span>
+          <span>
+            Desarrollado por{" "}
+            <a
+              href="https://neura.com.py"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              Neura
+            </a>
+          </span>
         </div>
       </div>
     </footer>

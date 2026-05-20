@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, MessageCircle, Instagram, Send, CheckCircle2 } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { SectionHeader } from "@/components/SectionHeader";
+import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { site } from "@/data/site";
@@ -21,11 +21,12 @@ function ContactoPage() {
   const [sent, setSent] = useState(false);
   return (
     <PublicLayout>
-      <section className="bg-gradient-cream py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Contacto" title="Hablamos" description="Estamos para acompañarte en tu camino. Elegí el canal que prefieras." />
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Contacto"
+        title="Hablamos"
+        description="Estamos para acompañarte en tu camino. Elegí el canal que prefieras."
+        icon={<div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold"><MessageCircle className="h-5 w-5 text-foreground" strokeWidth={1.75} /></div>}
+      />
 
       <section className="py-16">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
