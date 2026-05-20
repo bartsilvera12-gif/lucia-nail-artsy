@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
+import { CourseSecurityGuard } from "@/components/CourseSecurityGuard";
 import { Paywall } from "@/components/Paywall";
 import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -164,12 +165,18 @@ function CursoDetailPage() {
           <div>
             {canPlay && current ? (
               vdo ? (
-                <ProtectedVideo
-                  otp={vdo.otp}
-                  playbackInfo={vdo.playbackInfo}
+                <CourseSecurityGuard
                   userEmail={user?.email ?? "preview@invitado"}
-                  title={current.title}
-                />
+                  courseId={course.id}
+                  lessonId={current.id}
+                >
+                  <ProtectedVideo
+                    otp={vdo.otp}
+                    playbackInfo={vdo.playbackInfo}
+                    userEmail={user?.email ?? "preview@invitado"}
+                    title={current.title}
+                  />
+                </CourseSecurityGuard>
               ) : currentVideoPath ? (
                 <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-black text-center text-sm text-white/70">
                   {vdoError ?? "Cargando video…"}

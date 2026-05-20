@@ -231,3 +231,42 @@
   .marquee-pause:hover .animate-marquee { animation-play-state: paused; }
 }
 
+/* ---------------------------------------------------------- */
+/* Print: ocultar contenido sensible                           */
+/* ---------------------------------------------------------- */
+
+@media print {
+  /* Ocultá secciones marcadas como protegidas */
+  .secure-area, [data-secure-area], video, iframe {
+    visibility: hidden !important;
+  }
+  .secure-area::after {
+    content: "Contenido protegido — no permitido imprimir";
+    position: fixed;
+    inset: 0;
+    visibility: visible !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-family: serif;
+    font-size: 18pt;
+    color: #000;
+    background: #fff;
+  }
+  /* Bloqueo full-page si la página entera es una clase */
+  body[data-course-page] *:not(.secure-area):not(.secure-area *) {
+    visibility: hidden !important;
+  }
+  body[data-course-page]::before {
+    content: "Contenido protegido — Lucía Rojas Studio";
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: serif;
+    font-size: 22pt;
+    color: #000;
+  }
+}
+

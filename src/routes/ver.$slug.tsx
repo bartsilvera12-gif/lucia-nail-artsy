@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstac
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
+import { CourseSecurityGuard } from "@/components/CourseSecurityGuard";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -55,6 +56,11 @@ function VerPage() {
     return () => { cancelled = true; };
   }, [current?.id, current?.video_path]);
 
+  useEffect(() => {
+    document.body.setAttribute("data-course-page", "1");
+    return () => document.body.removeAttribute("data-course-page");
+  }, []);
+
   if (loading || isLoading) {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-300">Cargando…</div>;
   }
@@ -97,12 +103,18 @@ function VerPage() {
             <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
                 vdo ? (
-                  <ProtectedVideo
-                    otp={vdo.otp}
-                    playbackInfo={vdo.playbackInfo}
+                  <CourseSecurityGuard
                     userEmail={user?.email ?? "preview@invitado"}
-                    title={current.title}
-                  />
+                    courseId={data.course.id}
+                    lessonId={current.id}
+                  >
+                    <ProtectedVideo
+                      otp={vdo.otp}
+                      playbackInfo={vdo.playbackInfo}
+                      userEmail={user?.email ?? "preview@invitado"}
+                      title={current.title}
+                    />
+                  </CourseSecurityGuard>
                 ) : current.video_path ? (
                   <div className="flex aspect-video w-full items-center justify-center text-sm text-zinc-400">
                     {vdoError ?? "Cargando video…"}
