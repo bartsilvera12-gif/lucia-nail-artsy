@@ -142,13 +142,12 @@ export function CourseSecurityGuard({
     };
     const onBlur = () => {
       reportSecurityEvent({ event_type: "window_blur", course_id: courseId, lesson_id: lessonId });
-      // Heurística: si el window pierde foco pero el tab sigue visible
-      // (algo se interpuso encima sin cambiar de pestaña) → probable
-      // herramienta de captura (Snipping Tool, Game Bar, OBS, AnyDesk).
+      // Heurística: si el window pierde foco pero el tab sigue visible,
+      // probablemente algo se interpuso encima (Snipping Tool, Game Bar,
+      // OBS, AnyDesk, recorder de Windows, etc.). Bajamos a 700ms.
       if (document.visibilityState === "visible") {
         if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
         blurTimerRef.current = window.setTimeout(() => {
-          // Verificamos de nuevo después del delay para evitar falsos positivos
           if (!document.hasFocus() && document.visibilityState === "visible") {
             heuristicRef.current = true;
             setHeuristicRecording(true);
@@ -159,7 +158,7 @@ export function CourseSecurityGuard({
               metadata: { source: "heuristic_focus_loss" },
             });
           }
-        }, 1500);
+        }, 700);
       }
     };
     const onFocus = () => {
@@ -227,6 +226,35 @@ export function CourseSecurityGuard({
     };
     md?.addEventListener?.("devicechange", onDevChange);
 
+    // Poller adicional: chequea hasFocus + visibilityState cada 400ms.
+    // Captura casos donde no se dispara blur (ej. Snipping Tool con overlay
+    // transparente no siempre quita foco según versión de Windows).
+    let pollerFocusLostAt: number | null = null;
+    const focusPoller = window.setInterval(() => {
+      const visible = document.visibilityState === "visible";
+      const focused = document.hasFocus();
+      if (visible && !focused) {
+        if (pollerFocusLostAt === null) pollerFocusLostAt = Date.now();
+        else if (Date.now() - pollerFocusLostAt > 700 && !heuristicRef.current) {
+          heuristicRef.current = true;
+          setHeuristicRecording(true);
+          reportSecurityEvent({
+            event_type: "displaymedia_active",
+            course_id: courseId,
+            lesson_id: lessonId,
+            metadata: { source: "poll_focus_lost" },
+          });
+        }
+      } else {
+        pollerFocusLostAt = null;
+        if (heuristicRef.current && focused) {
+          heuristicRef.current = false;
+          setHeuristicRecording(false);
+          reportSecurityEvent({ event_type: "displaymedia_ended", course_id: courseId, lesson_id: lessonId });
+        }
+      }
+    }, 400);
+
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
     window.addEventListener("keydown", onKey, { capture: true });
@@ -259,6 +287,7 @@ export function CourseSecurityGuard({
       document.removeEventListener("fullscreenchange", onFsChange);
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
       if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
+      window.clearInterval(focusPoller);
     };
   }, [courseId, lessonId, trigger]);
 
@@ -332,18 +361,13 @@ export function CourseSecurityGuard({
         <Eye className="h-3 w-3" /> {userEmail}
       </div>
 
-      {/* Banner permanente: grabación prohibida + indicador rojo si detectamos */}
-      <div
-        className={
-          "pointer-events-none absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium backdrop-blur transition-colors " +
-          (recording
-            ? "bg-red-600/90 text-white shadow-lg shadow-red-900/60 animate-pulse"
-            : "bg-black/60 text-white/80")
-        }
-      >
-        <Radio className={"h-3 w-3 " + (recording ? "text-white" : "text-red-400")} />
-        {recording ? "Grabación detectada — sesión registrada" : "Grabación prohibida · sesión rastreada"}
-      </div>
+      {/* Badge rojo solo cuando hay grabación activa detectada */}
+      {recording && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-medium text-white shadow-lg shadow-red-900/60 animate-pulse backdrop-blur">
+          <Radio className="h-3 w-3" />
+          Grabación detectada — sesión registrada
+        </div>
+      )}
 
       {/* Botón fullscreen custom (mantiene el watermark arriba) */}
       <button
