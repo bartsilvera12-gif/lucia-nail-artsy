@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { CourseSecurityGuard } from "@/components/CourseSecurityGuard";
+import { YouTubePlayer, isYouTubeUrl } from "@/components/YouTubePlayer";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -41,20 +42,21 @@ function VerPage() {
   const current = allLessons.find((l) => l.id === currentId) ?? allLessons[0];
   const currentIndex = allLessons.findIndex((l) => l.id === current?.id);
 
-  // OTP
+  // OTP (solo para VdoCipher; YouTube va directo)
+  const currentIsYouTube = isYouTubeUrl(current?.video_path);
   const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [vdoError, setVdoError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     setVdo(null); setVdoError(null);
-    if (!current?.id || !current?.video_path) return;
+    if (!current?.id || !current?.video_path || currentIsYouTube) return;
     getVdoCipherOtp(current.id).then((res) => {
       if (cancelled) return;
       if (res) setVdo(res);
       else setVdoError("No pudimos cargar el video. Verificá tu acceso o probá de nuevo.");
     });
     return () => { cancelled = true; };
-  }, [current?.id, current?.video_path]);
+  }, [current?.id, current?.video_path, currentIsYouTube]);
 
   useEffect(() => {
     document.body.setAttribute("data-course-page", "1");
@@ -102,7 +104,15 @@ function VerPage() {
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
             <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
-                vdo ? (
+                currentIsYouTube && current.video_path ? (
+                  <CourseSecurityGuard
+                    userEmail={user?.email ?? "preview@invitado"}
+                    courseId={data.course.id}
+                    lessonId={current.id}
+                  >
+                    <YouTubePlayer url={current.video_path} title={current.title} />
+                  </CourseSecurityGuard>
+                ) : vdo ? (
                   <CourseSecurityGuard
                     userEmail={user?.email ?? "preview@invitado"}
                     courseId={data.course.id}
