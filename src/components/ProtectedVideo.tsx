@@ -26,38 +26,25 @@ export function ProtectedVideo({ otp, playbackInfo, userEmail, title }: Protecte
   useEffect(() => {
     const obscure = (why: string) => { setReason(why); setObscured(true); };
 
+    // Solo pausamos si la pestaña se oculta (cambio de tab, minimizar).
+    // No usamos window.blur porque fullscreen y muchos clicks legítimos
+    // disparan blur y rompen la experiencia.
     const onVisibility = () => {
-      if (document.visibilityState !== "visible") obscure("Pestaña inactiva");
+      if (document.visibilityState === "hidden") obscure("Pestaña inactiva");
     };
-    const onBlur = () => obscure("La ventana perdió el foco");
-    const onFocus = () => { if (document.visibilityState === "visible") setObscured(false); };
 
     const onKey = (e: KeyboardEvent) => {
-      const k = e.key;
-      if (k === "PrintScreen") {
+      if (e.key === "PrintScreen") {
         navigator.clipboard?.writeText("").catch(() => undefined);
         obscure("Captura de pantalla bloqueada");
-      }
-      const meta = e.ctrlKey || e.metaKey;
-      if (meta && e.shiftKey && (k === "S" || k === "s" || k === "5" || k === "4" || k === "3" || k === "I" || k === "i")) {
-        e.preventDefault();
-        obscure("Atajo de captura bloqueado");
-      }
-      if (k === "F12") {
-        e.preventDefault();
-        obscure("Herramientas de desarrollo");
       }
     };
 
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("focus", onFocus);
     window.addEventListener("keydown", onKey, { capture: true });
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
     };
   }, []);
