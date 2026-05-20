@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ShieldAlert, Eye } from "lucide-react";
+import { useEffect } from "react";
+import { Eye } from "lucide-react";
 
 interface ProtectedVideoProps {
   /** OTP de VdoCipher */
@@ -11,47 +11,26 @@ interface ProtectedVideoProps {
 }
 
 /**
- * Reproductor VdoCipher con DRM real + capas extra anti-screenshot/grabación:
- * - Marca de agua persistente con email (sumada al watermark dinámico del propio VdoCipher)
- * - Bloqueo de menú contextual y selección
- * - Pausa visual al perder foco / detectar PrintScreen / atajos de captura
+ * Reproductor VdoCipher con DRM real (Widevine/FairPlay) y watermark
+ * server-side. Capas extra: marca de agua visible con email del usuario
+ * y bloqueo de menú contextual + clipboard al detectar PrintScreen.
  *
- * Nota: VdoCipher ya cifra el video con Widevine/FairPlay y embebe watermark
- * dinámico en el lado del servidor. Esto es una segunda capa visual.
+ * Ya no obscurecemos por blur/visibility porque rompía la experiencia
+ * en fullscreen y clicks legítimos. La protección real es la de VdoCipher.
  */
 export function ProtectedVideo({ otp, playbackInfo, userEmail, title }: ProtectedVideoProps) {
-  const [obscured, setObscured] = useState(false);
-  const [reason, setReason] = useState<string>("");
-
   useEffect(() => {
-    const obscure = (why: string) => { setReason(why); setObscured(true); };
-
-    // Solo pausamos si la pestaña se oculta (cambio de tab, minimizar).
-    // No usamos window.blur porque fullscreen y muchos clicks legítimos
-    // disparan blur y rompen la experiencia.
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") obscure("Pestaña inactiva");
-    };
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen") {
         navigator.clipboard?.writeText("").catch(() => undefined);
-        obscure("Captura de pantalla bloqueada");
       }
     };
-
-    document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("keydown", onKey, { capture: true });
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
-    };
+    return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
   }, []);
 
   const watermark = `${userEmail} · ${new Date().toLocaleDateString()}`;
 
-  // VdoCipher player URL: https://player.vdocipher.com/v2/?otp=...&playbackInfo=...
   const playerUrl = `https://player.vdocipher.com/v2/?otp=${encodeURIComponent(otp)}&playbackInfo=${encodeURIComponent(playbackInfo)}`;
 
   return (
@@ -65,13 +44,12 @@ export function ProtectedVideo({ otp, playbackInfo, userEmail, title }: Protecte
         allow="encrypted-media; fullscreen"
         allowFullScreen
         className="absolute inset-0 h-full w-full"
-        style={{ pointerEvents: obscured ? "none" : "auto" }}
       />
 
       {/* Marca de agua visual extra (capa cliente) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden text-[11px] font-medium text-white/15"
+        className="pointer-events-none absolute inset-0 overflow-hidden text-[11px] font-medium text-white/10"
         style={{ mixBlendMode: "difference" }}
       >
         <div className="absolute inset-0 -rotate-[18deg]">
@@ -90,17 +68,6 @@ export function ProtectedVideo({ otp, playbackInfo, userEmail, title }: Protecte
       {title && (
         <div className="pointer-events-none absolute left-3 top-3 rounded bg-black/60 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur">
           {title}
-        </div>
-      )}
-
-      {obscured && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/95 text-center text-white">
-          <ShieldAlert className="h-10 w-10 text-primary" />
-          <p className="font-serif text-lg">Reproducción pausada</p>
-          <p className="max-w-xs text-xs text-white/70">{reason}. Mantené la ventana en foco para continuar. La grabación o difusión de las clases está prohibida y rastreable.</p>
-          <button onClick={() => setObscured(false)} className="mt-2 rounded-md border border-white/20 px-4 py-2 text-xs hover:bg-white/10">
-            Reanudar
-          </button>
         </div>
       )}
     </div>

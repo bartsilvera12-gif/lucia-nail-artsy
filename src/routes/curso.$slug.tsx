@@ -117,8 +117,15 @@ function CursoDetailPage() {
                 <span className="pb-1 text-xs text-muted-foreground">pago único</span>
               </div>
               {hasAccess ? (
-                <div className="mt-5 flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs">
-                  <Check className="h-4 w-4 text-primary" /> Ya tenés acceso
+                <div className="mt-5 space-y-2">
+                  <Button variant="hero" className="w-full" asChild>
+                    <Link to="/ver/$slug" params={{ slug: course.slug }}>
+                      <PlayCircle className="h-4 w-4" /> Comenzar curso
+                    </Link>
+                  </Button>
+                  <div className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs">
+                    <Check className="h-4 w-4 text-primary" /> Ya tenés acceso
+                  </div>
                 </div>
               ) : (
                 <div className="mt-5 space-y-2" id="comprar">

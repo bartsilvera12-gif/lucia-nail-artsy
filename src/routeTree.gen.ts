@@ -21,6 +21,7 @@ import { Route as ComunidadRouteImport } from './routes/comunidad'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VerSlugRouteImport } from './routes/ver.$slug'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
 
 const SobreRoute = SobreRouteImport.update({
@@ -83,6 +84,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerSlugRoute = VerSlugRouteImport.update({
+  id: '/ver/$slug',
+  path: '/ver/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CursoSlugRoute = CursoSlugRouteImport.update({
   id: '/curso/$slug',
   path: '/curso/$slug',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
+  '/ver/$slug': typeof VerSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
+  '/ver/$slug': typeof VerSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
+  '/ver/$slug': typeof VerSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/sobre'
     | '/curso/$slug'
+    | '/ver/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/sobre'
     | '/curso/$slug'
+    | '/ver/$slug'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/sobre'
     | '/curso/$slug'
+    | '/ver/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   RegistroRoute: typeof RegistroRoute
   SobreRoute: typeof SobreRoute
   CursoSlugRoute: typeof CursoSlugRoute
+  VerSlugRoute: typeof VerSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ver/$slug': {
+      id: '/ver/$slug'
+      path: '/ver/$slug'
+      fullPath: '/ver/$slug'
+      preLoaderRoute: typeof VerSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/curso/$slug': {
       id: '/curso/$slug'
       path: '/curso/$slug'
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegistroRoute: RegistroRoute,
   SobreRoute: SobreRoute,
   CursoSlugRoute: CursoSlugRoute,
+  VerSlugRoute: VerSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
