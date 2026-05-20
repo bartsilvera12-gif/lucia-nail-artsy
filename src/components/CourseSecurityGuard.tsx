@@ -77,15 +77,37 @@ export function CourseSecurityGuard({
       e.preventDefault();
       trigger("copy", "Copiar contenido no está permitido.");
     };
-    const onKey = (e: KeyboardEvent) => {
-      const meta = e.ctrlKey || e.metaKey;
-      const k = e.key;
+    const isPrintScreenEvent = (e: KeyboardEvent): boolean => {
+      // En Chrome/Edge PrintScreen solo dispara keyup. En Firefox a veces ambos.
+      // Cubrimos varios identificadores por las dudas.
+      return (
+        e.key === "PrintScreen" ||
+        e.code === "PrintScreen" ||
+        e.keyCode === 44 ||
+        e.which === 44
+      );
+    };
 
-      if (k === "PrintScreen") {
+    const handlePrintScreen = () => {
+      navigator.clipboard?.writeText("").catch(() => undefined);
+      // Algunos browsers solo permiten escribir clipboard si la página tiene foco.
+      // Intentamos hasta 3 veces espaciado para "pisar" el contenido capturado.
+      let attempts = 0;
+      const wipe = () => {
         navigator.clipboard?.writeText("").catch(() => undefined);
-        trigger("printscreen", "Por seguridad, no está permitido tomar capturas de pantalla. Este intento fue registrado.");
+        if (++attempts < 3) window.setTimeout(wipe, 150);
+      };
+      wipe();
+      trigger("printscreen", "Por seguridad, no está permitido tomar capturas de pantalla. Este intento fue registrado.");
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (isPrintScreenEvent(e)) {
+        handlePrintScreen();
         return;
       }
+      const meta = e.ctrlKey || e.metaKey;
+      const k = e.key;
       if (meta) {
         const lower = k.toLowerCase();
         if (lower === "c") { e.preventDefault(); trigger("shortcut_copy", "Copiar contenido no está permitido."); return; }
@@ -103,6 +125,11 @@ export function CourseSecurityGuard({
         e.preventDefault();
         trigger("shortcut_devtools", "Herramientas de desarrollo deshabilitadas.");
       }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      // PrintScreen suele venir solo en keyup en Chrome/Edge
+      if (isPrintScreenEvent(e)) handlePrintScreen();
     };
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
@@ -128,6 +155,7 @@ export function CourseSecurityGuard({
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
     window.addEventListener("keydown", onKey, { capture: true });
+    window.addEventListener("keyup", onKeyUp, { capture: true });
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
@@ -137,6 +165,7 @@ export function CourseSecurityGuard({
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("copy", onCopy);
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+      window.removeEventListener("keyup", onKeyUp, { capture: true } as EventListenerOptions);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
