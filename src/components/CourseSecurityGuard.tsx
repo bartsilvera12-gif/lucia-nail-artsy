@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ShieldAlert, Eye, Maximize2, Minimize2 } from "lucide-react";
+import { ShieldAlert, Eye, Maximize2, Minimize2, Radio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface CourseSecurityGuardProps {
@@ -44,6 +44,7 @@ export function CourseSecurityGuard({
   const [warning, setWarning] = useState<string>("");
   const [suspicious, setSuspicious] = useState(false);
   const [isFs, setIsFs] = useState(false);
+  const [recording, setRecording] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
   const trigger = useCallback(async (eventType: string, why: string, meta: Record<string, unknown> = {}) => {
@@ -166,6 +167,39 @@ export function CourseSecurityGuard({
     };
     const onWindowFocusBackFromIframe = () => { blurredByIframe = false; };
 
+    // --- Detección de grabación de pantalla iniciada DESDE el browser ---
+    // Sobrescribimos getDisplayMedia para detectar:
+    // - "Compartir esta pestaña" (Chrome/Edge)
+    // - Captura de pantalla vía cualquier extensión que use la API
+    // Solo detecta captura del propio browser. NO detecta OBS, QuickTime,
+    // celulares apuntando a la pantalla, etc.
+    const md = navigator.mediaDevices;
+    let originalGDM: typeof navigator.mediaDevices.getDisplayMedia | null = null;
+    let activeStream: MediaStream | null = null;
+    const releaseStream = () => {
+      activeStream?.getTracks().forEach((t) => t.stop());
+      activeStream = null;
+      setRecording(false);
+      reportSecurityEvent({ event_type: "displaymedia_ended", course_id: courseId, lesson_id: lessonId });
+    };
+    if (md && typeof md.getDisplayMedia === "function") {
+      originalGDM = md.getDisplayMedia.bind(md);
+      md.getDisplayMedia = async (constraints?: DisplayMediaStreamOptions) => {
+        reportSecurityEvent({ event_type: "displaymedia_request", course_id: courseId, lesson_id: lessonId });
+        trigger("printscreen", "Detectamos un intento de grabación de pantalla. Esta acción está prohibida y quedó registrada.");
+        const stream = await originalGDM!(constraints);
+        activeStream = stream;
+        setRecording(true);
+        reportSecurityEvent({ event_type: "displaymedia_active", course_id: courseId, lesson_id: lessonId });
+        stream.getTracks().forEach((t) => t.addEventListener("ended", releaseStream));
+        return stream;
+      };
+    }
+    const onDevChange = () => {
+      reportSecurityEvent({ event_type: "mediadevices_change", course_id: courseId, lesson_id: lessonId });
+    };
+    md?.addEventListener?.("devicechange", onDevChange);
+
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
     window.addEventListener("keydown", onKey, { capture: true });
@@ -181,6 +215,9 @@ export function CourseSecurityGuard({
 
     return () => {
       void blurredByIframe;
+      if (originalGDM && md) md.getDisplayMedia = originalGDM;
+      md?.removeEventListener?.("devicechange", onDevChange);
+      releaseStream();
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("copy", onCopy);
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
@@ -242,6 +279,19 @@ export function CourseSecurityGuard({
       {/* Badge con email */}
       <div className="pointer-events-none absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-medium text-white/90 backdrop-blur">
         <Eye className="h-3 w-3" /> {userEmail}
+      </div>
+
+      {/* Banner permanente: grabación prohibida + indicador rojo si detectamos */}
+      <div
+        className={
+          "pointer-events-none absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium backdrop-blur transition-colors " +
+          (recording
+            ? "bg-red-600/90 text-white shadow-lg shadow-red-900/60 animate-pulse"
+            : "bg-black/60 text-white/80")
+        }
+      >
+        <Radio className={"h-3 w-3 " + (recording ? "text-white" : "text-red-400")} />
+        {recording ? "Grabación detectada — sesión registrada" : "Grabación prohibida · sesión rastreada"}
       </div>
 
       {/* Botón fullscreen custom (mantiene el watermark arriba) */}

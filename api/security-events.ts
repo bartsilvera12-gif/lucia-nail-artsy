@@ -26,6 +26,8 @@ const ALLOWED_TYPES = new Set([
   "shortcut_devtools", "shortcut_capture",
   "visibility_hidden", "window_blur", "window_focus",
   "fullscreen_enter", "fullscreen_exit",
+  "displaymedia_request", "displaymedia_active", "displaymedia_ended",
+  "mediadevices_change",
 ]);
 
 function getClientIp(req: Request): string | null {
