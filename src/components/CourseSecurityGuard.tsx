@@ -186,10 +186,9 @@ export function CourseSecurityGuard({
       originalGDM = md.getDisplayMedia.bind(md);
       md.getDisplayMedia = async (constraints?: DisplayMediaStreamOptions) => {
         reportSecurityEvent({ event_type: "displaymedia_request", course_id: courseId, lesson_id: lessonId });
-        trigger("printscreen", "Detectamos un intento de grabación de pantalla. Esta acción está prohibida y quedó registrada.");
         const stream = await originalGDM!(constraints);
         activeStream = stream;
-        setRecording(true);
+        setRecording(true);  // tapa el video con overlay negro permanente
         reportSecurityEvent({ event_type: "displaymedia_active", course_id: courseId, lesson_id: lessonId });
         stream.getTracks().forEach((t) => t.addEventListener("ended", releaseStream));
         return stream;
@@ -304,15 +303,29 @@ export function CourseSecurityGuard({
         {isFs ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
 
-      {/* Overlay de advertencia */}
-      {obscured && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/95 px-6 text-center text-white animate-fade-in">
-          <ShieldAlert className="h-10 w-10 text-primary" />
-          <p className="font-serif text-lg sm:text-xl">{suspicious ? "Sesión marcada como sospechosa" : "Acción no permitida"}</p>
-          <p className="max-w-md text-xs text-white/80 sm:text-sm">
-            {warning} Este intento quedó registrado junto a tu sesión.
+      {/* Overlay de advertencia (cubre el video). Se queda permanente mientras
+          haya una grabación de pantalla activa; pulsa 3.5s en otros eventos. */}
+      {(obscured || recording) && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black px-6 text-center text-white animate-fade-in">
+          <ShieldAlert className="h-12 w-12 text-primary" />
+          <p className="font-serif text-xl sm:text-2xl">
+            {recording
+              ? "Grabación de pantalla detectada"
+              : suspicious
+                ? "Sesión marcada como sospechosa"
+                : "Acción no permitida"}
           </p>
-          {suspicious && (
+          <p className="max-w-md text-xs text-white/80 sm:text-sm">
+            {recording
+              ? "Las clases no se pueden grabar. El video va a permanecer oculto mientras detectemos una grabación activa. Este intento quedó registrado con tu cuenta."
+              : `${warning} Este intento quedó registrado junto a tu sesión.`}
+          </p>
+          {recording && (
+            <p className="mt-2 max-w-md text-[11px] text-red-300">
+              Detené la grabación para volver a ver el video.
+            </p>
+          )}
+          {suspicious && !recording && (
             <p className="mt-1 max-w-md text-[11px] text-amber-300/90">
               Detectamos varios intentos en poco tiempo. El equipo va a revisar esta sesión.
             </p>
