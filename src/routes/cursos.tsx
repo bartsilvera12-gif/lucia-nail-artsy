@@ -31,9 +31,8 @@ function CursosPage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16 lg:px-8">
-          {/* Izquierda: icono + eyebrow + título + descripción, todo centrado en la columna */}
-          <div className="flex flex-col items-center text-center">
+        <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+          <div className="flex flex-col items-start">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
               <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
             </div>
@@ -42,35 +41,35 @@ function CursosPage() {
               <span>Catálogo</span>
               <span aria-hidden className="h-px w-8 bg-gradient-to-l from-transparent to-primary" />
             </div>
-            <h1 className="mt-4 font-serif text-3xl leading-[1.1] text-balance sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 font-serif text-3xl leading-[1.1] sm:text-4xl lg:text-5xl">
               Cursos online de uñas
             </h1>
-            <p className="mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
               Aprendé a tu ritmo con cursos premium organizados por niveles.
             </p>
-          </div>
 
-          {/* Derecha: búsqueda + filtros */}
-          <div className="lg:pl-4">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-3 shadow-soft backdrop-blur">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar curso…"
-                className="flex-1 bg-transparent text-sm outline-none"
-              />
+            {/* Buscador + filtros debajo del título, alineados a la izquierda */}
+            <div className="mt-6 w-full max-w-md">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-3 shadow-soft backdrop-blur">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Buscar curso…"
+                  className="flex-1 bg-transparent text-sm outline-none"
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {filters.map((f) => (
+                  <Button key={f} variant={filter === f ? "gold" : "outlineGold"} size="sm" onClick={() => setFilter(f)}>
+                    {f}
+                  </Button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {isLoading ? "Cargando…" : `${filtered.length} curso${filtered.length === 1 ? "" : "s"} disponibles`}
+              </p>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {filters.map((f) => (
-                <Button key={f} variant={filter === f ? "gold" : "outlineGold"} size="sm" onClick={() => setFilter(f)}>
-                  {f}
-                </Button>
-              ))}
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              {isLoading ? "Cargando…" : `${filtered.length} curso${filtered.length === 1 ? "" : "s"} disponibles`}
-            </p>
           </div>
         </div>
       </section>
