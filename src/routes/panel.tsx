@@ -124,13 +124,11 @@ function PanelPage() {
                     .filter((p) => progressByLesson[p.lesson_id])
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
                   const lastLessonId = lastProgress?.lesson_id;
-                  const to = lastLessonId ? `/ver/${c.slug}?l=${lastLessonId}` : `/ver/${c.slug}`;
                   return (
                     <Link
                       key={c.id}
-                      to="/ver/$slug"
+                      to="/curso/$slug"
                       params={{ slug: c.slug }}
-                      search={lastLessonId ? { l: lastLessonId } : {}}
                       className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft transition-all hover:shadow-elegant"
                     >
                       <div className="relative aspect-video overflow-hidden">
