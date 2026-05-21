@@ -33,13 +33,16 @@ function CursosPage() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="flex flex-col items-start">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
-              <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
-            </div>
-            <div className="mt-5 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">
-              <span aria-hidden className="h-px w-8 bg-gradient-to-r from-transparent to-primary" />
-              <span>Catálogo</span>
-              <span aria-hidden className="h-px w-8 bg-gradient-to-l from-transparent to-primary" />
+            {/* Ícono + eyebrow centrados juntos */}
+            <div className="flex flex-col items-center self-start">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
+                <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
+              </div>
+              <div className="mt-3 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">
+                <span aria-hidden className="h-px w-8 bg-gradient-to-r from-transparent to-primary" />
+                <span>Catálogo</span>
+                <span aria-hidden className="h-px w-8 bg-gradient-to-l from-transparent to-primary" />
+              </div>
             </div>
             <h1 className="mt-4 font-serif text-3xl leading-[1.1] sm:text-4xl lg:text-5xl">
               Cursos online de uñas
