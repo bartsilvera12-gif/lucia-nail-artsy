@@ -27,7 +27,7 @@ import { useCourses } from "@/hooks/useCourses";
 import { plans, testimonials, faqs } from "@/data/site";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
-import heroBg from "@/assets/01_mano_esmalte.webp";
+import heroBg from "@/assets/02_mano_manicura.webp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,10 +63,10 @@ function HomePage() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Imagen de fondo */}
-      <img src={heroBg} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover object-center" />
-      {/* Overlay crema para mantener legibilidad */}
-      <div aria-hidden className="absolute inset-0 bg-[oklch(0.97_0.03_85/0.82)]" />
+      {/* Fondo crema base */}
+      <div aria-hidden className="absolute inset-0 bg-gradient-cream" />
+      {/* Imagen posicionada a la derecha, sin estirar */}
+      <img src={heroBg} alt="" aria-hidden className="absolute right-0 top-0 h-full w-auto max-w-[55%] object-contain object-right opacity-30" />
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-12">
         <div className="flex flex-col justify-center">
           <h1 className="font-serif text-4xl leading-[1.05] text-balance sm:text-5xl lg:text-6xl">
