@@ -110,6 +110,26 @@ export function CourseSecurityGuard({
         handlePrintScreen();
         return;
       }
+      // Win/Meta key sola o combinada → solemos verlo antes de Win+Shift+S
+      // o Win+PrintScreen. Cubrimos preventivamente.
+      if (e.key === "Meta" || e.key === "OS" || e.code === "MetaLeft" || e.code === "MetaRight") {
+        heuristicRef.current = true;
+        setHeuristicRecording(true);
+        reportSecurityEvent({
+          event_type: "displaymedia_active",
+          course_id: courseId,
+          lesson_id: lessonId,
+          metadata: { source: "meta_key_down" },
+        });
+        // Lo limpiamos en 2 segundos si no se confirma con otra señal
+        window.setTimeout(() => {
+          if (document.hasFocus()) {
+            heuristicRef.current = false;
+            setHeuristicRecording(false);
+          }
+        }, 2000);
+        return;
+      }
       const meta = e.ctrlKey || e.metaKey;
       const k = e.key;
       if (meta) {
