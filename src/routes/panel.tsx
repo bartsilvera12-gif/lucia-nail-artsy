@@ -4,7 +4,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
 import { useAuth, formatExpiry } from "@/lib/auth";
-import { useCourses, resolveCourseImage } from "@/hooks/useCourses";
+import { useCourses, resolveCourseImage, useMyProgress } from "@/hooks/useCourses";
 
 export const Route = createFileRoute("/panel")({
   head: () => ({ meta: [{ title: "Mi panel — Lucía Rojas Studio" }] }),
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/panel")({
 function PanelPage() {
   const { user, loading, isAuthenticated, hasMembership, isMembershipExpired, daysUntilExpiry, hasAccessTo, subscribe, logout, isAdmin } = useAuth();
   const { data: courses = [] } = useCourses();
+  const { data: progress = [] } = useMyProgress();
 
   if (loading) {
     return (
@@ -26,6 +27,9 @@ function PanelPage() {
 
   const myCourses = courses.filter((c) => hasAccessTo(c.id, c.included_in_membership));
   const lockedCourses = courses.filter((c) => !hasAccessTo(c.id, c.included_in_membership));
+
+  // Índice de progreso: lesson_id → row (para lookup rápido)
+  const progressByLesson = Object.fromEntries(progress.map((p) => [p.lesson_id, p]));
 
   return (
     <PublicLayout>
@@ -115,11 +119,18 @@ function PanelPage() {
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {myCourses.map((c) => {
                   const img = resolveCourseImage(c.image_path);
+                  // Buscar la última lección vista de este curso en el progreso
+                  const lastProgress = progress
+                    .filter((p) => progressByLesson[p.lesson_id])
+                    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+                  const lastLessonId = lastProgress?.lesson_id;
+                  const to = lastLessonId ? `/ver/${c.slug}?l=${lastLessonId}` : `/ver/${c.slug}`;
                   return (
                     <Link
                       key={c.id}
-                      to="/curso/$slug"
+                      to="/ver/$slug"
                       params={{ slug: c.slug }}
+                      search={lastLessonId ? { l: lastLessonId } : {}}
                       className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft transition-all hover:shadow-elegant"
                     >
                       <div className="relative aspect-video overflow-hidden">
@@ -133,8 +144,13 @@ function PanelPage() {
                         <p className="mt-1 font-serif text-base">{c.title}</p>
                         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{c.duration}</span>
-                          <span className="inline-flex items-center gap-1 text-primary">Continuar <ArrowRight className="h-3 w-3" /></span>
+                          <span className="inline-flex items-center gap-1 text-primary">
+                            {lastLessonId ? "Retomar" : "Empezar"} <ArrowRight className="h-3 w-3" />
+                          </span>
                         </div>
+                        {lastLessonId && (
+                          <p className="mt-1 text-[10px] text-muted-foreground/70">Continuás donde dejaste</p>
+                        )}
                       </div>
                     </Link>
                   );

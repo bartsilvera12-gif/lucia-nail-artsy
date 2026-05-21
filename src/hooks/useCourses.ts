@@ -382,6 +382,74 @@ export async function getLessonVideoSignedUrl(videoPath: string, expiresInSecond
   return data?.signedUrl ?? null;
 }
 
+// ---------- progreso de lecciones ----------
+
+export interface LessonProgressRow {
+  lesson_id: string;
+  last_position_seconds: number;
+  completed_at: string | null;
+  updated_at: string;
+}
+
+/** Devuelve el progreso de todas las lecciones del usuario autenticado. */
+export function useMyProgress() {
+  return useQuery({
+    queryKey: ["my-progress"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, last_position_seconds, completed_at, updated_at");
+      if (error) throw error;
+      return (data ?? []) as LessonProgressRow[];
+    },
+  });
+}
+
+/**
+ * Guarda o actualiza el progreso de una lección.
+ * Llama a upsert para que funcione tanto en la primera vez como en actualizaciones.
+ */
+export async function saveLessonProgress(
+  userId: string,
+  lessonId: string,
+  opts: { positionSeconds?: number; completed?: boolean } = {},
+): Promise<void> {
+  const now = new Date().toISOString();
+  await supabase.from("lesson_progress").upsert(
+    {
+      user_id: userId,
+      lesson_id: lessonId,
+      last_position_seconds: opts.positionSeconds ?? 0,
+      completed_at: opts.completed ? now : null,
+      updated_at: now,
+    },
+    { onConflict: "user_id,lesson_id" },
+  );
+}
+
+/**
+ * Devuelve la última lección vista por el usuario en un curso dado,
+ * junto con el lesson_id para poder navegar directo.
+ */
+export function useLastLesson(courseId: string | undefined, allLessons: { id: string }[]) {
+  return useQuery({
+    queryKey: ["last-lesson", courseId, allLessons.map((l) => l.id).join(",")],
+    enabled: !!courseId && allLessons.length > 0,
+    queryFn: async () => {
+      const lessonIds = allLessons.map((l) => l.id);
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, updated_at")
+        .in("lesson_id", lessonIds)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ lesson_id: string; updated_at: string }>();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+}
+
 /** Pide al backend un OTP de VdoCipher para reproducir una lección. */
 export async function getVdoCipherOtp(lessonId: string): Promise<{ otp: string; playbackInfo: string } | null> {
   const { data: sessionData } = await supabase.auth.getSession();

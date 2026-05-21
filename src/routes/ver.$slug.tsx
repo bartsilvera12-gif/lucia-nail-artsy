@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
-import { useCourseBySlug, getVdoCipherOtp } from "@/hooks/useCourses";
+import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
 interface VerSearch { l?: string }
@@ -39,6 +39,12 @@ function VerPage() {
 
   const current = allLessons.find((l) => l.id === currentId) ?? allLessons[0];
   const currentIndex = allLessons.findIndex((l) => l.id === current?.id);
+
+  // Guardar progreso cuando el usuario abre una lección
+  useEffect(() => {
+    if (!current?.id || !user?.id) return;
+    saveLessonProgress(user.id, current.id, { positionSeconds: 0 });
+  }, [current?.id, user?.id]);
 
   // OTP de VdoCipher
   const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
