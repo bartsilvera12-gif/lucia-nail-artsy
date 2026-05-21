@@ -2,38 +2,36 @@ import { Link } from "@tanstack/react-router";
 import { Instagram, Mail } from "lucide-react";
 import { site } from "@/data/site";
 import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
+import esmalte2Img from "@/assets/esmalte2.png";
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-secondary/40">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {/* Logo + tagline */}
           <div>
             <Link to="/" className="flex items-center" aria-label={site.name}>
-              <img src={logoUrl} alt={site.name} className="h-24 w-auto sm:h-28" />
+              <img src={logoUrl} alt={site.name} className="h-24 w-auto sm:h-32" />
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
           </div>
+
+          {/* Plataforma */}
           <div>
             <h4 className="text-sm font-medium">Plataforma</h4>
-            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/cursos" className="hover:text-foreground">Cursos</Link></li>
               <li><Link to="/planes" className="hover:text-foreground">Planes</Link></li>
               <li><Link to="/sobre" className="hover:text-foreground">Sobre Lucía</Link></li>
               <li><Link to="/faq" className="hover:text-foreground">Preguntas frecuentes</Link></li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-sm font-medium">Legal</h4>
-            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/contacto" className="hover:text-foreground">Contacto</Link></li>
-              <li><Link to="/terminos" className="hover:text-foreground">Términos y condiciones</Link></li>
-              <li><Link to="/privacidad" className="hover:text-foreground">Política de privacidad</Link></li>
-            </ul>
-          </div>
+
+          {/* Contacto */}
           <div>
             <h4 className="text-sm font-medium">Contacto</h4>
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <ul className="mt-3 space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> {site.email}</li>
               <li>
                 <a href={site.social.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-foreground">
@@ -42,10 +40,16 @@ export function Footer() {
               </li>
             </ul>
           </div>
+
+          {/* Ilustración decorativa */}
+          <div className="flex items-end justify-center">
+            <img src={esmalte2Img} alt="" aria-hidden className="pointer-events-none h-72 w-auto object-contain opacity-70" />
+          </div>
         </div>
-        <div className="mt-12 flex flex-col items-center justify-between gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+
+        <div className="mt-8 flex flex-col items-center gap-2 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} {site.name}. Todos los derechos reservados.</span>
-          <span>
+          <span className="sm:mr-12">
             Desarrollado por{" "}
             <a
               href="https://neura.com.py"
