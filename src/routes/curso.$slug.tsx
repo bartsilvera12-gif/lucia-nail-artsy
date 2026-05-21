@@ -287,10 +287,10 @@ function CursoDetailPage() {
             )}
           </div>
 
-          <aside className="rounded-xl border border-border bg-card p-5 shadow-soft">
+          <aside className="self-start rounded-xl border border-border bg-card p-5 shadow-soft">
             <p className="font-serif text-base">Contenido del curso</p>
             <p className="mt-1 text-xs text-muted-foreground">{modules.length} módulos · {lessons.length} clases</p>
-            <div className="mt-4 max-h-[600px] space-y-4 overflow-y-auto pr-1">
+            <div className="mt-4 space-y-4">
               {modules.map((mod, mi) => (
                 <div key={mod.id}>
                   <p className="text-[11px] font-medium uppercase tracking-wider text-primary">Módulo {mi + 1} · {mod.title}</p>
