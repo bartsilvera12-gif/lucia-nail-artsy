@@ -403,8 +403,6 @@ function PlansSection() {
         </div>
 
         <p className="mt-10 text-center text-xs text-muted-foreground">
-          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> 7 días de garantía
-          <span className="mx-3">·</span>
           <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Acceso inmediato después del pago
           <span className="mx-3">·</span>
           <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Pago seguro

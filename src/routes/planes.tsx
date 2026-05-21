@@ -83,24 +83,6 @@ function PlanesPage() {
         </div>
       </section>
 
-      <section className="bg-secondary/40 py-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Garantía" title="Aprendé sin riesgo" />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-6 shadow-soft">
-              <ShieldCheck className="h-6 w-6 text-primary" />
-              <h3 className="mt-3 font-serif text-lg">7 días de garantía</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Si en los primeros 7 días no te convence, te devolvemos el 100% sin preguntas.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-6 shadow-soft">
-              <Crown className="h-6 w-6 text-primary" />
-              <h3 className="mt-3 font-serif text-lg">Acceso inmediato</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Apenas confirmás el pago, recibís tus credenciales y empezás a aprender.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <SectionHeader eyebrow="Preguntas frecuentes" title="Lo que más nos preguntan" />

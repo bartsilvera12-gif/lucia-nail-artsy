@@ -85,75 +85,114 @@ function CursoDetailPage() {
 
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-gradient-cream py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="text-xs text-muted-foreground">
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-12 sm:py-16">
+        {/* Decoración */}
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 top-1/4 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-2 text-xs text-muted-foreground">
             <Link to="/cursos" className="hover:text-foreground">Cursos</Link>
-            <span className="mx-2">/</span>
+            <span>›</span>
             <span className="text-foreground">{course.title}</span>
           </nav>
-          <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_320px]">
+
+          <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_360px]">
             <div>
-              <GoldBadge>{course.category} · {course.level}</GoldBadge>
-              <h1 className="mt-4 font-serif text-3xl text-balance sm:text-4xl">{course.title}</h1>
-              <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">{course.description}</p>
-              <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><BookOpen className="h-4 w-4 text-primary" /> {modules.length} módulos · {lessons.length} clases</span>
-                <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4 text-primary" /> {course.duration}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-gold px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground shadow-gold">
+                  <Sparkles className="h-3 w-3" /> {course.category}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground/80">
+                  Nivel {course.level}
+                </span>
+              </div>
+
+              <h1 className="mt-5 font-serif text-4xl leading-[1.1] text-balance sm:text-5xl lg:text-6xl">
+                {course.title}
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">{course.description}</p>
+
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs shadow-soft backdrop-blur">
+                  <BookOpen className="h-3.5 w-3.5 text-primary" /> {modules.length} módulos · {lessons.length} clases
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs shadow-soft backdrop-blur">
+                  <Clock className="h-3.5 w-3.5 text-primary" /> {course.duration}
+                </span>
                 {course.included_in_membership && (
-                  <span className="inline-flex items-center gap-1 text-primary"><Crown className="h-4 w-4" /> Incluido en la membresía</span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-gradient-gold px-3 py-1.5 text-xs text-foreground shadow-soft">
+                    <Crown className="h-3.5 w-3.5" /> Incluido en la membresía
+                  </span>
                 )}
               </div>
             </div>
 
-            <aside className="rounded-xl border border-border bg-card p-6 shadow-elegant">
-              {heroImg && (
-                <div className="mb-4 aspect-video overflow-hidden rounded-lg">
-                  <img src={heroImg} alt="" className="h-full w-full object-cover" />
-                </div>
-              )}
-              <div className="flex items-end gap-1">
-                <span className="font-serif text-3xl">USD {course.price}</span>
-                <span className="pb-1 text-xs text-muted-foreground">pago único</span>
-              </div>
-              {hasAccess ? (
-                <div className="mt-5 space-y-2">
-                  <Button variant="hero" className="w-full" asChild>
-                    <Link to="/ver/$slug" params={{ slug: course.slug }}>
-                      <PlayCircle className="h-4 w-4" /> Comenzar curso
-                    </Link>
-                  </Button>
-                  <div className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs">
-                    <Check className="h-4 w-4 text-primary" /> Ya tenés acceso
+            <aside className="relative">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-elegant transition-transform hover:-translate-y-0.5">
+                {/* Halo dorado decorativo */}
+                <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-30 blur-2xl" />
+
+                {heroImg && (
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img src={heroImg} alt="" className="h-full w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
                   </div>
-                </div>
-              ) : (
-                <div className="mt-5 space-y-2" id="comprar">
-                  {course.included_in_membership && (
-                    <Button variant="hero" className="w-full" asChild>
-                      <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
-                    </Button>
+                )}
+
+                <div className="relative p-6">
+                  <div className="flex items-end gap-1">
+                    <span className="font-serif text-4xl tracking-tight">USD {course.price}</span>
+                    <span className="pb-1.5 text-xs text-muted-foreground">pago único</span>
+                  </div>
+
+                  {hasAccess ? (
+                    <div className="mt-5 flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary/15 to-primary/5 px-3 py-2.5 text-sm font-medium text-foreground">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-gold">
+                        <Check className="h-3 w-3 text-foreground" strokeWidth={3} />
+                      </span>
+                      Ya tenés acceso
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-2" id="comprar">
+                      {course.included_in_membership && (
+                        <Button variant="hero" className="w-full" asChild>
+                          <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
+                        </Button>
+                      )}
+                      <Button
+                        variant="outlineGold"
+                        className="w-full"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
+                            return;
+                          }
+                          purchaseCourse(course.id, Number(course.price));
+                        }}
+                      >
+                        <ShoppingCart className="h-4 w-4" /> Comprar individual
+                      </Button>
+                    </div>
                   )}
-                  <Button
-                    variant="outlineGold"
-                    className="w-full"
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
-                        return;
-                      }
-                      purchaseCourse(course.id, Number(course.price));
-                    }}
-                  >
-                    <ShoppingCart className="h-4 w-4" /> Comprar individual
-                  </Button>
+
+                  <div aria-hidden className="my-5 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
+                  <ul className="space-y-2.5 text-xs">
+                    <li className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
+                    </li>
+                    <li className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Certificado al completar
+                    </li>
+                    <li className="flex items-center gap-2 text-muted-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Soporte por WhatsApp
+                    </li>
+                  </ul>
                 </div>
-              )}
-              <ul className="mt-6 space-y-2 text-xs text-muted-foreground">
-                <li className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" /> 7 días de garantía</li>
-                <li className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> Acceso inmediato</li>
-                <li className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> Certificado al completar</li>
-              </ul>
+              </div>
             </aside>
           </div>
         </div>

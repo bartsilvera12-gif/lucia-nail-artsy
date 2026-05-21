@@ -83,7 +83,7 @@ function ComunidadPage() {
                 <Button variant="ghost" className="mt-2 w-full" asChild>
                   <Link to="/planes">Ver todos los planes</Link>
                 </Button>
-                <p className="mt-3 text-center text-[10px] text-muted-foreground">7 días de garantía · Cancelás cuando quieras</p>
+                <p className="mt-3 text-center text-[10px] text-muted-foreground">Cancelás cuando quieras</p>
               </aside>
             </div>
           </div>
