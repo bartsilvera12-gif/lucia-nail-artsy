@@ -214,8 +214,7 @@ function CursoDetailPage() {
       <section className="py-12">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
           <div>
-            {/* Player sticky para que el DRM siempre tenga el video en viewport */}
-            <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-background lg:py-2">
+            <div>
             {canPlay && current ? (
               vdo ? (
                 <ProtectedVideo
@@ -288,7 +287,7 @@ function CursoDetailPage() {
             )}
           </div>
 
-          <aside className="rounded-xl border border-border bg-card p-5 shadow-soft lg:sticky lg:top-24 lg:self-start">
+          <aside className="rounded-xl border border-border bg-card p-5 shadow-soft">
             <p className="font-serif text-base">Contenido del curso</p>
             <p className="mt-1 text-xs text-muted-foreground">{modules.length} módulos · {lessons.length} clases</p>
             <div className="mt-4 max-h-[600px] space-y-4 overflow-y-auto pr-1">
