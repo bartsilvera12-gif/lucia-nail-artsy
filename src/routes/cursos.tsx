@@ -32,7 +32,7 @@ function CursosPage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:px-8">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
           {/* Izquierda: ícono + título + buscador */}
           <div className="flex flex-col items-start">
             <div className="flex flex-col items-center self-start">
@@ -74,9 +74,9 @@ function CursosPage() {
             </div>
           </div>
 
-          {/* Derecha: imagen */}
-          <div className="hidden lg:flex lg:items-center lg:justify-center">
-            <img src={manoImg} alt="" className="h-72 w-auto rounded-2xl object-contain drop-shadow-xl" />
+          {/* Derecha: imagen full height */}
+          <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:block">
+            <img src={manoImg} alt="" className="h-full w-full object-contain object-right" />
           </div>
         </div>
       </section>
