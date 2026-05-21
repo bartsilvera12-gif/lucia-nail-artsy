@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShieldCheck, ShoppingCart } from "lucide-react";
+import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
@@ -149,48 +149,61 @@ function CursoDetailPage() {
                   </div>
 
                   {hasAccess ? (
-                    <div className="mt-5 flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary/15 to-primary/5 px-3 py-2.5 text-sm font-medium text-foreground">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-gold">
-                        <Check className="h-3 w-3 text-foreground" strokeWidth={3} />
-                      </span>
-                      Ya tenés acceso
-                    </div>
+                    <>
+                      <div className="mt-5 flex items-center gap-2.5 rounded-lg bg-gradient-gold px-4 py-3 text-sm font-medium text-foreground shadow-gold">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground/15">
+                          <Check className="h-3 w-3 text-foreground" strokeWidth={3} />
+                        </span>
+                        Ya tenés acceso
+                      </div>
+                      <ul className="mt-4 space-y-2.5 text-xs">
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
+                        </li>
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Certificado al completar
+                        </li>
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Soporte por WhatsApp
+                        </li>
+                      </ul>
+                    </>
                   ) : (
-                    <div className="mt-5 space-y-2" id="comprar">
-                      {course.included_in_membership && (
-                        <Button variant="hero" className="w-full" asChild>
-                          <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
+                    <>
+                      <div className="mt-5 space-y-2" id="comprar">
+                        {course.included_in_membership && (
+                          <Button variant="hero" className="w-full" asChild>
+                            <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
+                          </Button>
+                        )}
+                        <Button
+                          variant="outlineGold"
+                          className="w-full"
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
+                              return;
+                            }
+                            purchaseCourse(course.id, Number(course.price));
+                          }}
+                        >
+                          <ShoppingCart className="h-4 w-4" /> Comprar individual
                         </Button>
-                      )}
-                      <Button
-                        variant="outlineGold"
-                        className="w-full"
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
-                            return;
-                          }
-                          purchaseCourse(course.id, Number(course.price));
-                        }}
-                      >
-                        <ShoppingCart className="h-4 w-4" /> Comprar individual
-                      </Button>
-                    </div>
+                      </div>
+                      <div aria-hidden className="my-5 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                      <ul className="space-y-2.5 text-xs">
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
+                        </li>
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Certificado al completar
+                        </li>
+                        <li className="flex items-center gap-2 text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Soporte por WhatsApp
+                        </li>
+                      </ul>
+                    </>
                   )}
-
-                  <div aria-hidden className="my-5 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-
-                  <ul className="space-y-2.5 text-xs">
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Certificado al completar
-                    </li>
-                    <li className="flex items-center gap-2 text-muted-foreground">
-                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Soporte por WhatsApp
-                    </li>
-                  </ul>
                 </div>
               </div>
             </aside>
