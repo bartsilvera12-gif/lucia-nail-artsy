@@ -163,7 +163,7 @@ function CursoDetailPage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
           <div>
             {/* Player sticky para que el DRM siempre tenga el video en viewport */}
-            <div className="lg:sticky lg:top-4 lg:z-10">
+            <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-background lg:py-2">
             {canPlay && current ? (
               vdo ? (
                 <ProtectedVideo

@@ -20,7 +20,7 @@ function VerPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useCourseBySlug(slug);
   const { user, isAuthenticated, hasAccessTo, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const allLessons = useMemo(() => {
     if (!data) return [];
@@ -93,9 +93,9 @@ function VerPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Player area */}
         <main className="flex flex-1 flex-col overflow-y-auto">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+          <div className={"mx-auto w-full px-4 py-6 sm:px-6 " + (sidebarOpen ? "max-w-6xl" : "max-w-5xl")}>
             {/* Sticky para que el DRM mantenga el video en viewport siempre */}
-            <div className="sticky top-0 z-10 overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
+            <div className="sticky top-0 z-10 mx-auto w-full overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
                 vdo ? (
                   <ProtectedVideo
