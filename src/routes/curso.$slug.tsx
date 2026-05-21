@@ -136,27 +136,27 @@ function CursoDetailPage() {
                 <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-30 blur-2xl" />
 
                 {heroImg && (
-                  <div className="relative aspect-[4/3] overflow-hidden">
+                  <div className="relative aspect-video overflow-hidden">
                     <img src={heroImg} alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card to-transparent" />
                   </div>
                 )}
 
-                <div className="relative p-6">
+                <div className="relative p-4">
                   <div className="flex items-end gap-1">
-                    <span className="font-serif text-4xl tracking-tight">USD {course.price}</span>
-                    <span className="pb-1.5 text-xs text-muted-foreground">pago único</span>
+                    <span className="font-serif text-2xl tracking-tight">USD {course.price}</span>
+                    <span className="pb-0.5 text-xs text-muted-foreground">pago único</span>
                   </div>
 
                   {hasAccess ? (
                     <>
-                      <div className="mt-5 flex items-center gap-2.5 rounded-lg bg-gradient-gold px-4 py-3 text-sm font-medium text-foreground shadow-gold">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground/15">
-                          <Check className="h-3 w-3 text-foreground" strokeWidth={3} />
+                      <div className="mt-3 flex items-center gap-2 rounded-lg bg-gradient-gold px-3 py-2.5 text-xs font-medium text-foreground shadow-gold">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-foreground/15">
+                          <Check className="h-2.5 w-2.5 text-foreground" strokeWidth={3} />
                         </span>
                         Ya tenés acceso
                       </div>
-                      <ul className="mt-4 space-y-2.5 text-xs">
+                      <ul className="mt-3 space-y-2 text-xs">
                         <li className="flex items-center gap-2 text-muted-foreground">
                           <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
                         </li>
@@ -170,7 +170,7 @@ function CursoDetailPage() {
                     </>
                   ) : (
                     <>
-                      <div className="mt-5 space-y-2" id="comprar">
+                      <div className="mt-3 space-y-2" id="comprar">
                         {course.included_in_membership && (
                           <Button variant="hero" className="w-full" asChild>
                             <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
@@ -190,8 +190,8 @@ function CursoDetailPage() {
                           <ShoppingCart className="h-4 w-4" /> Comprar individual
                         </Button>
                       </div>
-                      <div aria-hidden className="my-5 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-                      <ul className="space-y-2.5 text-xs">
+                      <div aria-hidden className="my-4 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                      <ul className="space-y-2 text-xs">
                         <li className="flex items-center gap-2 text-muted-foreground">
                           <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato
                         </li>
