@@ -328,13 +328,25 @@ export function CourseSecurityGuard({
     <div
       ref={containerRef}
       data-secure-area
+      tabIndex={-1}
       className={
-        "group/secure secure-area relative w-full select-none overflow-hidden " +
+        "group/secure secure-area relative w-full select-none overflow-hidden outline-none " +
         (isFs ? "h-screen rounded-none" : "aspect-video rounded-xl") +
         " border border-border bg-black"
       }
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
+      onFocusCapture={(e) => {
+        // Si el foco entró al iframe del player, lo robamos de vuelta al
+        // contenedor padre para que los keyup/keydown (PrintScreen, atajos)
+        // sigan llegando al window. El click sobre el iframe ya fue procesado
+        // por el player antes de este handler, así que play/pause con el
+        // mouse no se rompe.
+        const t = e.target as HTMLElement;
+        if (t?.tagName === "IFRAME") {
+          window.setTimeout(() => containerRef.current?.focus(), 0);
+        }
+      }}
     >
       {children}
 
