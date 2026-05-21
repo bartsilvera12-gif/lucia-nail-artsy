@@ -2,8 +2,6 @@ import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstac
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
-import { CourseSecurityGuard } from "@/components/CourseSecurityGuard";
-import { YouTubePlayer, isYouTubeUrl } from "@/components/YouTubePlayer";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -42,26 +40,20 @@ function VerPage() {
   const current = allLessons.find((l) => l.id === currentId) ?? allLessons[0];
   const currentIndex = allLessons.findIndex((l) => l.id === current?.id);
 
-  // OTP (solo para VdoCipher; YouTube va directo)
-  const currentIsYouTube = isYouTubeUrl(current?.video_path);
+  // OTP de VdoCipher
   const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [vdoError, setVdoError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     setVdo(null); setVdoError(null);
-    if (!current?.id || !current?.video_path || currentIsYouTube) return;
+    if (!current?.id || !current?.video_path) return;
     getVdoCipherOtp(current.id).then((res) => {
       if (cancelled) return;
       if (res) setVdo(res);
       else setVdoError("No pudimos cargar el video. Verificá tu acceso o probá de nuevo.");
     });
     return () => { cancelled = true; };
-  }, [current?.id, current?.video_path, currentIsYouTube]);
-
-  useEffect(() => {
-    document.body.setAttribute("data-course-page", "1");
-    return () => document.body.removeAttribute("data-course-page");
-  }, []);
+  }, [current?.id, current?.video_path]);
 
   if (loading || isLoading) {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-300">Cargando…</div>;
@@ -104,27 +96,13 @@ function VerPage() {
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
             <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
-                currentIsYouTube && current.video_path ? (
-                  <CourseSecurityGuard
+                vdo ? (
+                  <ProtectedVideo
+                    otp={vdo.otp}
+                    playbackInfo={vdo.playbackInfo}
                     userEmail={user?.email ?? "preview@invitado"}
-                    courseId={data.course.id}
-                    lessonId={current.id}
-                  >
-                    <YouTubePlayer url={current.video_path} title={current.title} />
-                  </CourseSecurityGuard>
-                ) : vdo ? (
-                  <CourseSecurityGuard
-                    userEmail={user?.email ?? "preview@invitado"}
-                    courseId={data.course.id}
-                    lessonId={current.id}
-                  >
-                    <ProtectedVideo
-                      otp={vdo.otp}
-                      playbackInfo={vdo.playbackInfo}
-                      userEmail={user?.email ?? "preview@invitado"}
-                      title={current.title}
-                    />
-                  </CourseSecurityGuard>
+                    title={current.title}
+                  />
                 ) : current.video_path ? (
                   <div className="flex aspect-video w-full items-center justify-center text-sm text-zinc-400">
                     {vdoError ?? "Cargando video…"}

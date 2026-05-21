@@ -5,8 +5,6 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
-import { CourseSecurityGuard } from "@/components/CourseSecurityGuard";
-import { YouTubePlayer, isYouTubeUrl } from "@/components/YouTubePlayer";
 import { Paywall } from "@/components/Paywall";
 import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -49,25 +47,24 @@ function CursoDetailPage() {
     }
   }, [search.buy, isAuthenticated, user, data, purchaseCourse]);
 
-  // Pedir OTP de VdoCipher para la lección actual (solo si no es YouTube)
+  // Pedir OTP de VdoCipher para la lección actual
   const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [vdoError, setVdoError] = useState<string | null>(null);
   const currentForVideo = allLessons.find((l) => l.id === currentLessonId);
   const currentVideoPath = currentForVideo?.video_path ?? null;
-  const currentIsYouTube = isYouTubeUrl(currentVideoPath);
 
   useEffect(() => {
     let cancelled = false;
     setVdo(null);
     setVdoError(null);
-    if (!currentLessonId || !currentVideoPath || currentIsYouTube) return;
+    if (!currentLessonId || !currentVideoPath) return;
     getVdoCipherOtp(currentLessonId).then((res) => {
       if (cancelled) return;
       if (res) setVdo(res);
       else setVdoError("No pudimos cargar este video. Verificá tu acceso o intentá de nuevo.");
     });
     return () => { cancelled = true; };
-  }, [currentLessonId, currentVideoPath, currentIsYouTube]);
+  }, [currentLessonId, currentVideoPath]);
 
   if (isLoading) {
     return (
@@ -166,27 +163,13 @@ function CursoDetailPage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
           <div>
             {canPlay && current ? (
-              currentIsYouTube && currentVideoPath ? (
-                <CourseSecurityGuard
+              vdo ? (
+                <ProtectedVideo
+                  otp={vdo.otp}
+                  playbackInfo={vdo.playbackInfo}
                   userEmail={user?.email ?? "preview@invitado"}
-                  courseId={course.id}
-                  lessonId={current.id}
-                >
-                  <YouTubePlayer url={currentVideoPath} title={current.title} />
-                </CourseSecurityGuard>
-              ) : vdo ? (
-                <CourseSecurityGuard
-                  userEmail={user?.email ?? "preview@invitado"}
-                  courseId={course.id}
-                  lessonId={current.id}
-                >
-                  <ProtectedVideo
-                    otp={vdo.otp}
-                    playbackInfo={vdo.playbackInfo}
-                    userEmail={user?.email ?? "preview@invitado"}
-                    title={current.title}
-                  />
-                </CourseSecurityGuard>
+                  title={current.title}
+                />
               ) : currentVideoPath ? (
                 <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-black text-center text-sm text-white/70">
                   {vdoError ?? "Cargando video…"}

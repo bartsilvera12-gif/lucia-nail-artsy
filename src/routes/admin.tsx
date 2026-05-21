@@ -572,11 +572,6 @@ function ModuleBlock({
   );
 }
 
-function isYouTubeUrl(s?: string | null): boolean {
-  if (!s) return false;
-  return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(s);
-}
-
 function LessonRowItem({
   lesson, onUpdate, onDelete,
 }: {
@@ -588,7 +583,6 @@ function LessonRowItem({
   const [title, setTitle] = useState(lesson.title);
   const [editing, setEditing] = useState(false);
   const [videoId, setVideoId] = useState(lesson.video_path ?? "");
-  const isYT = isYouTubeUrl(lesson.video_path);
 
   const saveVideoId = () => {
     const v = videoId.trim();
@@ -617,7 +611,7 @@ function LessonRowItem({
 
         {lesson.video_path ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700" title={lesson.video_path}>
-            <Film className="h-3 w-3" /> {isYT ? "YouTube" : "VdoCipher"} · {lesson.video_path.slice(0, 16)}…
+            <Film className="h-3 w-3" /> VdoCipher · {lesson.video_path.slice(0, 16)}…
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">
@@ -633,12 +627,9 @@ function LessonRowItem({
 
       {editing && (
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">
-          <p className="text-[11px] text-muted-foreground">
-            Pegá un <b>VdoCipher Video ID</b> (32 hex) o un <b>link de YouTube</b>.
-          </p>
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="VdoCipher ID o https://youtube.com/watch?v=..."
+              placeholder="VdoCipher Video ID (32 hex)"
               value={videoId}
               onChange={(e) => setVideoId(e.target.value)}
               className="flex-1 min-w-[260px] bg-white font-mono text-xs"
@@ -646,10 +637,9 @@ function LessonRowItem({
             <Button size="sm" variant="outlineGold" onClick={saveVideoId}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setVideoId(lesson.video_path ?? ""); }}>Cancelar</Button>
           </div>
-          <div className="flex gap-3 text-[11px]">
-            <a href="https://www.vdocipher.com/admin/videos" target="_blank" rel="noreferrer" className="text-primary hover:underline">VdoCipher ↗</a>
-            <a href="https://studio.youtube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">YouTube Studio ↗</a>
-          </div>
+          <a href="https://www.vdocipher.com/admin/videos" target="_blank" rel="noreferrer" className="text-[11px] text-primary hover:underline">
+            Subir a VdoCipher ↗
+          </a>
         </div>
       )}
     </div>
