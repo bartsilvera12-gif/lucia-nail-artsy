@@ -5,7 +5,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CourseCard } from "@/components/CourseCard";
 import { useCourses } from "@/hooks/useCourses";
 import { Button } from "@/components/ui/button";
-import manoImg from "@/assets/02_mano_manicura.webp";
+import manoImg from "@/assets/manicure_line_art_transparent_4x.png";
 
 const filters = ["Todos", "Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"] as const;
 
@@ -32,18 +32,14 @@ function CursosPage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:min-h-[420px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
           {/* Izquierda: ícono + título + buscador */}
           <div className="flex flex-col items-start">
-            <div className="flex flex-col items-center self-start">
+            <div className="flex w-fit flex-col items-center gap-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
                 <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
               </div>
-              <div className="mt-3 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">
-                <span aria-hidden className="h-px w-8 bg-gradient-to-r from-transparent to-primary" />
-                <span>Catálogo</span>
-                <span aria-hidden className="h-px w-8 bg-gradient-to-l from-transparent to-primary" />
-              </div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-primary">— Catálogo —</p>
             </div>
             <h1 className="mt-4 font-serif text-3xl leading-[1.1] sm:text-4xl lg:text-5xl">
               Cursos online de uñas
@@ -52,7 +48,7 @@ function CursosPage() {
               Aprendé a tu ritmo con cursos premium organizados por niveles.
             </p>
             <div className="mt-6 w-full max-w-md">
-              <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-3 shadow-soft backdrop-blur">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-3 shadow-soft">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <input
                   value={q}
@@ -74,9 +70,9 @@ function CursosPage() {
             </div>
           </div>
 
-          {/* Derecha: imagen full height */}
-          <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:block">
-            <img src={manoImg} alt="" className="h-full w-full object-contain object-right" />
+          {/* Derecha: imagen centrada */}
+          <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
+            <img src={manoImg} alt="" className="h-full w-full object-contain object-center" />
           </div>
         </div>
       </section>

@@ -27,6 +27,7 @@ import { useCourses } from "@/hooks/useCourses";
 import { plans, testimonials, faqs } from "@/data/site";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
+import esmalteImg from "@/assets/esmalte.png";
 
 
 export const Route = createFileRoute("/")({
@@ -123,6 +124,14 @@ function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Imagen decorativa esmalte — bottom right */}
+      <img
+        src={esmalteImg}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute -bottom-28 -right-20 hidden h-[30rem] w-auto object-contain object-bottom lg:block"
+      />
     </section>
   );
 }
