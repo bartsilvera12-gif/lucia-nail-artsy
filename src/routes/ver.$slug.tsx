@@ -94,7 +94,8 @@ function VerPage() {
         {/* Player area */}
         <main className="flex flex-1 flex-col overflow-y-auto">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-            <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
+            {/* Sticky para que el DRM mantenga el video en viewport siempre */}
+            <div className="sticky top-0 z-10 overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
                 vdo ? (
                   <ProtectedVideo
@@ -153,14 +154,17 @@ function VerPage() {
               <p className="text-xs text-zinc-500">
                 Clase {currentIndex + 1} de {allLessons.length}
               </p>
-              <Button
-                variant="gold"
-                onClick={() => go(currentIndex + 1)}
-                disabled={currentIndex >= allLessons.length - 1}
-                className="disabled:opacity-50"
-              >
-                Siguiente <ChevronRight className="h-4 w-4" />
-              </Button>
+              {currentIndex >= allLessons.length - 1 ? (
+                <Button variant="gold" asChild>
+                  <Link to="/curso/$slug" params={{ slug }}>
+                    Ver curso completo <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="gold" onClick={() => go(currentIndex + 1)}>
+                  Siguiente <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </main>

@@ -162,6 +162,8 @@ function CursoDetailPage() {
       <section className="py-12">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
           <div>
+            {/* Player sticky para que el DRM siempre tenga el video en viewport */}
+            <div className="lg:sticky lg:top-4 lg:z-10">
             {canPlay && current ? (
               vdo ? (
                 <ProtectedVideo
@@ -189,6 +191,7 @@ function CursoDetailPage() {
                 authenticated={isAuthenticated}
               />
             )}
+            </div>
 
             {current && (
               <div className="mt-4 flex items-start justify-between gap-4">

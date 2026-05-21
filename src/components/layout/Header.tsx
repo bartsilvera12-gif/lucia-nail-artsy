@@ -21,7 +21,7 @@ export function Header() {
   const { isAuthenticated, user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
+    <header className="relative z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-24 lg:px-8">
         <Link to="/" className="flex items-center" aria-label={site.name}>
           <img src={logoUrl} alt={site.name} className="h-12 w-auto sm:h-16 lg:h-20" />
