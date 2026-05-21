@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CourseCard } from "@/components/CourseCard";
 import { useCourses } from "@/hooks/useCourses";
 import { Button } from "@/components/ui/button";
+import manoImg from "@/assets/02_mano_manicura.webp";
 
 const filters = ["Todos", "Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"] as const;
 
@@ -31,9 +32,9 @@ function CursosPage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:px-8">
+          {/* Izquierda: ícono + título + buscador */}
           <div className="flex flex-col items-start">
-            {/* Ícono + eyebrow centrados juntos */}
             <div className="flex flex-col items-center self-start">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
                 <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
@@ -50,8 +51,6 @@ function CursosPage() {
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
               Aprendé a tu ritmo con cursos premium organizados por niveles.
             </p>
-
-            {/* Buscador + filtros debajo del título, alineados a la izquierda */}
             <div className="mt-6 w-full max-w-md">
               <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-3 shadow-soft backdrop-blur">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -73,6 +72,11 @@ function CursosPage() {
                 {isLoading ? "Cargando…" : `${filtered.length} curso${filtered.length === 1 ? "" : "s"} disponibles`}
               </p>
             </div>
+          </div>
+
+          {/* Derecha: imagen */}
+          <div className="hidden lg:flex lg:items-center lg:justify-center">
+            <img src={manoImg} alt="" className="h-72 w-auto rounded-2xl object-contain drop-shadow-xl" />
           </div>
         </div>
       </section>
