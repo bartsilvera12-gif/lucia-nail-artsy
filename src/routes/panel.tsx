@@ -193,9 +193,9 @@ function PanelPage() {
                 <Link to="/planes">Gestionar plan</Link>
               </Button>
             </SidebarCard>
-            <SidebarCard icon={Crown} title="Comunidad privada" body="Compartí trabajos y resolvé dudas con otras alumnas.">
+            <SidebarCard icon={Crown} title="Espacio de Alumnos" body="Compartí tus avances, hacé preguntas y recibí acompañamiento.">
               <Button variant="outlineGold" size="sm" asChild className="mt-2 w-full">
-                <Link to="/comunidad">Entrar a la comunidad</Link>
+                <Link to="/comunidad">Entrar al espacio</Link>
               </Button>
             </SidebarCard>
           </aside>

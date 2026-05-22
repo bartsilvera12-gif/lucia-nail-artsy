@@ -32,23 +32,23 @@ function CursosPage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:min-h-[420px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:min-h-[320px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
           {/* Izquierda: ícono + título + buscador */}
-          <div className="flex flex-col items-start">
-            <div className="flex w-fit flex-col items-center gap-2">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex w-full flex-col items-center gap-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
                 <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
               </div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-primary">— Catálogo —</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-primary">— Catálogo —</p>
             </div>
-            <h1 className="mt-4 font-serif text-3xl leading-[1.1] sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 font-serif text-xl leading-[1.1] sm:text-2xl lg:text-3xl">
               Cursos online de uñas
             </h1>
-            <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
+            <p className="mt-3 max-w-xl text-xs text-muted-foreground sm:text-sm">
               Aprendé a tu ritmo con cursos premium organizados por niveles.
             </p>
             <div className="mt-6 w-full max-w-md">
-              <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-3 shadow-soft">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 shadow-soft">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <input
                   value={q}
@@ -72,18 +72,22 @@ function CursosPage() {
 
           {/* Derecha: imagen centrada */}
           <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
-            <img src={manoImg} alt="" className="h-full w-full object-contain object-center" />
+            {/* Blob orgánico de fondo */}
+            <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
+            {/* Contorno del blob ligeramente más grande */}
+            <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
+            <img src={manoImg} alt="" className="relative h-full w-full object-contain object-center" />
           </div>
         </div>
       </section>
 
-      <section className="py-16">
+      <section className="py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
             <p className="text-center text-sm text-muted-foreground">Cargando cursos…</p>
           ) : (
             <>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {filtered.map((c) => (<CourseCard key={c.id} course={c} />))}
               </div>
               {filtered.length === 0 && (

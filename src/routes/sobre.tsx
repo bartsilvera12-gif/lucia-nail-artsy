@@ -33,14 +33,14 @@ function SobrePage() {
             </h1>
             <p className="mt-6 text-base leading-relaxed text-muted-foreground">
               Lucía Rojas Studio nació para llenar un vacío: enseñar uñas con técnica real, criterio estético y mirada de negocio.
-              Hoy es una comunidad privada con cientos de alumnas que aprenden a su ritmo desde cualquier lugar.
+              Hoy es una academia privada con cientos de alumnas que aprenden a su ritmo desde cualquier lugar.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="gold" asChild>
                 <Link to="/cursos">Ver cursos <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button variant="outlineGold" asChild>
-                <Link to="/comunidad">Conocer la comunidad</Link>
+                <Link to="/comunidad">Espacio de Alumnos</Link>
               </Button>
             </div>
           </div>
@@ -56,7 +56,7 @@ function SobrePage() {
           <div className="mt-14 grid gap-6 sm:grid-cols-3">
             {[
               { icon: Heart, t: "Vocación primero", d: "Enseñamos desde la práctica real con foco en lo que funciona." },
-              { icon: Users, t: "Comunidad activa", d: "Aprendés con otras alumnas, no sola frente a un video." },
+              { icon: Users, t: "Acompañamiento real", d: "Aprendés con soporte de Lucía y otras alumnas, no sola frente a un video." },
               { icon: Award, t: "Estándares premium", d: "Resultados que se notan, se ven y se cobran mejor." },
             ].map(({ icon: Icon, t, d }) => (
               <div key={t} className="rounded-xl border border-border bg-card p-6 shadow-soft">

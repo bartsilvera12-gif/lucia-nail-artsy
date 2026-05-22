@@ -29,7 +29,7 @@ function LoginPage() {
               <span className="font-serif text-lg">Lucía Rojas Studio</span>
             </div>
             <h1 className="mt-6 font-serif text-2xl">Ingresá a tu cuenta</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Accedé a tus cursos, comunidad y panel.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Accedé a tus cursos, espacio de alumnos y panel.</p>
 
             <form
               className="mt-6 space-y-4"

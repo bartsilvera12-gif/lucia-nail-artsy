@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, Star, Calendar, BookOpen, MessageCircle, Heart, Pin, Sparkles, Crown, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Users, Star, Calendar, BookOpen, MessageCircle, Heart, Pin, Crown, ArrowRight, CheckCircle2, Bell } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
@@ -9,30 +9,31 @@ import aboutImg from "@/assets/about-studio.jpg";
 export const Route = createFileRoute("/comunidad")({
   head: () => ({
     meta: [
-      { title: "Comunidad Lucía Rojas Studio — Academia privada de uñas" },
-      { name: "description", content: "Una comunidad privada con cursos exclusivos, sesiones en vivo y soporte para alumnas." },
+      { title: "Espacio de Alumnos — Lucía Rojas Studio" },
+      { name: "description", content: "Un espacio exclusivo para alumnas con membresía: novedades del instructor, preguntas sobre clases y compartí tus avances." },
     ],
   }),
-  component: ComunidadPage,
+  component: EspacioAlumnasPage,
 });
 
-function ComunidadPage() {
+function EspacioAlumnasPage() {
   return (
     <PublicLayout>
+      {/* Hero */}
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-12">
         <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
             <div className="relative aspect-[16/6] w-full bg-gradient-gold">
-              <img src={aboutImg} alt="Comunidad" className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />
+              <img src={aboutImg} alt="Espacio de Alumnos" className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between gap-4 text-white">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/80">Comunidad privada</p>
-                  <h1 className="font-serif text-2xl sm:text-3xl">Lucía Rojas Studio</h1>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/80">Acceso exclusivo · Alumnas activas</p>
+                  <h1 className="font-serif text-2xl sm:text-3xl">Espacio de Alumnos</h1>
                 </div>
-                <Stat label="Miembros" value="2.4k" />
+                <Stat label="Alumnas" value="2.4k" />
               </div>
             </div>
 
@@ -48,37 +49,37 @@ function ComunidadPage() {
                   <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Sesiones semanales</span>
                 </div>
 
-                <h2 className="mt-5 font-serif text-2xl sm:text-3xl">Aprendé uñas profesionales con una comunidad que te acompaña</h2>
+                <h2 className="mt-5 font-serif text-2xl sm:text-3xl">Tu espacio de aprendizaje acompañado</h2>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                  Una comunidad privada para futuras profesionales del mundo de las uñas. Cursos en video, recursos descargables,
-                  sesiones en vivo con Lucía y un espacio para compartir tus trabajos y resolver dudas con otras alumnas.
+                  Un área privada para alumnas con membresía activa. Aquí encontrás novedades del instructor,
+                  podés hacer preguntas sobre tus clases, compartir tus avances y recibir orientación real durante todo tu aprendizaje.
                 </p>
 
                 <div className="mt-6 grid gap-2 sm:grid-cols-2">
                   {[
-                    "6 cursos exclusivos paso a paso",
-                    "Comunidad privada activa",
-                    "Sesiones en vivo con Lucía",
-                    "Bonos descargables y plantillas",
-                    "Certificados al completar",
-                    "Soporte real y novedades internas",
+                    "Novedades y avisos del instructor",
+                    "Hacé preguntas sobre tus clases",
+                    "Compartí tus avances y trabajos",
+                    "Materiales y recursos exclusivos",
+                    "Sesiones en vivo periódicas",
+                    "Acompañamiento durante todo el proceso",
                   ].map((f) => (
                     <p key={f} className="inline-flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary" /> {f}
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" /> {f}
                     </p>
                   ))}
                 </div>
               </div>
 
               <aside className="rounded-xl border border-border bg-secondary/40 p-5">
-                <p className="font-serif text-lg">Membresía privada</p>
-                <p className="mt-1 text-xs text-muted-foreground">Acceso completo a cursos, comunidad y bonos.</p>
+                <p className="font-serif text-lg">Membresía activa</p>
+                <p className="mt-1 text-xs text-muted-foreground">Acceso completo al espacio de alumnos, cursos y materiales.</p>
                 <div className="mt-4 flex items-end gap-1">
                   <span className="font-serif text-3xl">USD 29</span>
                   <span className="pb-1 text-xs text-muted-foreground">/ mes</span>
                 </div>
                 <Button variant="gold" className="mt-5 w-full" asChild>
-                  <Link to="/registro?plan=monthly"><Crown className="h-4 w-4" /> Unirme ahora</Link>
+                  <Link to="/registro?plan=monthly"><Crown className="h-4 w-4" /> Activar membresía</Link>
                 </Button>
                 <Button variant="ghost" className="mt-2 w-full" asChild>
                   <Link to="/planes">Ver todos los planes</Link>
@@ -90,23 +91,46 @@ function ComunidadPage() {
         </div>
       </section>
 
+      {/* Actividad del espacio */}
       <section className="py-16">
         <div className="mx-auto grid max-w-5xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-8">
           <div>
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="font-serif text-xl">Adentro de la comunidad</h2>
-              <span className="text-xs text-muted-foreground">3 publicaciones recientes</span>
+              <h2 className="font-serif text-xl">Actividad del espacio</h2>
+              <span className="text-xs text-muted-foreground">Publicaciones recientes</span>
             </div>
             <div className="mt-5 space-y-4">
-              <Post pinned category="Anuncios" title="Nuevo curso disponible: Manicura Rusa" author="Lucía Rojas" snippet="Ya está online el módulo completo de manicura rusa con torno y fresas. Las alumnas con membresía ya pueden empezar." likes={132} comments={24} />
-              <Post category="Trabajos de alumnas" title="Mi primer baby boomer" author="Camila F." snippet="Después de practicar durante una semana, comparto mi primer trabajo terminado. ¡Acepto feedback!" likes={86} comments={18} />
-              <Post category="Dudas" title="¿Cómo evitar levantamientos en el borde libre?" author="Macarena R." snippet="Me pasa con dos clientas en particular, alguien tiene tip que le haya funcionado?" likes={42} comments={9} />
+              <Publicacion
+                pinned
+                tipo="Aviso del instructor"
+                titulo="Nuevo módulo disponible: Preparación profesional"
+                autor="Lucía Rojas"
+                texto="Ya está disponible el módulo completo de preparación con torno y fresas para las alumnas con membresía activa. Pueden empezar desde el panel."
+                reacciones={48}
+                respuestas={12}
+              />
+              <Publicacion
+                tipo="Avance de alumna"
+                titulo="Mi primer baby boomer completo"
+                autor="Camila F."
+                texto="Después de practicar durante una semana, comparto mi primer trabajo terminado. Cualquier sugerencia es bienvenida, especialmente en la parte del borde libre."
+                reacciones={34}
+                respuestas={9}
+              />
+              <Publicacion
+                tipo="Consulta sobre clases"
+                titulo="¿Cómo evitar el levantamiento en el borde libre?"
+                autor="Macarena R."
+                texto="Me pasa con dos clientas en particular. Ya revisé el módulo de preparación pero sigo teniendo el mismo resultado. ¿Alguien tiene algún tip?"
+                reacciones={18}
+                respuestas={6}
+              />
             </div>
           </div>
 
           <aside className="space-y-6">
             <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-              <p className="font-serif text-base">Tu host</p>
+              <p className="font-serif text-base">Tu instructora</p>
               <div className="mt-4 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold font-serif text-foreground">LR</div>
                 <div>
@@ -114,11 +138,11 @@ function ComunidadPage() {
                   <p className="text-xs text-muted-foreground">Fundadora · Nail master</p>
                 </div>
               </div>
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">+10 años formando alumnas. Especialista en técnica rusa y nail art premium.</p>
+              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">+10 años formando alumnas. Especialista en técnica rusa y nail art premium. Responde consultas de lunes a viernes.</p>
             </div>
 
             <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-              <p className="font-serif text-base">Cursos en la comunidad</p>
+              <p className="font-serif text-base">Cursos del programa</p>
               <ul className="mt-4 space-y-3">
                 {courses.slice(0, 4).map((c) => (
                   <li key={c.slug} className="flex items-center gap-3">
@@ -131,28 +155,29 @@ function ComunidadPage() {
                 ))}
               </ul>
               <Button variant="ghost" size="sm" className="mt-3 w-full" asChild>
-                <Link to="/cursos">Ver todos <ArrowRight className="h-3.5 w-3.5" /></Link>
+                <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-3.5 w-3.5" /></Link>
               </Button>
             </div>
 
             <div className="rounded-xl border border-primary/40 bg-card p-5 shadow-elegant">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Bell className="h-5 w-5 text-primary" />
               <p className="mt-3 font-serif text-base">Próxima sesión en vivo</p>
-              <p className="mt-1 text-xs text-muted-foreground">Jueves 22 · 19:00 hs · Solo membresía</p>
-              <p className="mt-3 text-sm">Q&amp;A en vivo: cómo cobrar tu trabajo y subir precios sin perder clientas.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Exclusivo para alumnas con membresía activa</p>
+              <p className="mt-3 text-sm">Consultas en vivo: cómo cobrar tu trabajo y subir precios sin perder clientas.</p>
             </div>
           </aside>
         </div>
       </section>
 
+      {/* CTA final */}
       <section className="bg-secondary/40 py-16">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <GoldBadge><Sparkles className="h-3 w-3" /> Empezá hoy</GoldBadge>
-          <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Sumate a la comunidad privada</h2>
-          <p className="mt-4 text-base text-muted-foreground">Acceso inmediato a cursos, bonos y sesiones en vivo.</p>
+          <GoldBadge><Crown className="h-3 w-3" /> Acceso exclusivo</GoldBadge>
+          <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Sumate al espacio de alumnos</h2>
+          <p className="mt-4 text-base text-muted-foreground">Acceso inmediato a cursos, materiales y acompañamiento real de la instructora.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button variant="hero" size="xl" asChild>
-              <Link to="/registro?plan=monthly">Unirme ahora <ArrowRight className="h-4 w-4" /></Link>
+              <Link to="/registro?plan=monthly">Activar membresía <ArrowRight className="h-4 w-4" /></Link>
             </Button>
             <Button variant="outlineGold" size="xl" asChild>
               <Link to="/planes">Ver planes</Link>
@@ -173,20 +198,24 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Post({ pinned, category, title, author, snippet, likes, comments }: { pinned?: boolean; category: string; title: string; author: string; snippet: string; likes: number; comments: number }) {
+function Publicacion({
+  pinned, tipo, titulo, autor, texto, reacciones, respuestas,
+}: {
+  pinned?: boolean; tipo: string; titulo: string; autor: string; texto: string; reacciones: number; respuestas: number;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         {pinned && <Pin className="h-3 w-3 text-primary" />}
-        <span className="uppercase tracking-wider text-primary">{category}</span>
+        <span className="uppercase tracking-wider text-primary">{tipo}</span>
         <span>•</span>
-        <span>{author}</span>
+        <span>{autor}</span>
       </div>
-      <p className="mt-2 font-serif text-base">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{snippet}</p>
+      <p className="mt-2 font-serif text-base">{titulo}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{texto}</p>
       <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> {likes}</span>
-        <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {comments}</span>
+        <span className="inline-flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> {reacciones}</span>
+        <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {respuestas} respuestas</span>
       </div>
     </div>
   );

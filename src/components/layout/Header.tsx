@@ -10,7 +10,7 @@ import hero2Img from "@/assets/hero2.png";
 const navLinks = [
   { to: "/", label: "Inicio" },
   { to: "/cursos", label: "Cursos" },
-  { to: "/comunidad", label: "Comunidad" },
+  { to: "/comunidad", label: "Alumnos" },
   { to: "/planes", label: "Planes" },
   { to: "/sobre", label: "Sobre Lucía" },
   { to: "/faq", label: "FAQ" },
