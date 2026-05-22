@@ -25,6 +25,7 @@ import { TestimonialCard } from "@/components/TestimonialCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { useCourses } from "@/hooks/useCourses";
 import { plans, testimonials, faqs } from "@/data/site";
+import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
 import esmalteImg from "@/assets/esmalte.png";
@@ -65,7 +66,7 @@ function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-cream">
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-12">
-        <div className="flex flex-col justify-center">
+        <AnimateIn direction="up" duration={700} className="flex flex-col justify-center">
           <h1 className="font-serif text-3xl leading-[1.05] text-balance sm:text-4xl lg:text-5xl">
             Aprendé uñas profesionales y construí tu camino en la belleza
           </h1>
@@ -88,7 +89,7 @@ function Hero() {
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Certificado digital</span>
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Desde cualquier dispositivo</span>
           </div>
-        </div>
+        </AnimateIn>
 
         <div className="relative flex items-center justify-center -translate-y-8">
           {/* halo dorado de fondo */}
@@ -151,10 +152,13 @@ function ValueProps() {
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow="Propuesta de valor" title="Todo lo que necesitás para aprender, practicar y crecer" />
+        <AnimateIn direction="up">
+          <SectionHeader eyebrow="Propuesta de valor" title="Todo lo que necesitás para aprender, practicar y crecer" />
+        </AnimateIn>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {items.map(({ icon: Icon, title, desc, accent }, i) => (
+            <AnimateIn key={title} direction="up" delay={i * 100}>
             <article
               key={title}
               style={{ animationDelay: `${i * 120}ms` }}
@@ -182,6 +186,7 @@ function ValueProps() {
               {/* línea dorada inferior animada */}
               <span aria-hidden className="absolute inset-x-7 bottom-0 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover:scale-x-100" />
             </article>
+            </AnimateIn>
           ))}
         </div>
       </div>
@@ -193,6 +198,7 @@ function SkoolStyle() {
   return (
     <section className="bg-secondary/40 py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
+        <AnimateIn direction="right">
         <div>
           <GoldBadge><Sparkles className="h-3 w-3" /> Una comunidad privada</GoldBadge>
           <h2 className="mt-6 font-serif text-3xl text-balance sm:text-4xl lg:text-5xl">
@@ -214,7 +220,9 @@ function SkoolStyle() {
             </Button>
           </div>
         </div>
+        </AnimateIn>
 
+        <AnimateIn direction="left" delay={100}>
         <div className="relative">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant">
             <div className="flex items-center justify-between border-b border-border pb-3">
@@ -231,6 +239,7 @@ function SkoolStyle() {
             </div>
           </div>
         </div>
+        </AnimateIn>
       </div>
     </section>
   );
@@ -258,12 +267,14 @@ function FeaturedCourses() {
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
-          <SectionHeader eyebrow="Cursos destacados" title="Empezá por donde más te interesa" description="Una selección de los cursos favoritos de la academia para que arranques hoy." align="left" />
-          <Button variant="outlineGold" asChild>
-            <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-4 w-4" /></Link>
-          </Button>
-        </div>
+        <AnimateIn direction="up">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+            <SectionHeader eyebrow="Cursos destacados" title="Empezá por donde más te interesa" description="Una selección de los cursos favoritos de la academia para que arranques hoy." align="left" />
+            <Button variant="outlineGold" asChild>
+              <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
+        </AnimateIn>
         <FeaturedCoursesCarousel />
       </div>
     </section>
@@ -365,14 +376,15 @@ function Benefits() {
       <div aria-hidden className="pointer-events-none absolute -bottom-32 left-0 h-72 w-72 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow="Beneficios" title="Una experiencia premium pensada para alumnas que quieren avanzar" />
+        <AnimateIn direction="up">
+          <SectionHeader eyebrow="Beneficios" title="Una experiencia premium pensada para alumnas que quieren avanzar" />
+        </AnimateIn>
 
         <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {items.map(({ icon: Icon, title, desc }, i) => (
+            <AnimateIn key={title} direction="up" delay={i * 80}>
             <div
-              key={title}
-              style={{ animationDelay: `${i * 80}ms` }}
-              className="group relative flex animate-fade-up flex-col rounded-2xl border border-border bg-card/80 p-6 shadow-soft backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-elegant"
+              className="group relative flex flex-col rounded-2xl border border-border bg-card/80 p-6 shadow-soft backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-elegant"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-gold shadow-gold transition-transform duration-500 group-hover:scale-110">
                 <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
@@ -380,6 +392,7 @@ function Benefits() {
               <h3 className="mt-5 font-serif text-base">{title}</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
             </div>
+            </AnimateIn>
           ))}
         </div>
       </div>
@@ -395,20 +408,18 @@ function PlansSection() {
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-20 -z-10 h-96 w-[90%] -translate-x-1/2 rounded-full bg-gradient-gold opacity-10 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="Planes"
-          title="Elegí cómo aprender"
-          description="Membresía con todo incluido o compra individual del curso que necesites. Cancelás cuando quieras."
-        />
+        <AnimateIn direction="up">
+          <SectionHeader
+            eyebrow="Planes"
+            title="Elegí cómo aprender"
+            description="Membresía con todo incluido o compra individual del curso que necesites. Cancelás cuando quieras."
+          />
+        </AnimateIn>
         <div className="mt-16 grid items-stretch gap-8 lg:grid-cols-3 lg:gap-6">
           {plans.map((plan, i) => (
-            <div
-              key={plan.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${i * 120}ms` }}
-            >
+            <AnimateIn key={plan.id} direction="up" delay={i * 120}>
               <PlanCard {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
-            </div>
+            </AnimateIn>
           ))}
         </div>
 
@@ -426,9 +437,15 @@ function Testimonials() {
   return (
     <section className="bg-secondary/40 py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow="Alumnas" title="Resultados reales de la academia" />
+        <AnimateIn direction="up">
+          <SectionHeader eyebrow="Alumnas" title="Resultados reales de la academia" />
+        </AnimateIn>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t) => (<TestimonialCard key={t.name} {...t} />))}
+          {testimonials.map((t, i) => (
+            <AnimateIn key={t.name} direction="up" delay={i * 100}>
+              <TestimonialCard {...t} />
+            </AnimateIn>
+          ))}
         </div>
       </div>
     </section>
@@ -480,7 +497,7 @@ function FAQSection() {
 function FinalCTA() {
   return (
     <section className="py-20 sm:py-28">
-      <div className="mx-auto max-w-5xl rounded-3xl border border-border bg-foreground px-6 py-16 text-center text-background shadow-elegant sm:px-12">
+      <AnimateIn direction="up" className="mx-auto max-w-5xl rounded-3xl border border-border bg-foreground px-6 py-16 text-center text-background shadow-elegant sm:px-12">
         <Sparkles className="mx-auto h-6 w-6 text-primary" />
         <h2 className="mt-4 font-serif text-3xl text-balance sm:text-4xl lg:text-5xl">
           Convertí tu pasión por las uñas en una habilidad rentable
@@ -501,7 +518,7 @@ function FinalCTA() {
             <Link to="/cursos"><Play className="h-4 w-4" /> Ver cursos</Link>
           </Button>
         </div>
-      </div>
+      </AnimateIn>
     </section>
   );
 }
