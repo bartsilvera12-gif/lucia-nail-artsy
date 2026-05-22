@@ -20,7 +20,7 @@ const all: FaqItem[] = [
   { q: "¿Las clases tienen protección contra grabación?", a: "Sí. Las clases se reproducen en un visor protegido con marca de agua personalizada con tu email, bloqueo de menú contextual, detección de captura de pantalla y pausa automática al perder el foco. La difusión de contenido está prohibida y rastreable.", category: "seguridad" },
   { q: "¿Puedo descargar las clases?", a: "No. Las clases se ven exclusivamente en línea desde la plataforma para proteger el contenido de las alumnas y mantener el valor de la academia.", category: "seguridad" },
   { q: "¿Qué pasa si la academia se actualiza?", a: "Las alumnas con membresía activa reciben todas las actualizaciones y nuevos cursos sin costo adicional mientras dure su suscripción.", category: "general" },
-  { q: "¿Cómo es el soporte?", a: "Tenés soporte por email y un canal interno en la comunidad. Respondemos de lunes a viernes en menos de 24 horas hábiles.", category: "general" },
+  { q: "¿Cómo es el soporte?", a: "Tenés soporte por email y acceso al Espacio de Alumnos donde podés hacer preguntas sobre tus clases. Respondemos de lunes a viernes en menos de 24 horas hábiles.", category: "general" },
 ];
 
 const categories = [

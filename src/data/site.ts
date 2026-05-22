@@ -21,7 +21,7 @@ export const plans = [
     period: "/ mes",
     description: "Acceso completo, renovación mensual flexible.",
     features: [
-      "Comunidad privada de alumnas",
+      "Espacio de Alumnos exclusivo",
       "Cursos incluidos en la membresía",
       "Bonos descargables",
       "Certificados al completar",

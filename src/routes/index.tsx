@@ -66,7 +66,7 @@ function Hero() {
     <section className="relative overflow-hidden bg-gradient-cream">
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-12">
         <div className="flex flex-col justify-center">
-          <h1 className="font-serif text-4xl leading-[1.05] text-balance sm:text-5xl lg:text-6xl">
+          <h1 className="font-serif text-3xl leading-[1.05] text-balance sm:text-4xl lg:text-5xl">
             Aprendé uñas profesionales y construí tu camino en la belleza
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -90,7 +90,7 @@ function Hero() {
           </div>
         </div>
 
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center -translate-y-8">
           {/* halo dorado de fondo */}
           <div
             aria-hidden
@@ -104,20 +104,20 @@ function Hero() {
           <img
             src={heroLogo}
             alt="Lucía Rojas Studio"
-            className="relative z-10 mx-auto w-full max-w-sm animate-float drop-shadow-2xl lg:max-w-md"
+            className="relative z-10 mx-auto w-full max-w-xs animate-float drop-shadow-2xl lg:max-w-sm"
           />
 
-          <div className="absolute -bottom-4 left-4 hidden w-60 rounded-xl border border-border bg-card/95 p-4 shadow-elegant backdrop-blur animate-fade-up sm:block lg:-bottom-6 lg:-left-6" style={{ animationDelay: "400ms" }}>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="absolute -bottom-4 left-4 hidden w-44 rounded-xl border border-border bg-card/95 p-3 shadow-elegant backdrop-blur animate-fade-up sm:block lg:-bottom-6 lg:-left-6" style={{ animationDelay: "400ms" }}>
+            <div className="grid grid-cols-2 gap-2">
               {[
                 { icon: Crown, label: "Cursos premium" },
                 { icon: Users, label: "Comunidad privada" },
                 { icon: Award, label: "Certificado digital" },
                 { icon: Smartphone, label: "Desde celular" },
               ].map(({ icon: Icon, label }) => (
-                <div key={label} className="text-xs">
-                  <Icon className="h-4 w-4 text-primary" />
-                  <p className="mt-1 leading-tight">{label}</p>
+                <div key={label} className="text-[10px]">
+                  <Icon className="h-3 w-3 text-primary" />
+                  <p className="mt-0.5 leading-tight">{label}</p>
                 </div>
               ))}
             </div>
