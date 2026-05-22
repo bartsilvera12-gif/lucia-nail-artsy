@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ArrowRight, Crown, ShieldCheck } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { PageHero } from "@/components/PageHero";
 import { SectionHeader } from "@/components/SectionHeader";
 import { PlanCard } from "@/components/PlanCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { Button } from "@/components/ui/button";
 import { plans, faqs } from "@/data/site";
+import manoImg from "@/assets/manoesmalte2.png";
+import { AnimateIn } from "@/components/AnimateIn";
 
 export const Route = createFileRoute("/planes")({
   head: () => ({
@@ -21,20 +22,47 @@ export const Route = createFileRoute("/planes")({
 function PlanesPage() {
   return (
     <PublicLayout>
-      <PageHero
-        eyebrow="Planes"
-        title="Elegí cómo aprender"
-        description="Membresía con todo incluido o compra individual del curso que necesites."
-        icon={<div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold"><Crown className="h-5 w-5 text-foreground" strokeWidth={1.75} /></div>}
-      />
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream">
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 top-1/3 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:min-h-[320px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
+          <AnimateIn direction="up" className="flex flex-col items-center text-center">
+            <div className="flex w-full flex-col items-center gap-2">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
+                <Crown className="h-5 w-5 text-foreground" strokeWidth={1.75} />
+              </div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-primary">— Planes —</p>
+            </div>
+            <h1 className="mt-4 font-serif text-xl leading-[1.1] sm:text-2xl lg:text-3xl">
+              Elegí cómo aprender
+            </h1>
+            <p className="mt-3 max-w-xl text-xs text-muted-foreground sm:text-sm">
+              Membresía con todo incluido o compra individual del curso que necesites.
+            </p>
+          </AnimateIn>
+
+          <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
+            <AnimateIn direction="fade" duration={900} delay={200} className="relative flex h-full w-full items-center justify-center">
+              <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }} />
+              <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }} />
+              <AnimateIn direction="left" delay={350} duration={800} className="relative h-full w-full">
+                <img src={manoImg} alt="" className="h-full w-full object-contain object-center" />
+              </AnimateIn>
+            </AnimateIn>
+          </div>
+        </div>
+      </section>
 
       <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-stretch gap-8 lg:grid-cols-3 lg:gap-6">
             {plans.map((plan, i) => (
-              <div key={plan.id} className="animate-fade-up" style={{ animationDelay: `${i * 120}ms` }}>
+              <AnimateIn key={plan.id} direction="up" delay={i * 120}>
                 <PlanCard {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
-              </div>
+              </AnimateIn>
             ))}
           </div>
           <p className="mt-10 text-center text-xs text-muted-foreground">Precios en USD. Podés cancelar la membresía cuando quieras desde tu panel.</p>

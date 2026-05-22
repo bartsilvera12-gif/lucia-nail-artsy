@@ -6,6 +6,7 @@ import { CourseCard } from "@/components/CourseCard";
 import { useCourses } from "@/hooks/useCourses";
 import { Button } from "@/components/ui/button";
 import manoImg from "@/assets/manicure_line_art_transparent_4x.png";
+import { AnimateIn } from "@/components/AnimateIn";
 
 const filters = ["Todos", "Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"] as const;
 
@@ -34,7 +35,7 @@ function CursosPage() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:min-h-[320px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
           {/* Izquierda: ícono + título + buscador */}
-          <div className="flex flex-col items-center text-center">
+          <AnimateIn direction="up" className="flex flex-col items-center text-center">
             <div className="flex w-full flex-col items-center gap-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
                 <BookOpen className="h-5 w-5 text-foreground" strokeWidth={1.75} />
@@ -68,15 +69,17 @@ function CursosPage() {
                 {isLoading ? "Cargando…" : `${filtered.length} curso${filtered.length === 1 ? "" : "s"} disponibles`}
               </p>
             </div>
-          </div>
+          </AnimateIn>
 
           {/* Derecha: imagen centrada */}
           <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
-            {/* Blob orgánico de fondo */}
-            <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
-            {/* Contorno del blob ligeramente más grande */}
-            <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
-            <img src={manoImg} alt="" className="relative h-full w-full object-contain object-center" />
+            <AnimateIn direction="fade" duration={900} delay={200} className="relative flex h-full w-full items-center justify-center">
+              <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
+              <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "40% 60% 70% 30% / 30% 50% 50% 70%" }} />
+              <AnimateIn direction="left" delay={350} duration={800} className="relative h-full w-full">
+                <img src={manoImg} alt="" className="h-full w-full object-contain object-center" />
+              </AnimateIn>
+            </AnimateIn>
           </div>
         </div>
       </section>
@@ -88,7 +91,11 @@ function CursosPage() {
           ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {filtered.map((c) => (<CourseCard key={c.id} course={c} />))}
+                {filtered.map((c, i) => (
+                  <AnimateIn key={c.id} direction="up" delay={i * 60}>
+                    <CourseCard course={c} />
+                  </AnimateIn>
+                ))}
               </div>
               {filtered.length === 0 && (
                 <div className="rounded-xl border border-border bg-card p-12 text-center">

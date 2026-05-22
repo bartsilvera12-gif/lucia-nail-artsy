@@ -2,11 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, HelpCircle, Search, BookOpen, Crown, ShieldCheck, MessageCircle, Mail, Instagram } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { PageHero } from "@/components/PageHero";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { Button } from "@/components/ui/button";
 import { faqs } from "@/data/site";
 import { site } from "@/data/site";
+import limaImg from "@/assets/lima.png";
+import { AnimateIn } from "@/components/AnimateIn";
 
 interface FaqItem { q: string; a: string; category: "general" | "cursos" | "pagos" | "seguridad" }
 
@@ -54,23 +55,50 @@ function FaqPage() {
 
   return (
     <PublicLayout>
-      <PageHero
-        eyebrow="Preguntas frecuentes"
-        title="Resolvemos tus dudas"
-        description="Todo lo que te ayuda a decidir antes de empezar tu camino con nosotras."
-        icon={<div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold"><HelpCircle className="h-5 w-5 text-foreground" strokeWidth={1.75} /></div>}
-      >
-        {/* Buscador dentro del hero */}
-        <div className="mx-auto flex max-w-xl items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-2.5 shadow-soft backdrop-blur">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar en las preguntas…" className="flex-1 bg-transparent text-sm outline-none" />
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream">
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 top-1/3 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:min-h-[320px] lg:grid-cols-[1fr_1fr] lg:gap-0 lg:px-8">
+          <AnimateIn direction="up" className="flex flex-col items-center text-center">
+            <div className="flex w-full flex-col items-center gap-2">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
+                <HelpCircle className="h-5 w-5 text-foreground" strokeWidth={1.75} />
+              </div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-primary">— Preguntas frecuentes —</p>
+            </div>
+            <h1 className="mt-4 font-serif text-xl leading-[1.1] sm:text-2xl lg:text-3xl">
+              Resolvemos tus dudas
+            </h1>
+            <p className="mt-3 max-w-xl text-xs text-muted-foreground sm:text-sm">
+              Todo lo que te ayuda a decidir antes de empezar tu camino con nosotras.
+            </p>
+            <div className="mt-6 w-full max-w-md">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 shadow-soft">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar en las preguntas…" className="flex-1 bg-transparent text-sm outline-none" />
+              </div>
+            </div>
+          </AnimateIn>
+
+          <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
+            <AnimateIn direction="fade" duration={900} delay={200} className="relative flex h-full w-full items-center justify-center">
+              <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
+              <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
+              <AnimateIn direction="left" delay={350} duration={800} className="relative h-full w-full">
+                <img src={limaImg} alt="" className="h-full w-full object-contain object-center" />
+              </AnimateIn>
+            </AnimateIn>
+          </div>
         </div>
-      </PageHero>
+      </section>
 
       <section className="py-12 sm:py-16">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[260px_1fr] lg:gap-12 lg:px-8">
           {/* Sidebar: categorías + contacto */}
-          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          <AnimateIn direction="right" className="space-y-6 lg:sticky lg:top-28 lg:self-start" threshold={0.05}>
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-primary">Categorías</p>
               <nav className="mt-4 space-y-1.5">
@@ -116,10 +144,10 @@ function FaqPage() {
                 <Link to="/contacto">Escribirnos <ArrowRight className="h-3.5 w-3.5" /></Link>
               </Button>
             </div>
-          </aside>
+          </AnimateIn>
 
           {/* Contenido */}
-          <div>
+          <AnimateIn direction="up" delay={100}>
             {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
                 <Search className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -142,7 +170,7 @@ function FaqPage() {
                 </Button>
               </div>
             </div>
-          </div>
+          </AnimateIn>
         </div>
       </section>
     </PublicLayout>

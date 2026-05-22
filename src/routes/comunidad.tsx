@@ -5,6 +5,7 @@ import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { courses } from "@/data/courses";
 import aboutImg from "@/assets/about-studio.jpg";
+import { AnimateIn } from "@/components/AnimateIn";
 
 export const Route = createFileRoute("/comunidad")({
   head: () => ({
@@ -23,7 +24,7 @@ function EspacioAlumnasPage() {
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-12">
         <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <AnimateIn direction="up" className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
             <div className="relative aspect-[16/6] w-full bg-gradient-gold">
               <img src={aboutImg} alt="Espacio de Alumnos" className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />
@@ -88,13 +89,13 @@ function EspacioAlumnasPage() {
               </aside>
             </div>
           </div>
-        </div>
+        </AnimateIn>
       </section>
 
       {/* Actividad del espacio */}
       <section className="py-16">
         <div className="mx-auto grid max-w-5xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-8">
-          <div>
+          <AnimateIn direction="up">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h2 className="font-serif text-xl">Actividad del espacio</h2>
               <span className="text-xs text-muted-foreground">Publicaciones recientes</span>
@@ -126,9 +127,9 @@ function EspacioAlumnasPage() {
                 respuestas={6}
               />
             </div>
-          </div>
+          </AnimateIn>
 
-          <aside className="space-y-6">
+          <AnimateIn direction="left" delay={100} className="space-y-6">
             <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
               <p className="font-serif text-base">Tu instructora</p>
               <div className="mt-4 flex items-center gap-3">
@@ -165,7 +166,7 @@ function EspacioAlumnasPage() {
               <p className="mt-1 text-xs text-muted-foreground">Exclusivo para alumnas con membresía activa</p>
               <p className="mt-3 text-sm">Consultas en vivo: cómo cobrar tu trabajo y subir precios sin perder clientas.</p>
             </div>
-          </aside>
+          </AnimateIn>
         </div>
       </section>
 
