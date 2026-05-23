@@ -147,8 +147,8 @@ function ValueProps() {
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       {/* Halos decorativos */}
-      <div aria-hidden className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-gradient-gold opacity-15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-gradient-gold opacity-12 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-[var(--nude)] opacity-20 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -164,8 +164,8 @@ function ValueProps() {
               style={{ animationDelay: `${i * 120}ms` }}
               className="group relative flex h-full flex-col animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
             >
-              {/* Brillo dorado al hover */}
-              <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
+              {/* Brillo nude al hover */}
+              <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[var(--nude)] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-50" />
 
               {/* Número decorativo grande al fondo */}
               <span aria-hidden className="absolute -right-1 -top-3 select-none font-serif text-7xl leading-none text-primary/10 transition-colors group-hover:text-primary/20">
@@ -421,8 +421,8 @@ function Benefits() {
   ];
   return (
     <section className="relative overflow-hidden bg-gradient-cream py-24 sm:py-28">
-      <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-72 w-72 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 left-0 h-72 w-72 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-72 w-72 rounded-full bg-[var(--nude)] opacity-25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 left-0 h-72 w-72 rounded-full bg-gradient-gold opacity-12 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <AnimateIn direction="up">

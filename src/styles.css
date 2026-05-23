@@ -122,7 +122,7 @@
   --muted:            oklch(0.958 0.014 82);
   --muted-foreground: oklch(0.491 0.021 62);     /* taupe #7A6F63 */
 
-  --accent:            oklch(0.900 0.035 72);    /* champagne muy claro */
+  --accent:            oklch(0.908 0.026 52);    /* nude muy claro — hover femenino */
   --accent-foreground: oklch(0.169 0.009 52);
 
   --destructive:            oklch(0.55 0.22 27);
@@ -134,7 +134,8 @@
 
   /* ── Gradientes & sombras ─────────────────────────────── */
   --gradient-gold:  linear-gradient(135deg, oklch(0.858 0.065 78) 0%, oklch(0.714 0.108 74) 45%, oklch(0.565 0.095 68) 100%);
-  --gradient-cream: linear-gradient(180deg, oklch(0.985 0.007 88), oklch(0.955 0.015 82));
+  --gradient-nude:  linear-gradient(135deg, oklch(0.930 0.022 55) 0%, oklch(0.779 0.047 52) 100%);
+  --gradient-cream: linear-gradient(180deg, oklch(0.985 0.007 88), oklch(0.972 0.009 84));
   --shadow-soft:    0 1px 2px rgb(36 33 30 / 0.04), 0 8px 24px -8px rgb(130 100 58 / 0.12);
   --shadow-elegant: 0 20px 60px -20px rgb(130 100 58 / 0.22);
   --shadow-gold:    0 10px 30px -10px rgb(198 160 74 / 0.40);
@@ -223,13 +224,18 @@
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
-  .bg-gradient-gold { background-image: var(--gradient-gold); }
+  .bg-gradient-gold  { background-image: var(--gradient-gold); }
+  .bg-gradient-nude  { background-image: var(--gradient-nude); }
   .bg-gradient-cream { background-image: var(--gradient-cream); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-gold { box-shadow: var(--shadow-gold); }
   .gold-divider {
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    height: 1px;
+  }
+  .nude-divider {
+    background: linear-gradient(90deg, transparent, var(--nude), transparent);
     height: 1px;
   }
 }
