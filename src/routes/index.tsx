@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   Sparkles,
   GraduationCap,
@@ -334,59 +334,75 @@ function FeaturedCoursesCarousel() {
   const { data: courses = [] } = useCourses();
   const featured = courses.slice(0, 6);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
 
   const scrollByCard = (dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>("[data-card]");
-    const step = card ? card.offsetWidth + 24 : 300;
+    const step = card ? card.offsetWidth + 24 : 320;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
   };
 
+  // Auto-scroll continuo a ~50px/s; al alcanzar la mitad (segunda copia), resetea sin saltos.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      if (!pausedRef.current && el) {
+        el.scrollLeft += (dt / 1000) * 50;
+        const half = el.scrollWidth / 2;
+        if (el.scrollLeft >= half) el.scrollLeft -= half;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
-    <div className="mt-12">
-      {/* ── Desktop: grid 3 columnas ─────────────────── */}
-      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-8">
-        {featured.slice(0, 3).map((course) => (
-          <div key={course.slug} className="transition-transform duration-300 hover:-translate-y-1.5">
+    <div
+      className="group relative mt-12"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-background to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background to-transparent" />
+
+      <button
+        type="button"
+        aria-label="Anterior"
+        onClick={() => scrollByCard(-1)}
+        className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-left-4"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Siguiente"
+        onClick={() => scrollByCard(1)}
+        className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-right-4"
+      >
+        <ArrowRight className="h-5 w-5" />
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className="flex gap-6 overflow-x-auto px-2 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {[...featured, ...featured].map((course, i) => (
+          <div
+            key={`${course.slug}-${i}`}
+            data-card
+            className="h-auto w-[280px] shrink-0 transition-transform duration-300 hover:-translate-y-2 sm:w-[320px] lg:w-[360px]"
+          >
             <CourseCard course={course} />
           </div>
         ))}
-      </div>
-
-      {/* ── Mobile / Tablet: carrusel horizontal limpio ── */}
-      <div className="relative lg:hidden">
-        <button
-          type="button"
-          aria-label="Anterior"
-          onClick={() => scrollByCard(-1)}
-          className="absolute -left-1 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--blush)] bg-card shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-left-5"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Siguiente"
-          onClick={() => scrollByCard(1)}
-          className="absolute -right-1 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--blush)] bg-card shadow-elegant backdrop-blur transition-all hover:bg-gradient-gold hover:text-foreground sm:-right-5"
-        >
-          <ArrowRight className="h-4 w-4" />
-        </button>
-
-        <div
-          ref={scrollerRef}
-          className="flex gap-6 overflow-x-auto px-8 pb-4 sm:px-10 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {featured.map((course, i) => (
-            <div
-              key={`${course.slug}-${i}`}
-              data-card
-              className="w-[272px] shrink-0 transition-transform duration-300 hover:-translate-y-1.5 sm:w-[310px]"
-            >
-              <CourseCard course={course} />
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
