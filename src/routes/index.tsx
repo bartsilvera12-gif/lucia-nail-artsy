@@ -158,11 +158,11 @@ function ValueProps() {
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {items.map(({ icon: Icon, title, desc, accent }, i) => (
-            <AnimateIn key={title} direction="up" delay={i * 100}>
+            <AnimateIn key={title} direction="up" delay={i * 100} className="h-full">
             <article
               key={title}
               style={{ animationDelay: `${i * 120}ms` }}
-              className="group relative animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
+              className="group relative flex h-full flex-col animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
             >
               {/* Brillo dorado al hover */}
               <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
