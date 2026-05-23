@@ -6,7 +6,7 @@ import { resolveCourseImage, type CourseRow } from "@/hooks/useCourses";
 export function CourseCard({ course }: { course: CourseRow }) {
   const img = resolveCourseImage(course.image_path);
   return (
-    <article className="group flex h-full w-full max-w-[320px] justify-self-center flex-col overflow-hidden rounded-lg border border-border bg-card shadow-soft transition-all hover:shadow-elegant hover:-translate-y-0.5">
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-[var(--blush)] bg-card shadow-soft transition-all hover:shadow-elegant hover:-translate-y-0.5 hover:border-primary/40">
       <Link to="/curso/$slug" params={{ slug: course.slug }} className="relative block aspect-[16/7] overflow-hidden bg-muted">
         {img && (
           <img src={img} alt={course.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
