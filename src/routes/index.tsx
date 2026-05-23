@@ -158,11 +158,11 @@ function ValueProps() {
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {items.map(({ icon: Icon, title, desc, accent }, i) => (
-            <AnimateIn key={title} direction="up" delay={i * 100}>
+            <AnimateIn key={title} direction="up" delay={i * 100} className="h-full">
             <article
               key={title}
               style={{ animationDelay: `${i * 120}ms` }}
-              className="group relative animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
+              className="group relative flex h-full flex-col animate-fade-up overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
             >
               {/* Brillo dorado al hover */}
               <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-gold opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
@@ -200,15 +200,15 @@ function SkoolStyle() {
       <div className="mx-auto grid max-w-7xl gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
         <AnimateIn direction="right">
         <div>
-          <GoldBadge><Sparkles className="h-3 w-3" /> Una comunidad privada</GoldBadge>
+          <GoldBadge><Sparkles className="h-3 w-3" /> Espacio de Alumnas</GoldBadge>
           <h2 className="mt-6 font-serif text-3xl text-balance sm:text-4xl lg:text-5xl">
-            Mucho más que cursos: una academia viva donde aprendés con otras
+            Preguntá, aprendé y crecé con respuestas reales de la docente
           </h2>
           <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-            Inspirada en las mejores comunidades educativas online. Accedé a cursos exclusivos, publicaciones internas, comentarios, bonos, novedades y acompañamiento real.
+            El Espacio de Alumnas es un canal directo entre vos y Lucía. Enviá tus consultas técnicas, seguí las preguntas de otras alumnas y accedé a respuestas oficiales en un solo lugar.
           </p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {["Cursos exclusivos","Comunidad privada","Publicaciones internas","Bonos descargables","Certificados digitales","Actualizaciones constantes"].map((f) => (
+            {["Consultas técnicas","Respuestas de la docente","Preguntas destacadas","Filtros por curso","Historial completo","Solo para miembras"].map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-primary" /> {f}
               </li>
@@ -216,7 +216,7 @@ function SkoolStyle() {
           </ul>
           <div className="mt-8">
             <Button variant="gold" asChild>
-              <Link to="/planes">Conocer la membresía</Link>
+              <Link to="/planes">Acceder con membresía</Link>
             </Button>
           </div>
         </div>
@@ -225,17 +225,37 @@ function SkoolStyle() {
         <AnimateIn direction="left" delay={100}>
         <div className="relative">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant">
+            {/* Header del panel */}
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="font-serif text-sm">Comunidad — Lucía Rojas Studio</span>
+                <MessageCircle className="h-4 w-4 text-primary" />
+                <span className="font-serif text-sm">Espacio de Alumnas</span>
               </div>
-              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px]">Privada</span>
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium">Solo miembras</span>
             </div>
+
+            {/* Pregunta destacada respondida */}
             <div className="mt-4 space-y-3">
-              <CommunityPostMock pinned category="Anuncios" title="Nuevo curso disponible: Manicura Rusa" author="Lucía" comments={24} likes={132} />
-              <CommunityPostMock category="Trabajos de alumnas" title="Mi primera práctica de baby boomer" author="Camila F." comments={18} likes={86} />
-              <CommunityPostMock category="Dudas" title="¿Cómo evitar levantamientos en el borde libre?" author="Macarena R." comments={9} likes={42} />
+              <QuestionMock
+                featured
+                status="answered"
+                title="¿Cuánto tiempo debo curar el gel para que no se levante?"
+                author="Camila F."
+                course="Kapping profesional"
+                answer="Curá entre 60 y 90 segundos en lámpara LED de 48 W. El levantamiento suele ocurrir por capa muy gruesa o por no sellar los bordes libres antes del curado."
+              />
+              <QuestionMock
+                status="answered"
+                title="¿Qué lima uso para dar forma sin dañar el acrílico?"
+                author="Macarena R."
+                course="Acrílico avanzado"
+                answer="Lima de 180/240 para la forma gruesa y 240/320 para refinado final. Siempre en una sola dirección."
+              />
+              <QuestionMock
+                status="pending"
+                title="¿Puedo mezclar distintas marcas de base y top coat?"
+                author="Valentina S."
+              />
             </div>
           </div>
         </div>
@@ -245,20 +265,49 @@ function SkoolStyle() {
   );
 }
 
-function CommunityPostMock({ pinned, category, title, author, comments, likes }: { pinned?: boolean; category: string; title: string; author: string; comments: number; likes: number; }) {
+function QuestionMock({
+  featured,
+  status,
+  title,
+  author,
+  course,
+  answer,
+}: {
+  featured?: boolean;
+  status: "pending" | "answered";
+  title: string;
+  author: string;
+  course?: string;
+  answer?: string;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-background/60 p-4">
-      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-        {pinned && <Pin className="h-3 w-3 text-primary" />}
-        <span className="uppercase tracking-wider text-primary">{category}</span>
-        <span>•</span>
-        <span>{author}</span>
+    <div className={`rounded-lg border bg-background/60 p-4 ${featured ? "border-primary/30" : "border-border"}`}>
+      {/* fila superior */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+          {featured && <Pin className="h-3 w-3 text-primary" />}
+          <span className="font-medium text-foreground/80">{author}</span>
+          {course && <><span>·</span><span className="text-primary">{course}</span></>}
+        </div>
+        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+          status === "answered"
+            ? "border-green-200 bg-green-50 text-green-700"
+            : "border-amber-200 bg-amber-50 text-amber-700"
+        }`}>
+          {status === "answered" ? "Respondida" : "Pendiente"}
+        </span>
       </div>
-      <p className="mt-1.5 font-serif text-sm">{title}</p>
-      <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" /> {likes}</span>
-        <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> {comments}</span>
-      </div>
+
+      {/* título */}
+      <p className="mt-2 font-serif text-sm leading-snug">{title}</p>
+
+      {/* respuesta oficial */}
+      {answer && (
+        <div className="mt-3 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">Respuesta de la docente</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{answer}</p>
+        </div>
+      )}
     </div>
   );
 }

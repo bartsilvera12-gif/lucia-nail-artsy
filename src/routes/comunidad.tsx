@@ -1,43 +1,106 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, Star, Calendar, BookOpen, MessageCircle, Heart, Pin, Crown, ArrowRight, CheckCircle2, Bell } from "lucide-react";
+import { useState } from "react";
+import {
+  Users, Star, Calendar, BookOpen, Crown, ArrowRight, CheckCircle2,
+  Bell, Lock, Send, Loader2, MessageSquare, ChevronDown, ChevronUp,
+  Star as StarIcon, X, AlertCircle, Pin,
+} from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
-import { courses } from "@/data/courses";
-import aboutImg from "@/assets/about-studio.jpg";
 import { AnimateIn } from "@/components/AnimateIn";
+import { useAuth } from "@/lib/auth";
+import { useCourses } from "@/hooks/useCourses";
+import {
+  useStudentQuestions,
+  useMyQuestionsToday,
+  useCreateQuestion,
+  useAnswerQuestion,
+  useUpdateQuestion,
+  useDeleteQuestion,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  PAGE_SIZE,
+  type StudentQuestion,
+  type QuestionStatus,
+} from "@/hooks/useStudentQuestions";
+import aboutImg from "@/assets/about-studio.jpg";
 
 export const Route = createFileRoute("/comunidad")({
   head: () => ({
     meta: [
-      { title: "Espacio de Alumnos — Lucía Rojas Studio" },
-      { name: "description", content: "Un espacio exclusivo para alumnas con membresía: novedades del instructor, preguntas sobre clases y compartí tus avances." },
+      { title: "Espacio de Alumnas — Lucía Rojas Studio" },
+      {
+        name: "description",
+        content:
+          "Un espacio exclusivo para alumnas con membresía: consultá a la docente, recibí respuestas oficiales y acompañamiento real durante tu aprendizaje.",
+      },
     ],
   }),
   component: EspacioAlumnasPage,
 });
 
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
 function EspacioAlumnasPage() {
+  const { user, isAuthenticated, hasMembership, isAdmin, loading } = useAuth();
+  const { data: courses = [] } = useCourses();
+
+  const [statusFilter, setStatusFilter] = useState<QuestionStatus | "all">("all");
+  const [courseFilter, setCourseFilter] = useState("");
+  const [page, setPage] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+
+  const canRead = isAuthenticated;
+  const canPost = isAuthenticated && (hasMembership || isAdmin);
+
+  const { data: questionsData, isLoading: questionsLoading } = useStudentQuestions({
+    status: statusFilter,
+    courseId: courseFilter || undefined,
+    page,
+    enabled: canRead,
+  });
+
+  const { data: todayCount = 0 } = useMyQuestionsToday(canPost);
+
+  const questions = questionsData?.questions ?? [];
+  const totalCount = questionsData?.count ?? 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const handleFilterChange = (s: QuestionStatus | "all") => {
+    setStatusFilter(s);
+    setPage(0);
+  };
+
   return (
     <PublicLayout>
-      {/* Hero */}
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream py-12">
         <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+
         <AnimateIn direction="up" className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
+            {/* Banner image */}
             <div className="relative aspect-[16/6] w-full bg-gradient-gold">
-              <img src={aboutImg} alt="Espacio de Alumnos" className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />
+              <img
+                src={aboutImg}
+                alt="Espacio de Alumnas"
+                className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between gap-4 text-white">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/80">Acceso exclusivo · Alumnas activas</p>
-                  <h1 className="font-serif text-2xl sm:text-3xl">Espacio de Alumnos</h1>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/80">
+                    Acceso exclusivo · Alumnas activas
+                  </p>
+                  <h1 className="font-serif text-2xl sm:text-3xl">Espacio de Alumnas</h1>
                 </div>
-                <Stat label="Alumnas" value="2.4k" />
+                <StatChip label="Alumnas" value="2.4k" />
               </div>
             </div>
 
+            {/* Content + sidebar */}
             <div className="grid gap-6 p-6 sm:grid-cols-[1fr_300px] sm:p-8">
               <div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -47,22 +110,25 @@ function EspacioAlumnasPage() {
                   <span>•</span>
                   <span className="inline-flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> 6 cursos</span>
                   <span>•</span>
-                  <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Sesiones semanales</span>
+                  <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Consultas semanales</span>
                 </div>
 
-                <h2 className="mt-5 font-serif text-2xl sm:text-3xl">Tu espacio de aprendizaje acompañado</h2>
+                <h2 className="mt-5 font-serif text-2xl sm:text-3xl">
+                  Consultas, acompañamiento y respuestas oficiales de la docente
+                </h2>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                  Un área privada para alumnas con membresía activa. Aquí encontrás novedades del instructor,
-                  podés hacer preguntas sobre tus clases, compartir tus avances y recibir orientación real durante todo tu aprendizaje.
+                  Este espacio es exclusivo para alumnas activas. Podés dejar tus consultas por escrito
+                  y recibir una respuesta oficial de la docente. No es una red social — es un canal
+                  directo de acompañamiento.
                 </p>
 
                 <div className="mt-6 grid gap-2 sm:grid-cols-2">
                   {[
-                    "Novedades y avisos del instructor",
-                    "Hacé preguntas sobre tus clases",
-                    "Compartí tus avances y trabajos",
-                    "Materiales y recursos exclusivos",
-                    "Sesiones en vivo periódicas",
+                    "Preguntas solo en texto, sin archivos",
+                    "Respuesta oficial de la docente",
+                    "Máximo 3 consultas por día",
+                    "Historial de preguntas respondidas",
+                    "Filtro por estado y curso",
                     "Acompañamiento durante todo el proceso",
                   ].map((f) => (
                     <p key={f} className="inline-flex items-center gap-2 text-sm">
@@ -72,152 +138,715 @@ function EspacioAlumnasPage() {
                 </div>
               </div>
 
-              <aside className="rounded-xl border border-border bg-secondary/40 p-5">
-                <p className="font-serif text-lg">Membresía activa</p>
-                <p className="mt-1 text-xs text-muted-foreground">Acceso completo al espacio de alumnos, cursos y materiales.</p>
-                <div className="mt-4 flex items-end gap-1">
-                  <span className="font-serif text-3xl">USD 29</span>
-                  <span className="pb-1 text-xs text-muted-foreground">/ mes</span>
-                </div>
-                <Button variant="gold" className="mt-5 w-full" asChild>
-                  <Link to="/registro?plan=monthly"><Crown className="h-4 w-4" /> Activar membresía</Link>
-                </Button>
-                <Button variant="ghost" className="mt-2 w-full" asChild>
-                  <Link to="/planes">Ver todos los planes</Link>
-                </Button>
-                <p className="mt-3 text-center text-[10px] text-muted-foreground">Cancelás cuando quieras</p>
-              </aside>
+              {/* Sidebar card — adapts to auth state */}
+              <HeroSidebar
+                isAuthenticated={isAuthenticated}
+                hasMembership={hasMembership}
+                isAdmin={isAdmin}
+                loading={loading}
+                userName={user?.name}
+                todayCount={todayCount}
+                onNewQuestion={() => setShowForm(true)}
+              />
             </div>
           </div>
         </AnimateIn>
       </section>
 
-      {/* Actividad del espacio */}
+      {/* ── Q&A System ───────────────────────────────────────────────────── */}
       <section className="py-16">
-        <div className="mx-auto grid max-w-5xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-8">
-          <AnimateIn direction="up">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="font-serif text-xl">Actividad del espacio</h2>
-              <span className="text-xs text-muted-foreground">Publicaciones recientes</span>
-            </div>
-            <div className="mt-5 space-y-4">
-              <Publicacion
-                pinned
-                tipo="Aviso del instructor"
-                titulo="Nuevo módulo disponible: Preparación profesional"
-                autor="Lucía Rojas"
-                texto="Ya está disponible el módulo completo de preparación con torno y fresas para las alumnas con membresía activa. Pueden empezar desde el panel."
-                reacciones={48}
-                respuestas={12}
-              />
-              <Publicacion
-                tipo="Avance de alumna"
-                titulo="Mi primer baby boomer completo"
-                autor="Camila F."
-                texto="Después de practicar durante una semana, comparto mi primer trabajo terminado. Cualquier sugerencia es bienvenida, especialmente en la parte del borde libre."
-                reacciones={34}
-                respuestas={9}
-              />
-              <Publicacion
-                tipo="Consulta sobre clases"
-                titulo="¿Cómo evitar el levantamiento en el borde libre?"
-                autor="Macarena R."
-                texto="Me pasa con dos clientas en particular. Ya revisé el módulo de preparación pero sigo teniendo el mismo resultado. ¿Alguien tiene algún tip?"
-                reacciones={18}
-                respuestas={6}
-              />
-            </div>
-          </AnimateIn>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 
-          <AnimateIn direction="left" delay={100} className="space-y-6">
-            <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-              <p className="font-serif text-base">Tu instructora</p>
-              <div className="mt-4 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold font-serif text-foreground">LR</div>
-                <div>
-                  <p className="text-sm font-medium">Lucía Rojas</p>
-                  <p className="text-xs text-muted-foreground">Fundadora · Nail master</p>
+          {/* Not authenticated */}
+          {!isAuthenticated && !loading && <NonAuthBanner />}
+
+          {/* Authenticated */}
+          {isAuthenticated && (
+            <>
+              {/* New question form */}
+              {canPost && showForm && (
+                <AnimateIn direction="up">
+                  <NewQuestionForm
+                    userId={user!.id}
+                    courses={courses}
+                    todayCount={todayCount}
+                    onSuccess={() => setShowForm(false)}
+                    onCancel={() => setShowForm(false)}
+                  />
+                </AnimateIn>
+              )}
+
+              {/* No membership banner */}
+              {!canPost && (
+                <div className="mb-8 flex items-start gap-3 rounded-xl border border-primary/30 bg-secondary/40 p-5">
+                  <Lock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-medium">Podés leer las consultas, pero necesitás membresía activa para enviar las tuyas.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Acceso inmediato tras activar tu plan.</p>
+                  </div>
+                  <Button variant="gold" size="sm" asChild>
+                    <Link to="/planes"><Crown className="h-4 w-4" /> Activar</Link>
+                  </Button>
                 </div>
-              </div>
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">+10 años formando alumnas. Especialista en técnica rusa y nail art premium. Responde consultas de lunes a viernes.</p>
-            </div>
+              )}
 
-            <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-              <p className="font-serif text-base">Cursos del programa</p>
-              <ul className="mt-4 space-y-3">
-                {courses.slice(0, 4).map((c) => (
-                  <li key={c.slug} className="flex items-center gap-3">
-                    <img src={c.image} alt="" className="h-10 w-14 rounded object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <Link to="/curso/$slug" params={{ slug: c.slug }} className="block truncate text-sm hover:text-primary">{c.title}</Link>
-                      <p className="text-[10px] text-muted-foreground">{c.modules} módulos · {c.duration}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <Button variant="ghost" size="sm" className="mt-3 w-full" asChild>
-                <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-3.5 w-3.5" /></Link>
+              {/* Filters */}
+              <AnimateIn direction="up" delay={100}>
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    {(["all", "pending", "answered", "closed"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => handleFilterChange(s)}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                          statusFilter === s
+                            ? "border-primary bg-gradient-gold text-foreground shadow-gold"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                        }`}
+                      >
+                        {STATUS_LABELS[s]}
+                      </button>
+                    ))}
+                  </div>
+
+                  {courses.length > 0 && (
+                    <select
+                      value={courseFilter}
+                      onChange={(e) => { setCourseFilter(e.target.value); setPage(0); }}
+                      className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground focus:outline-none"
+                    >
+                      <option value="">Todos los cursos</option>
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.title}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {totalCount} consulta{totalCount !== 1 ? "s" : ""}
+                  </span>
+
+                  {canPost && !showForm && (
+                    <Button variant="gold" size="sm" onClick={() => setShowForm(true)}>
+                      <Send className="h-4 w-4" /> Nueva consulta
+                    </Button>
+                  )}
+                </div>
+              </AnimateIn>
+
+              {/* List */}
+              {questionsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : questions.length === 0 ? (
+                <EmptyState
+                  statusFilter={statusFilter}
+                  canPost={canPost}
+                  onNewQuestion={() => setShowForm(true)}
+                />
+              ) : (
+                <div className="space-y-4">
+                  {questions.map((q, i) => (
+                    <AnimateIn key={q.id} direction="up" delay={i * 50}>
+                      <QuestionCard
+                        question={q}
+                        isAdmin={isAdmin}
+                        currentUserId={user?.id}
+                      />
+                    </AnimateIn>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-10 flex items-center justify-center gap-3">
+                  <Button
+                    variant="outlineGold"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outlineGold"
+                    size="sm"
+                    disabled={page >= totalPages - 1}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* ── CTA final ────────────────────────────────────────────────────── */}
+      {!hasMembership && !isAdmin && (
+        <section className="bg-secondary/40 py-16">
+          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+            <GoldBadge><Crown className="h-3 w-3" /> Acceso exclusivo</GoldBadge>
+            <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Sumate al espacio de alumnas</h2>
+            <p className="mt-4 text-base text-muted-foreground">
+              Acceso inmediato a cursos, materiales y acompañamiento real de la docente.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button variant="hero" size="xl" asChild>
+                <Link to="/registro?plan=monthly">Activar membresía <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+              <Button variant="outlineGold" size="xl" asChild>
+                <Link to="/planes">Ver planes</Link>
               </Button>
             </div>
-
-            <div className="rounded-xl border border-primary/40 bg-card p-5 shadow-elegant">
-              <Bell className="h-5 w-5 text-primary" />
-              <p className="mt-3 font-serif text-base">Próxima sesión en vivo</p>
-              <p className="mt-1 text-xs text-muted-foreground">Exclusivo para alumnas con membresía activa</p>
-              <p className="mt-3 text-sm">Consultas en vivo: cómo cobrar tu trabajo y subir precios sin perder clientas.</p>
-            </div>
-          </AnimateIn>
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section className="bg-secondary/40 py-16">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <GoldBadge><Crown className="h-3 w-3" /> Acceso exclusivo</GoldBadge>
-          <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Sumate al espacio de alumnos</h2>
-          <p className="mt-4 text-base text-muted-foreground">Acceso inmediato a cursos, materiales y acompañamiento real de la instructora.</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button variant="hero" size="xl" asChild>
-              <Link to="/registro?plan=monthly">Activar membresía <ArrowRight className="h-4 w-4" /></Link>
-            </Button>
-            <Button variant="outlineGold" size="xl" asChild>
-              <Link to="/planes">Ver planes</Link>
-            </Button>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </PublicLayout>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+// ─── Hero sidebar ──────────────────────────────────────────────────────────────
+
+function HeroSidebar({
+  isAuthenticated, hasMembership, isAdmin, loading, userName, todayCount, onNewQuestion,
+}: {
+  isAuthenticated: boolean;
+  hasMembership: boolean;
+  isAdmin: boolean;
+  loading: boolean;
+  userName?: string;
+  todayCount: number;
+  onNewQuestion: () => void;
+}) {
+  if (loading) {
+    return (
+      <aside className="rounded-xl border border-border bg-secondary/40 p-5">
+        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+      </aside>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <aside className="rounded-xl border border-border bg-secondary/40 p-5">
+        <p className="font-serif text-lg">Acceso exclusivo</p>
+        <p className="mt-1 text-xs text-muted-foreground">Iniciá sesión para ver y enviar consultas.</p>
+        <Button variant="gold" className="mt-5 w-full" asChild>
+          <Link to="/login"><Lock className="h-4 w-4" /> Iniciar sesión</Link>
+        </Button>
+        <Button variant="ghost" className="mt-2 w-full" asChild>
+          <Link to="/planes">Ver planes</Link>
+        </Button>
+        <p className="mt-3 text-center text-[10px] text-muted-foreground">Cancelás cuando quieras</p>
+      </aside>
+    );
+  }
+
+  if (!hasMembership && !isAdmin) {
+    return (
+      <aside className="rounded-xl border border-border bg-secondary/40 p-5">
+        <p className="font-serif text-lg">Membresía activa</p>
+        <p className="mt-1 text-xs text-muted-foreground">Necesitás membresía para enviar consultas.</p>
+        <div className="mt-4 flex items-end gap-1">
+          <span className="font-serif text-3xl">USD 29</span>
+          <span className="pb-1 text-xs text-muted-foreground">/ mes</span>
+        </div>
+        <Button variant="gold" className="mt-5 w-full" asChild>
+          <Link to="/registro?plan=monthly"><Crown className="h-4 w-4" /> Activar membresía</Link>
+        </Button>
+        <Button variant="ghost" className="mt-2 w-full" asChild>
+          <Link to="/planes">Ver todos los planes</Link>
+        </Button>
+      </aside>
+    );
+  }
+
+  const remaining = Math.max(0, 3 - todayCount);
+
   return (
-    <div className="rounded-lg bg-black/40 px-3 py-2 text-right backdrop-blur">
-      <p className="font-serif text-xl leading-none">{value}</p>
-      <p className="text-[10px] uppercase tracking-wider text-white/70">{label}</p>
+    <aside className="rounded-xl border border-primary/40 bg-secondary/40 p-5">
+      <GoldBadge><Crown className="h-3 w-3" /> {isAdmin ? "Docente / Admin" : "Membresía activa"}</GoldBadge>
+      <p className="mt-3 font-serif text-lg">
+        Bienvenida{userName ? `, ${userName.split(" ")[0]}` : ""}
+      </p>
+      {!isAdmin && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          {remaining > 0
+            ? `Podés enviar ${remaining} consulta${remaining !== 1 ? "s" : ""} más hoy.`
+            : "Alcanzaste el límite de 3 consultas por día."}
+        </p>
+      )}
+      {isAdmin && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Podés responder y gestionar todas las consultas.
+        </p>
+      )}
+      <Button
+        variant="gold"
+        className="mt-5 w-full"
+        onClick={onNewQuestion}
+        disabled={!isAdmin && remaining === 0}
+      >
+        <Send className="h-4 w-4" /> Nueva consulta
+      </Button>
+      <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <Bell className="h-3.5 w-3.5" />
+        Respondemos durante la semana
+      </div>
+    </aside>
+  );
+}
+
+// ─── Non-auth banner ───────────────────────────────────────────────────────────
+
+function NonAuthBanner() {
+  return (
+    <AnimateIn direction="up">
+      <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-soft">
+        <Lock className="mx-auto h-10 w-10 text-muted-foreground/50" />
+        <h3 className="mt-5 font-serif text-xl">Contenido exclusivo para alumnas</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Iniciá sesión para ver las consultas publicadas y enviar las tuyas.
+          <br />Si todavía no tenés membresía, podés ver los planes disponibles.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button variant="gold" asChild>
+            <Link to="/login">Iniciar sesión <ArrowRight className="h-4 w-4" /></Link>
+          </Button>
+          <Button variant="outlineGold" asChild>
+            <Link to="/planes">Ver planes</Link>
+          </Button>
+        </div>
+      </div>
+    </AnimateIn>
+  );
+}
+
+// ─── New question form ─────────────────────────────────────────────────────────
+
+const MAX_TITLE = 120;
+const MAX_BODY = 2000;
+
+function NewQuestionForm({
+  userId,
+  courses,
+  todayCount,
+  onSuccess,
+  onCancel,
+}: {
+  userId: string;
+  courses: Array<{ id: string; title: string }>;
+  todayCount: number;
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [error, setError] = useState("");
+
+  const { mutateAsync, isPending } = useCreateQuestion();
+  const remaining = Math.max(0, 3 - todayCount);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    const t = title.trim();
+    const b = body.trim();
+
+    if (!t) return setError("El título no puede estar vacío.");
+    if (t.length > MAX_TITLE) return setError(`El título supera los ${MAX_TITLE} caracteres.`);
+    if (!b) return setError("La consulta no puede estar vacía.");
+    if (b.length > MAX_BODY) return setError(`La consulta supera los ${MAX_BODY} caracteres.`);
+    if (remaining === 0) return setError("Alcanzaste el límite de 3 consultas por día.");
+
+    try {
+      await mutateAsync({ userId, title: t, body: b, courseId: courseId || undefined });
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al enviar la consulta.";
+      // RLS rate limit error
+      if (msg.includes("row-level") || msg.includes("policy")) {
+        setError("Alcanzaste el límite de 3 consultas diarias.");
+      } else {
+        setError(msg);
+      }
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mb-8 rounded-2xl border border-primary/30 bg-card p-6 shadow-elegant"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="font-serif text-lg">Nueva consulta</h3>
+        <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {remaining > 0 && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Podés enviar {remaining} consulta{remaining !== 1 ? "s" : ""} más hoy.
+          Solo texto — sin imágenes ni archivos.
+        </p>
+      )}
+
+      <div className="mt-5 space-y-4">
+        {/* Title */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">Título de la consulta *</label>
+            <span className={`text-[10px] ${title.length > MAX_TITLE ? "text-destructive" : "text-muted-foreground"}`}>
+              {title.length}/{MAX_TITLE}
+            </span>
+          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={MAX_TITLE + 10}
+            placeholder="Ej: ¿Cómo evitar el levantamiento en el borde libre?"
+            className="mt-1 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/60"
+            required
+          />
+        </div>
+
+        {/* Body */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">Descripción detallada *</label>
+            <span className={`text-[10px] ${body.length > MAX_BODY ? "text-destructive" : "text-muted-foreground"}`}>
+              {body.length}/{MAX_BODY}
+            </span>
+          </div>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            maxLength={MAX_BODY + 20}
+            rows={5}
+            placeholder="Describí tu consulta con el mayor detalle posible. Contá qué técnica usás, qué producto, en qué etapa surge el problema..."
+            className="mt-1 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus:border-primary/60 placeholder:text-muted-foreground"
+            required
+          />
+        </div>
+
+        {/* Course selector */}
+        {courses.length > 0 && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Curso relacionado (opcional)</label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/60"
+            >
+              <option value="">Sin curso específico</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="gold"
+            size="sm"
+            disabled={isPending || remaining === 0}
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Enviar consulta
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+// ─── Question card ─────────────────────────────────────────────────────────────
+
+function QuestionCard({
+  question,
+  isAdmin,
+  currentUserId,
+}: {
+  question: StudentQuestion;
+  isAdmin: boolean;
+  currentUserId?: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [showAnswerForm, setShowAnswerForm] = useState(false);
+
+  const answer = question.student_question_answers?.[0];
+  const isOwn = currentUserId === question.user_id;
+  const colors = STATUS_COLORS[question.status];
+
+  return (
+    <div className={`rounded-xl border bg-card shadow-soft transition-shadow hover:shadow-elegant ${
+      question.is_featured ? "border-primary/40" : "border-border"
+    }`}>
+      <div className="p-5">
+        {/* Header row */}
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              {question.is_featured && (
+                <span className="inline-flex items-center gap-1 text-primary">
+                  <Pin className="h-3 w-3" /> Destacada
+                </span>
+              )}
+              <span>{question.author?.name ?? "Alumna"}</span>
+              {question.course && (
+                <>
+                  <span>·</span>
+                  <span className="text-primary">{question.course.title}</span>
+                </>
+              )}
+              <span>·</span>
+              <span>{new Date(question.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+              {isOwn && <span className="rounded bg-secondary px-1.5 py-0.5">Tu consulta</span>}
+            </div>
+            <p className="mt-1.5 font-serif text-base">{question.title}</p>
+          </div>
+
+          {/* Status badge */}
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${colors.badge}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
+            {STATUS_LABELS[question.status]}
+          </span>
+        </div>
+
+        {/* Body (expandable) */}
+        <div className={`mt-3 text-sm text-muted-foreground ${!expanded ? "line-clamp-3" : ""}`}>
+          {question.body}
+        </div>
+        {question.body.length > 200 && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 flex items-center gap-1 text-[11px] text-primary hover:underline"
+          >
+            {expanded ? <><ChevronUp className="h-3 w-3" /> Ver menos</> : <><ChevronDown className="h-3 w-3" /> Ver completa</>}
+          </button>
+        )}
+
+        {/* Official answer */}
+        {answer && (
+          <div className="mt-4 rounded-lg border border-primary/20 bg-gradient-cream p-4">
+            <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <MessageSquare className="h-3.5 w-3.5" /> Respuesta oficial de la docente
+              <span className="ml-auto font-normal normal-case tracking-normal text-muted-foreground">
+                {new Date(answer.updated_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
+            </p>
+            <p className="text-sm leading-relaxed">{answer.body}</p>
+          </div>
+        )}
+
+        {/* Admin controls */}
+        {isAdmin && (
+          <AdminControls
+            question={question}
+            answer={answer}
+            showAnswerForm={showAnswerForm}
+            onToggleAnswerForm={() => setShowAnswerForm((v) => !v)}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function Publicacion({
-  pinned, tipo, titulo, autor, texto, reacciones, respuestas,
+// ─── Admin controls ────────────────────────────────────────────────────────────
+
+function AdminControls({
+  question,
+  answer,
+  showAnswerForm,
+  onToggleAnswerForm,
 }: {
-  pinned?: boolean; tipo: string; titulo: string; autor: string; texto: string; reacciones: number; respuestas: number;
+  question: StudentQuestion;
+  answer?: StudentQuestion["student_question_answers"][0];
+  showAnswerForm: boolean;
+  onToggleAnswerForm: () => void;
+}) {
+  const [answerBody, setAnswerBody] = useState(answer?.body ?? "");
+  const [answerError, setAnswerError] = useState("");
+
+  const { mutateAsync: answerQ, isPending: answeringQ } = useAnswerQuestion();
+  const { mutateAsync: updateQ, isPending: updatingQ } = useUpdateQuestion();
+  const { mutateAsync: deleteQ, isPending: deletingQ } = useDeleteQuestion();
+
+  const { user } = useAuth();
+
+  const handleAnswer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAnswerError("");
+    const b = answerBody.trim();
+    if (!b) return setAnswerError("La respuesta no puede estar vacía.");
+    if (b.length > 2000) return setAnswerError("Máximo 2000 caracteres.");
+    try {
+      await answerQ({ questionId: question.id, teacherId: user!.id, body: b });
+      onToggleAnswerForm();
+    } catch (err: unknown) {
+      setAnswerError(err instanceof Error ? err.message : "Error al guardar la respuesta.");
+    }
+  };
+
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Admin:</span>
+
+        <Button
+          variant="outlineGold"
+          size="sm"
+          onClick={onToggleAnswerForm}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {answer ? "Editar respuesta" : "Responder"}
+        </Button>
+
+        {question.status !== "closed" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={updatingQ}
+            onClick={() => updateQ({ questionId: question.id, status: "closed" })}
+          >
+            {updatingQ ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Cerrar"}
+          </Button>
+        )}
+        {question.status === "closed" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={updatingQ}
+            onClick={() => updateQ({ questionId: question.id, status: "pending" })}
+          >
+            {updatingQ ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Reabrir"}
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={updatingQ}
+          onClick={() => updateQ({ questionId: question.id, isFeatured: !question.is_featured })}
+          title={question.is_featured ? "Quitar destacada" : "Marcar como destacada"}
+        >
+          <StarIcon className={`h-3.5 w-3.5 ${question.is_featured ? "fill-primary text-primary" : ""}`} />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={deletingQ}
+          className="ml-auto text-destructive hover:text-destructive"
+          onClick={() => {
+            if (confirm("¿Eliminar esta consulta? Esta acción no se puede deshacer.")) {
+              deleteQ(question.id);
+            }
+          }}
+        >
+          {deletingQ ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+
+      {/* Answer form */}
+      {showAnswerForm && (
+        <form onSubmit={handleAnswer} className="mt-4 space-y-3">
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">
+                {answer ? "Editar respuesta oficial" : "Respuesta oficial de la docente"}
+              </label>
+              <span className={`text-[10px] ${answerBody.length > 2000 ? "text-destructive" : "text-muted-foreground"}`}>
+                {answerBody.length}/2000
+              </span>
+            </div>
+            <textarea
+              value={answerBody}
+              onChange={(e) => setAnswerBody(e.target.value)}
+              rows={4}
+              maxLength={2020}
+              placeholder="Escribí la respuesta oficial para esta consulta..."
+              className="mt-1 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/60 placeholder:text-muted-foreground"
+            />
+          </div>
+          {answerError && (
+            <p className="text-xs text-destructive">{answerError}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={onToggleAnswerForm}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="gold" size="sm" disabled={answeringQ}>
+              {answeringQ ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {answer ? "Actualizar respuesta" : "Publicar respuesta"}
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// ─── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({
+  statusFilter,
+  canPost,
+  onNewQuestion,
+}: {
+  statusFilter: QuestionStatus | "all";
+  canPost: boolean;
+  onNewQuestion: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-        {pinned && <Pin className="h-3 w-3 text-primary" />}
-        <span className="uppercase tracking-wider text-primary">{tipo}</span>
-        <span>•</span>
-        <span>{autor}</span>
-      </div>
-      <p className="mt-2 font-serif text-base">{titulo}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{texto}</p>
-      <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> {reacciones}</span>
-        <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {respuestas} respuestas</span>
-      </div>
+    <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+      <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground" />
+      <p className="mt-4 font-serif text-lg">No hay consultas</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {statusFilter !== "all"
+          ? `No hay consultas con estado "${STATUS_LABELS[statusFilter]}".`
+          : "Todavía no hay consultas publicadas."}
+      </p>
+      {canPost && (
+        <Button variant="gold" className="mt-5" onClick={onNewQuestion}>
+          <Send className="h-4 w-4" /> Hacer la primera consulta
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ─── Stat chip ─────────────────────────────────────────────────────────────────
+
+function StatChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-black/40 px-3 py-2 text-right backdrop-blur">
+      <p className="font-serif text-xl leading-none">{value}</p>
+      <p className="text-[10px] uppercase tracking-wider text-white/70">{label}</p>
     </div>
   );
 }
