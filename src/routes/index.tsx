@@ -117,7 +117,7 @@ function Hero() {
                 { icon: Smartphone, label: "Desde celular" },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="text-[10px]">
-                  <Icon className="h-3 w-3 text-primary" />
+                  <Icon className="h-3 w-3 text-[var(--rose-gold)]" />
                   <p className="mt-0.5 leading-tight">{label}</p>
                 </div>
               ))}
@@ -168,7 +168,7 @@ function ValueProps() {
               <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[var(--nude)] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-50" />
 
               {/* Número decorativo grande al fondo */}
-              <span aria-hidden className="absolute -right-1 -top-3 select-none font-serif text-7xl leading-none text-primary/10 transition-colors group-hover:text-primary/20">
+              <span aria-hidden className="absolute -right-1 -top-3 select-none font-serif text-7xl leading-none text-[var(--rose-gold)]/20 transition-colors group-hover:text-[var(--rose-gold)]/35">
                 {accent}
               </span>
 
@@ -184,7 +184,7 @@ function ValueProps() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
 
               {/* línea dorada inferior animada */}
-              <span aria-hidden className="absolute inset-x-7 bottom-0 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover:scale-x-100" />
+              <span aria-hidden className="absolute inset-x-7 bottom-0 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-[var(--rose-gold)] to-transparent transition-transform duration-500 group-hover:scale-x-100" />
             </article>
             </AnimateIn>
           ))}
