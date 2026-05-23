@@ -6,7 +6,9 @@ import { resolveCourseImage, type CourseRow } from "@/hooks/useCourses";
 export function CourseCard({ course }: { course: CourseRow }) {
   const img = resolveCourseImage(course.image_path);
   return (
-    <article className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-[var(--blush)] bg-card shadow-soft transition-all hover:shadow-elegant hover:-translate-y-0.5 hover:border-primary/40">
+    <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-[var(--blush)] bg-card shadow-soft transition-all hover:shadow-elegant hover:-translate-y-0.5 hover:border-primary/40">
+      {/* Línea dorada champagne superior */}
+      <span aria-hidden className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--rose-gold)]/60 to-transparent" />
       <Link to="/curso/$slug" params={{ slug: course.slug }} className="relative block aspect-[16/7] overflow-hidden bg-muted">
         {img && (
           <img src={img} alt={course.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -27,7 +29,7 @@ export function CourseCard({ course }: { course: CourseRow }) {
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <div>
             <p className="text-[10px] text-muted-foreground">Desde</p>
-            <p className="font-serif text-base">USD {course.price}</p>
+            <p className="font-serif text-base text-[var(--rose-gold)]">USD {course.price}</p>
           </div>
           <Button variant="outlineGold" size="sm" asChild>
             <Link to="/curso/$slug" params={{ slug: course.slug }}>Ver curso</Link>

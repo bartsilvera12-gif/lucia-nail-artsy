@@ -139,12 +139,13 @@
   --ring:   oklch(0.697 0.046 35);               /* focus ring rose champagne */
 
   /* ── Gradientes & sombras ─────────────────────────────── */
-  --gradient-gold:  linear-gradient(135deg, oklch(0.886 0.030 40) 0%, oklch(0.697 0.046 35) 45%, oklch(0.555 0.060 30) 100%);
+  /* Gradiente dorado champagne cálido — para íconos, halo hero, botón hero */
+  --gradient-gold:  linear-gradient(135deg, oklch(0.910 0.042 78) 0%, oklch(0.718 0.075 70) 45%, oklch(0.575 0.068 65) 100%);
   --gradient-nude:  linear-gradient(135deg, oklch(0.930 0.022 55) 0%, oklch(0.779 0.047 52) 100%);
   --gradient-cream: linear-gradient(180deg, oklch(0.993 0.004 78), oklch(0.985 0.006 76));
   --shadow-soft:    0 1px 2px rgb(36 33 30 / 0.04), 0 8px 24px -8px rgb(195 154 139 / 0.10);
   --shadow-elegant: 0 20px 60px -20px rgb(195 154 139 / 0.20);
-  --shadow-gold:    0 10px 30px -10px rgb(195 154 139 / 0.40);
+  --shadow-gold:    0 10px 30px -10px rgb(196 160 96 / 0.42);
 
   /* ── Charts ───────────────────────────────────────────── */
   --chart-1: oklch(0.697 0.046 35);   /* rose champagne */
@@ -237,7 +238,7 @@
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-gold { box-shadow: var(--shadow-gold); }
   .gold-divider {
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    background: linear-gradient(90deg, transparent, oklch(0.718 0.075 70), transparent);
     height: 1px;
   }
   .nude-divider {
