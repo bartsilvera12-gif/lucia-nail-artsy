@@ -66,6 +66,8 @@
   --color-cream: var(--cream);
   --color-beige: var(--beige);
   --color-nude: var(--nude);
+  --color-blush: var(--blush);
+  --color-rose-gold: var(--rose-gold);
   --color-taupe: var(--taupe);
   --color-sage: var(--sage);
   --color-charcoal: var(--charcoal);
@@ -79,22 +81,26 @@
   /*
    * ══════════════════════════════════════════════════════════
    * Paleta oficial Lucía Rojas Studio
-   * Ivory · Sand · Champagne Gold · Rose Nude · Charcoal · Taupe · Sage
+   * Ivory · Sand Suave · Champagne Suave · Blush · Rose Gold · Nude · Charcoal
    * ══════════════════════════════════════════════════════════
    */
 
-  /* Dorado champagne — #C6A04A */
-  --gold:       oklch(0.714 0.108 74);   /* champagne principal */
-  --gold-soft:  oklch(0.858 0.065 78);   /* champagne claro (highlights) */
-  --gold-deep:  oklch(0.565 0.095 68);   /* bronce profundo */
-  --gold-hover: oklch(0.625 0.098 72);   /* hover dorado — #B08C3E */
+  /* Champagne suave — #BFA27A (menos amarillo, más cálido) */
+  --gold:       oklch(0.700 0.057 78);   /* champagne suave principal */
+  --gold-soft:  oklch(0.870 0.032 76);   /* champagne claro (highlights) */
+  --gold-deep:  oklch(0.555 0.065 70);   /* bronce profundo */
+  --gold-hover: oklch(0.620 0.055 75);   /* hover champagne */
 
   /* Fondos de marca */
   --cream:  oklch(0.979 0.009 86);       /* marfil cálido — #FAF7F0 */
-  --beige:  oklch(0.924 0.025 80);       /* arena — #EFE5D6 */
+  --beige:  oklch(0.926 0.018 70);       /* arena suave — #F3E8DE */
 
   /* Acento femenino — #D8B7A0 */
-  --nude:   oklch(0.779 0.047 52);       /* rosa nude */
+  --nude:      oklch(0.779 0.047 52);    /* rosa nude */
+  /* Blush suave — #E8CEC3 */
+  --blush:     oklch(0.862 0.030 40);    /* blush rosado */
+  /* Rose gold — #C39A8B */
+  --rose-gold: oklch(0.697 0.046 35);    /* rose gold suave */
 
   /* Textos */
   --charcoal: oklch(0.169 0.009 52);     /* negro carbón — #24211E */
@@ -113,10 +119,10 @@
   --popover:            oklch(1 0 0);
   --popover-foreground: oklch(0.169 0.009 52);
 
-  --primary:            oklch(0.714 0.108 74);   /* champagne */
-  --primary-foreground: oklch(0.169 0.009 52);   /* carbón sobre dorado */
+  --primary:            oklch(0.700 0.057 78);   /* champagne suave */
+  --primary-foreground: oklch(0.169 0.009 52);   /* carbón sobre champagne */
 
-  --secondary:            oklch(0.940 0.020 80);  /* arena suave — secciones alternadas */
+  --secondary:            oklch(0.926 0.018 70);  /* arena suave #F3E8DE */
   --secondary-foreground: oklch(0.169 0.009 52);
 
   --muted:            oklch(0.958 0.014 82);
@@ -128,34 +134,34 @@
   --destructive:            oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.979 0.009 86);
 
-  --border: oklch(0.908 0.028 76);               /* borde arena cálido */
-  --input:  oklch(0.908 0.028 76);
-  --ring:   oklch(0.714 0.108 74);               /* focus ring champagne */
+  --border: oklch(0.908 0.022 72);               /* borde arena suave */
+  --input:  oklch(0.908 0.022 72);
+  --ring:   oklch(0.700 0.057 78);               /* focus ring champagne suave */
 
   /* ── Gradientes & sombras ─────────────────────────────── */
-  --gradient-gold:  linear-gradient(135deg, oklch(0.858 0.065 78) 0%, oklch(0.714 0.108 74) 45%, oklch(0.565 0.095 68) 100%);
+  --gradient-gold:  linear-gradient(135deg, oklch(0.870 0.032 76) 0%, oklch(0.700 0.057 78) 45%, oklch(0.555 0.065 70) 100%);
   --gradient-nude:  linear-gradient(135deg, oklch(0.930 0.022 55) 0%, oklch(0.779 0.047 52) 100%);
   --gradient-cream: linear-gradient(180deg, oklch(0.985 0.007 88), oklch(0.972 0.009 84));
-  --shadow-soft:    0 1px 2px rgb(36 33 30 / 0.04), 0 8px 24px -8px rgb(130 100 58 / 0.12);
-  --shadow-elegant: 0 20px 60px -20px rgb(130 100 58 / 0.22);
-  --shadow-gold:    0 10px 30px -10px rgb(198 160 74 / 0.40);
+  --shadow-soft:    0 1px 2px rgb(36 33 30 / 0.04), 0 8px 24px -8px rgb(120 95 65 / 0.10);
+  --shadow-elegant: 0 20px 60px -20px rgb(120 95 65 / 0.18);
+  --shadow-gold:    0 10px 30px -10px rgb(191 162 122 / 0.38);
 
   /* ── Charts ───────────────────────────────────────────── */
-  --chart-1: oklch(0.714 0.108 74);   /* champagne */
+  --chart-1: oklch(0.700 0.057 78);   /* champagne suave */
   --chart-2: oklch(0.779 0.047 52);   /* nude */
-  --chart-3: oklch(0.704 0.025 117);  /* sage */
-  --chart-4: oklch(0.858 0.065 78);   /* gold-soft */
-  --chart-5: oklch(0.565 0.095 68);   /* gold-deep */
+  --chart-3: oklch(0.697 0.046 35);   /* rose gold */
+  --chart-4: oklch(0.870 0.032 76);   /* gold-soft */
+  --chart-5: oklch(0.555 0.065 70);   /* gold-deep */
 
   /* ── Sidebar — alineado a la marca ───────────────────── */
   --sidebar:                    oklch(0.979 0.009 86);   /* marfil */
   --sidebar-foreground:         oklch(0.169 0.009 52);   /* carbón */
-  --sidebar-primary:            oklch(0.714 0.108 74);   /* champagne */
+  --sidebar-primary:            oklch(0.700 0.057 78);   /* champagne suave */
   --sidebar-primary-foreground: oklch(0.979 0.009 86);   /* marfil */
-  --sidebar-accent:             oklch(0.924 0.025 80);   /* arena */
+  --sidebar-accent:             oklch(0.926 0.018 70);   /* arena suave */
   --sidebar-accent-foreground:  oklch(0.169 0.009 52);   /* carbón */
-  --sidebar-border:             oklch(0.908 0.028 76);   /* borde arena */
-  --sidebar-ring:               oklch(0.714 0.108 74);   /* champagne */
+  --sidebar-border:             oklch(0.908 0.022 72);   /* borde arena */
+  --sidebar-ring:               oklch(0.700 0.057 78);   /* champagne suave */
 }
 
 .dark {
@@ -169,11 +175,11 @@
   --popover:            oklch(0.215 0.010 54);
   --popover-foreground: oklch(0.979 0.009 86);
 
-  --primary:            oklch(0.714 0.108 74);   /* champagne */
+  --primary:            oklch(0.700 0.057 78);   /* champagne suave */
   --primary-foreground: oklch(0.169 0.009 52);   /* carbón */
 
   --secondary:            oklch(0.240 0.012 55);
-  --secondary-foreground: oklch(0.924 0.025 80);
+  --secondary-foreground: oklch(0.926 0.018 70);
 
   --muted:            oklch(0.235 0.010 54);
   --muted-foreground: oklch(0.650 0.018 68);
@@ -186,22 +192,22 @@
 
   --border: oklch(1 0 0 / 10%);
   --input:  oklch(1 0 0 / 15%);
-  --ring:   oklch(0.714 0.108 74);   /* champagne */
+  --ring:   oklch(0.700 0.057 78);   /* champagne suave */
 
-  --chart-1: oklch(0.714 0.108 74);
+  --chart-1: oklch(0.700 0.057 78);
   --chart-2: oklch(0.779 0.047 52);
-  --chart-3: oklch(0.704 0.025 117);
-  --chart-4: oklch(0.858 0.065 78);
-  --chart-5: oklch(0.565 0.095 68);
+  --chart-3: oklch(0.697 0.046 35);
+  --chart-4: oklch(0.870 0.032 76);
+  --chart-5: oklch(0.555 0.065 70);
 
   --sidebar:                    oklch(0.200 0.010 52);
-  --sidebar-foreground:         oklch(0.924 0.025 80);
-  --sidebar-primary:            oklch(0.714 0.108 74);
+  --sidebar-foreground:         oklch(0.926 0.018 70);
+  --sidebar-primary:            oklch(0.700 0.057 78);
   --sidebar-primary-foreground: oklch(0.169 0.009 52);
   --sidebar-accent:             oklch(0.240 0.012 55);
-  --sidebar-accent-foreground:  oklch(0.924 0.025 80);
+  --sidebar-accent-foreground:  oklch(0.926 0.018 70);
   --sidebar-border:             oklch(1 0 0 / 10%);
-  --sidebar-ring:               oklch(0.714 0.108 74);
+  --sidebar-ring:               oklch(0.700 0.057 78);
 }
 
 @layer base {
@@ -250,8 +256,8 @@
 }
 
 @keyframes lrs-glow {
-  0%, 100% { filter: drop-shadow(0 12px 32px rgba(196, 161, 90, 0.25)); }
-  50%      { filter: drop-shadow(0 22px 44px rgba(196, 161, 90, 0.45)); }
+  0%, 100% { filter: drop-shadow(0 12px 32px rgba(191, 162, 122, 0.25)); }
+  50%      { filter: drop-shadow(0 22px 44px rgba(191, 162, 122, 0.45)); }
 }
 
 @keyframes lrs-fade-up {

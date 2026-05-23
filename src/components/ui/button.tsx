@@ -20,7 +20,7 @@ const buttonVariants = cva(
         gold: "bg-primary text-primary-foreground hover:bg-[var(--gold-hover)] shadow-soft",
         outlineGold: "border border-primary/60 text-foreground hover:bg-primary/10 hover:border-primary",
         nude: "bg-[var(--nude)] text-foreground shadow-soft hover:bg-[var(--nude)]/75 font-medium",
-        outlineNude: "border border-[var(--nude)] bg-background text-foreground hover:bg-[var(--nude)]/20 hover:border-[var(--nude)]",
+        outlineNude: "border border-[var(--nude)] bg-background text-foreground hover:bg-[var(--blush)]/50 hover:border-[var(--rose-gold)]",
         dark: "bg-foreground text-background hover:bg-foreground/90 shadow-soft",
       },
       size: {

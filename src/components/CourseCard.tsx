@@ -12,7 +12,7 @@ export function CourseCard({ course }: { course: CourseRow }) {
           <img src={img} alt={course.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
         )}
         {course.included_in_membership && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--nude)]/90 px-2 py-0.5 text-[10px] font-medium backdrop-blur text-foreground">
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--blush)]/90 px-2 py-0.5 text-[10px] font-medium backdrop-blur text-foreground">
             <Crown className="h-2.5 w-2.5 text-primary" /> Membresía
           </span>
         )}
