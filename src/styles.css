@@ -107,19 +107,19 @@
   --background: oklch(0.979 0.009 86);   /* marfil #FAF7F0 */
   --foreground: oklch(0.169 0.009 52);   /* carbón #24211E */
 
-  --card:            oklch(0.996 0.004 86);  /* blanco marfil suave */
+  --card:            oklch(1 0 0);           /* blanco puro — contraste sobre fondo marfil */
   --card-foreground: oklch(0.169 0.009 52);
 
-  --popover:            oklch(0.996 0.004 86);
+  --popover:            oklch(1 0 0);
   --popover-foreground: oklch(0.169 0.009 52);
 
   --primary:            oklch(0.714 0.108 74);   /* champagne */
   --primary-foreground: oklch(0.169 0.009 52);   /* carbón sobre dorado */
 
-  --secondary:            oklch(0.924 0.025 80);  /* arena #EFE5D6 */
+  --secondary:            oklch(0.940 0.020 80);  /* arena suave — secciones alternadas */
   --secondary-foreground: oklch(0.169 0.009 52);
 
-  --muted:            oklch(0.950 0.018 82);
+  --muted:            oklch(0.958 0.014 82);
   --muted-foreground: oklch(0.491 0.021 62);     /* taupe #7A6F63 */
 
   --accent:            oklch(0.900 0.035 72);    /* champagne muy claro */
@@ -134,7 +134,7 @@
 
   /* ── Gradientes & sombras ─────────────────────────────── */
   --gradient-gold:  linear-gradient(135deg, oklch(0.858 0.065 78) 0%, oklch(0.714 0.108 74) 45%, oklch(0.565 0.095 68) 100%);
-  --gradient-cream: linear-gradient(180deg, oklch(0.985 0.007 88), oklch(0.924 0.025 80));
+  --gradient-cream: linear-gradient(180deg, oklch(0.985 0.007 88), oklch(0.955 0.015 82));
   --shadow-soft:    0 1px 2px rgb(36 33 30 / 0.04), 0 8px 24px -8px rgb(130 100 58 / 0.12);
   --shadow-elegant: 0 20px 60px -20px rgb(130 100 58 / 0.22);
   --shadow-gold:    0 10px 30px -10px rgb(198 160 74 / 0.40);

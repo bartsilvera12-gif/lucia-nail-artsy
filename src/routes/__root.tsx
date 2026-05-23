@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import iconUrl from "@/assets/logo/lucia_rojas_icono_LR_transparente_512px.png";
 import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
@@ -83,10 +84,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@luciarojasstudio" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: iconUrl, type: "image/png" },
+      { rel: "apple-touch-icon", href: iconUrl },
     ],
   }),
   shellComponent: RootShell,
