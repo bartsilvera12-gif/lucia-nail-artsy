@@ -56,8 +56,8 @@ function FaqPage() {
   return (
     <PublicLayout>
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream">
-        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-25 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -right-32 top-1/3 h-96 w-96 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-gold opacity-15 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-32 top-1/3 h-96 w-96 rounded-full bg-[var(--nude)] opacity-25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div aria-hidden className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl gold-divider" />
 
@@ -85,8 +85,8 @@ function FaqPage() {
 
           <div className="absolute inset-y-0 right-0 hidden w-1/2 lg:flex lg:items-center lg:justify-center">
             <AnimateIn direction="fade" duration={900} delay={200} className="relative flex h-full w-full items-center justify-center">
-              <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-gold opacity-40" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
-              <div aria-hidden className="absolute h-[72%] w-[72%] border border-primary/40 bg-transparent" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
+              <div aria-hidden className="absolute h-[65%] w-[65%] bg-gradient-nude opacity-35" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
+              <div aria-hidden className="absolute h-[72%] w-[72%] border border-[var(--nude)]/50 bg-transparent" style={{ borderRadius: "30% 70% 50% 50% / 30% 50% 50% 70%" }} />
               <AnimateIn direction="left" delay={350} duration={800} className="relative h-full w-full">
                 <img src={limaImg} alt="" className="h-full w-full object-contain object-center" />
               </AnimateIn>
@@ -111,8 +111,8 @@ function FaqPage() {
                       className={
                         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all " +
                         (active
-                          ? "bg-gradient-gold text-foreground shadow-gold"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground")
+                          ? "bg-[var(--nude)] text-foreground shadow-soft"
+                          : "text-muted-foreground hover:bg-[var(--nude)]/20 hover:text-foreground")
                       }
                     >
                       <Icon className="h-4 w-4" />
@@ -126,7 +126,7 @@ function FaqPage() {
               </nav>
             </div>
 
-            <div className="rounded-2xl border border-primary/30 bg-gradient-cream p-5 shadow-soft">
+            <div className="rounded-2xl border border-[var(--nude)]/40 bg-[var(--nude)]/10 p-5 shadow-soft">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-gold shadow-gold">
                 <MessageCircle className="h-5 w-5 text-foreground" strokeWidth={1.75} />
               </div>
