@@ -1,0 +1,139 @@
+/**
+ * pagopar.ts — Frontend client for Pagopar API endpoints
+ *
+ * All calls go through our own server (/api/pagopar/*).
+ * The private token NEVER leaves the server.
+ *
+ * Used only in Lucía Rojas Studio flows — completely isolated from
+ * any other payment provider.
+ */
+
+export interface PagoparComprador {
+  nombre: string;
+  apellido: string;
+  documento_identidad: string;
+  email: string;
+  celular: string;
+  ciudad: string;
+  departamento: string;
+  direccion: string;
+}
+
+export interface PagoparProducto {
+  nombre: string;
+  cantidad: number;
+  precio_usd: number;       // Server converts to PYG using configured rate
+  descripcion: string;
+  categoria_pagopar: string; // e.g. "Servicios" or "Cursos online"
+  url_imagen?: string;
+}
+
+export interface IniciarPayload {
+  monto_usd: number;
+  descripcion: string;
+  comprador: PagoparComprador;
+  productos: PagoparProducto[];
+  user_id: string;
+  curso_id?: string;
+  plan_id?: string;
+}
+
+export interface IniciarResult {
+  hash_pedido: string;
+  url_pago: string;
+  id_pedido: string;
+}
+
+export interface EstadoResult {
+  resultado: boolean;
+  respuesta: {
+    pagado: boolean;
+    id_pedido?: string;
+    hash_pedido?: string;
+    monto_total?: string;
+    [key: string]: unknown;
+  } | string;
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+
+/**
+ * Initiates a Pagopar transaction.
+ * Requires a valid Supabase JWT in the Authorization header (user must be logged in).
+ */
+export async function pagoparIniciar(
+  payload: IniciarPayload,
+  supabaseJwt: string,
+): Promise<{ data: IniciarResult | null; error: string | null }> {
+  try {
+    const res = await fetch("/api/pagopar/iniciar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${supabaseJwt}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) return { data: null, error: json.error || `Error ${res.status}` };
+    return { data: json as IniciarResult, error: null };
+  } catch (e) {
+    return { data: null, error: "No se pudo conectar con el servidor de pagos" };
+  }
+}
+
+/**
+ * Queries the real payment status from Pagopar.
+ * Safe to call from the result page (private token stays server-side).
+ */
+export async function pagoparEstado(
+  hash_pedido: string,
+): Promise<{ data: EstadoResult | null; error: string | null }> {
+  try {
+    const res = await fetch("/api/pagopar/estado", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hash_pedido }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) return { data: null, error: json.error || `Error ${res.status}` };
+    return { data: json as EstadoResult, error: null };
+  } catch (e) {
+    return { data: null, error: "No se pudo consultar el estado del pago" };
+  }
+}
+
+// ── SessionStorage context ────────────────────────────────────────────────────
+// Stores purchase context so the result page knows what to grant access to.
+
+export interface PagoparContext {
+  tipo: "course" | "plan";
+  curso_id?: string;
+  curso_slug?: string;
+  plan_id?: string;
+  precio_usd: number;
+  hash_pedido: string;
+}
+
+const STORAGE_KEY = "lrs_pagopar_ctx";
+
+export function savePagoparContext(ctx: PagoparContext) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(ctx));
+  } catch { /* ignore */ }
+}
+
+export function loadPagoparContext(): PagoparContext | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PagoparContext) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPagoparContext() {
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+}

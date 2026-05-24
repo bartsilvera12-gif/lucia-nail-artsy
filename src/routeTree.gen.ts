@@ -23,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerSlugRouteImport } from './routes/ver.$slug'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
+import { Route as PagoparResultadoHashRouteImport } from './routes/pagopar/resultado.$hash'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -94,6 +95,11 @@ const CursoSlugRoute = CursoSlugRouteImport.update({
   path: '/curso/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagoparResultadoHashRoute = PagoparResultadoHashRouteImport.update({
+  id: '/pagopar/resultado/$hash',
+  path: '/pagopar/resultado/$hash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
+  '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
+  '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
+  '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/pagopar/resultado/$hash'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/pagopar/resultado/$hash'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/pagopar/resultado/$hash'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   CursoSlugRoute: typeof CursoSlugRoute
   VerSlugRoute: typeof VerSlugRoute
+  PagoparResultadoHashRoute: typeof PagoparResultadoHashRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CursoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pagopar/resultado/$hash': {
+      id: '/pagopar/resultado/$hash'
+      path: '/pagopar/resultado/$hash'
+      fullPath: '/pagopar/resultado/$hash'
+      preLoaderRoute: typeof PagoparResultadoHashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   CursoSlugRoute: CursoSlugRoute,
   VerSlugRoute: VerSlugRoute,
+  PagoparResultadoHashRoute: PagoparResultadoHashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
