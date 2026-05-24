@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Crown, BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle, AlertTriangle, Calendar, RefreshCw, Shield } from "lucide-react";
+import { BookOpen, Award, Settings, LogOut, ArrowRight, PlayCircle, Shield, Users } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/panel")({
 });
 
 function PanelPage() {
-  const { user, loading, isAuthenticated, hasMembership, isMembershipExpired, daysUntilExpiry, hasAccessTo, subscribe, logout, isAdmin } = useAuth();
+  const { user, loading, isAuthenticated, hasAccessTo, logout, isAdmin } = useAuth();
   const { data: courses = [] } = useCourses();
   const { data: progress = [] } = useMyProgress();
 
@@ -53,50 +53,14 @@ function PanelPage() {
                   <Link to="/admin"><Shield className="h-4 w-4" /> Admin</Link>
                 </Button>
               )}
-              {hasMembership ? (
-                <GoldBadge><Crown className="h-3 w-3" /> Membresía {user.plan === "yearly" ? "anual" : "mensual"} activa</GoldBadge>
-              ) : isMembershipExpired ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
-                  <AlertTriangle className="h-3 w-3" /> Membresía vencida
-                </span>
-              ) : (
-                <Button variant="gold" size="sm" asChild>
-                  <Link to="/planes"><Crown className="h-4 w-4" /> Activar membresía</Link>
-                </Button>
-              )}
               <Button variant="ghost" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4" /> Salir
               </Button>
             </div>
-            {hasMembership && user.subscriptionExpiresAt && (
-              <p className="text-[11px] text-muted-foreground">
-                <Calendar className="mr-1 inline h-3 w-3" />
-                Renueva el {formatExpiry(user.subscriptionExpiresAt)}
-                {typeof daysUntilExpiry === "number" && daysUntilExpiry <= 7 && (
-                  <span className="ml-1 text-destructive">· vence en {daysUntilExpiry} día{daysUntilExpiry === 1 ? "" : "s"}</span>
-                )}
-              </p>
-            )}
           </div>
         </div>
       </section>
 
-      {isMembershipExpired && (
-        <section className="border-b border-destructive/30 bg-destructive/5">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
-              <div>
-                <p className="font-medium">Tu membresía venció el {formatExpiry(user.subscriptionExpiresAt)}</p>
-                <p className="text-xs text-muted-foreground">Perdiste el acceso a los cursos incluidos en la membresía. Renová para volver a verlos.</p>
-              </div>
-            </div>
-            <Button variant="gold" size="sm" onClick={() => subscribe(user.plan === "yearly" ? "yearly" : "monthly")}>
-              <RefreshCw className="h-4 w-4" /> Renovar plan
-            </Button>
-          </div>
-        </section>
-      )}
 
       <section className="py-12">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_280px] lg:px-8">
@@ -110,10 +74,9 @@ function PanelPage() {
               <div className="mt-6 rounded-xl border border-dashed border-border bg-card p-10 text-center">
                 <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />
                 <p className="mt-4 font-serif text-lg">Todavía no tenés cursos activos</p>
-                <p className="mt-2 text-sm text-muted-foreground">Sumate a la membresía o comprá un curso individual para empezar.</p>
+                <p className="mt-2 text-sm text-muted-foreground">Comprá un curso individual para empezar a aprender.</p>
                 <div className="mt-5 flex justify-center gap-2">
-                  <Button variant="gold" asChild><Link to="/planes">Ver planes</Link></Button>
-                  <Button variant="outlineGold" asChild><Link to="/cursos">Explorar cursos</Link></Button>
+                  <Button variant="gold" asChild><Link to="/cursos">Ver cursos</Link></Button>
                 </div>
               </div>
             ) : (
@@ -173,7 +136,7 @@ function PanelPage() {
                         {img && <img src={img} alt="" className="h-14 w-20 rounded object-cover opacity-80" />}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{c.title}</p>
-                          <p className="text-[11px] text-muted-foreground">{c.included_in_membership ? "Incluido con membresía" : `Solo individual · ${formatPYG(c.price)}`}</p>
+                          <p className="text-[11px] text-muted-foreground">{formatPYG(c.price)}</p>
                         </div>
                       </Link>
                     );
@@ -185,18 +148,10 @@ function PanelPage() {
 
           <aside className="space-y-4">
             <SidebarCard icon={Award} title="Certificados" body="Completá un curso al 100% para obtener tu certificado digital." />
-            <SidebarCard
-              icon={Settings}
-              title="Tu cuenta"
-              body={user.plan ? `Plan ${user.plan === "yearly" ? "anual" : "mensual"}${user.subscriptionExpiresAt ? ` · vence ${formatExpiry(user.subscriptionExpiresAt)}` : ""}` : "Sin plan activo"}
-            >
-              <Button variant="ghost" size="sm" asChild className="mt-2 w-full">
-                <Link to="/planes">Gestionar plan</Link>
-              </Button>
-            </SidebarCard>
-            <SidebarCard icon={Crown} title="Espacio de Alumnos" body="Compartí tus avances, hacé preguntas y recibí acompañamiento.">
+            <SidebarCard icon={Settings} title="Tu cuenta" body={user.email ?? ""} />
+            <SidebarCard icon={Users} title="Comunidad" body="Compartí tus avances, hacé preguntas y recibí acompañamiento.">
               <Button variant="outlineGold" size="sm" asChild className="mt-2 w-full">
-                <Link to="/comunidad">Entrar al espacio</Link>
+                <Link to="/comunidad">Entrar a la comunidad</Link>
               </Button>
             </SidebarCard>
           </aside>
@@ -206,7 +161,7 @@ function PanelPage() {
   );
 }
 
-function SidebarCard({ icon: Icon, title, body, children }: { icon: typeof Crown; title: string; body: string; children?: React.ReactNode }) {
+function SidebarCard({ icon: Icon, title, body, children }: { icon: typeof Users; title: string; body: string; children?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-gold">

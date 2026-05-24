@@ -1,9 +1,9 @@
 export const site = {
   name: "Lucía Rojas Studio",
-  tagline: "Academia privada de uñas online",
+  tagline: "Academia de uñas online",
   admin: "Administrada por HorizontesWebIA",
   description:
-    "Cursos online premium de uñas, comunidad privada, certificados y acompañamiento real para tu carrera profesional.",
+    "Cursos online premium de uñas, comunidad de alumnas, certificados y acompañamiento real para tu carrera profesional.",
   email: "hola@luciarojasstudio.com",
   phone: "+54 9 11 0000 0000",
   whatsapp: "+5491100000000",
@@ -13,60 +13,9 @@ export const site = {
   },
 };
 
-// ── NOTA: todos los precios están en Guaraníes (PYG), enteros, sin conversión. ──
-// Actualizar estos valores con los precios reales en PYG.
-export const plans = [
-  {
-    id: "monthly",
-    name: "Membresía Mensual",
-    price: 220000,   // Gs. 220.000 / mes — ajustar según tarifa real
-    period: "/ mes",
-    description: "Acceso completo, renovación mensual flexible.",
-    features: [
-      "Espacio de Alumnos exclusivo",
-      "Cursos incluidos en la membresía",
-      "Bonos descargables",
-      "Certificados al completar",
-      "Cancelás cuando quieras",
-    ],
-    cta: "Empezar mensual",
-    highlighted: false,
-  },
-  {
-    id: "yearly",
-    name: "Membresía Anual",
-    price: 1800000,  // Gs. 1.800.000 / año — ajustar según tarifa real
-    period: "/ año",
-    description: "El mejor precio. Acceso completo durante 12 meses.",
-    features: [
-      "Todo lo del plan mensual",
-      "Ahorrás más del 28%",
-      "Bonos premium exclusivos",
-      "Prioridad en novedades y lanzamientos",
-      "Acceso a sesiones en vivo",
-    ],
-    cta: "Empezar anual",
-    highlighted: true,
-    badge: "Más elegido",
-  },
-  {
-    id: "individual",
-    name: "Curso Individual",
-    price: 0,
-    period: "desde",
-    description: "Comprá el curso que necesitás, sin suscripción.",
-    features: [
-      "Acceso al curso elegido",
-      "Certificado al completar",
-      "Bonos del curso incluidos",
-      "Sin suscripción mensual",
-      "Pago único",
-    ],
-    cta: "Ver cursos",
-    highlighted: false,
-    individualPrice: true,
-  },
-] as const;
+// ── NOTA: precios en Guaraníes (PYG), enteros, sin conversión. ──
+// El modelo es solo compra individual de cursos — sin membresía.
+export const plans = [] as const;
 
 export const testimonials = [
   {
@@ -98,7 +47,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: "¿Los cursos son en vivo o grabados?",
-    a: "Los cursos son grabados para que puedas verlos a tu ritmo, las veces que necesites. Además hacemos sesiones en vivo periódicas para alumnas con membresía activa.",
+    a: "Los cursos son grabados para que puedas verlos a tu ritmo, las veces que necesites. Además hacemos sesiones en vivo periódicamente.",
   },
   {
     q: "¿Cuándo recibo el acceso?",
@@ -113,11 +62,11 @@ export const faqs = [
     a: "Sí. Al completar el 100% de un curso recibís un certificado digital con código único de validación.",
   },
   {
-    q: "¿Qué pasa si cancelo mi suscripción?",
-    a: "Podés cancelar cuando quieras desde tu panel. Mantenés el acceso hasta el final del período pagado.",
+    q: "¿Puedo comprar un curso individual?",
+    a: "Sí. Cada curso tiene su precio individual con acceso permanente. Comprás el que necesitás y es tuyo para siempre.",
   },
   {
-    q: "¿Puedo comprar un curso individual?",
-    a: "Sí. Algunos cursos están disponibles como compra individual con acceso permanente, además de estar incluidos en la membresía.",
+    q: "¿Hay algún costo recurrente?",
+    a: "No. El modelo es de compra individual: pagás una vez y tenés acceso permanente al curso. Sin suscripciones ni cargos automáticos.",
   },
 ];

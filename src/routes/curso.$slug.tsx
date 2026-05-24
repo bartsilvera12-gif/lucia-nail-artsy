@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart, CreditCard } from "lucide-react";
+import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart, CreditCard } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
@@ -127,11 +127,6 @@ function CursoDetailPage() {
                 <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs shadow-soft backdrop-blur">
                   <Clock className="h-3.5 w-3.5 text-primary" /> {course.duration}
                 </span>
-                {course.included_in_membership && (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-gradient-gold px-3 py-1.5 text-xs text-foreground shadow-soft">
-                    <Crown className="h-3.5 w-3.5" /> Incluido en la membresía
-                  </span>
-                )}
               </div>
             </div>
 
@@ -176,11 +171,6 @@ function CursoDetailPage() {
                   ) : (
                     <>
                       <div className="mt-3 space-y-2" id="comprar">
-                        {course.included_in_membership && (
-                          <Button variant="hero" className="w-full" asChild>
-                            <Link to="/planes"><Crown className="h-4 w-4" /> Acceder con membresía</Link>
-                          </Button>
-                        )}
                         <Button
                           variant="outlineGold"
                           className="w-full"
@@ -342,7 +332,7 @@ function CursoDetailPage() {
 
             {!hasAccess && (
               <Button variant="gold" className="mt-5 w-full" asChild>
-                <Link to="/planes">Desbloquear todo <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/cursos">Ver más cursos <ArrowRight className="h-4 w-4" /></Link>
               </Button>
             )}
           </aside>
