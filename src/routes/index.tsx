@@ -20,11 +20,10 @@ import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CourseCard } from "@/components/CourseCard";
-import { PlanCard } from "@/components/PlanCard";
 import { TestimonialCard } from "@/components/TestimonialCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { useCourses } from "@/hooks/useCourses";
-import { plans, testimonials, faqs } from "@/data/site";
+import { testimonials, faqs } from "@/data/site";
 import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
@@ -216,7 +215,7 @@ function SkoolStyle() {
           </ul>
           <div className="mt-8">
             <Button variant="gold" asChild>
-              <Link to="/planes">Acceder con membresía</Link>
+              <Link to="/cursos">Ver cursos</Link>
             </Button>
           </div>
         </div>
@@ -452,31 +451,30 @@ function Benefits() {
 function PlansSection() {
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
-      {/* decoración */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-20 -z-10 h-96 w-[90%] -translate-x-1/2 rounded-full bg-gradient-gold opacity-10 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
         <AnimateIn direction="up">
           <SectionHeader
-            eyebrow="Planes"
-            title="Elegí cómo aprender"
-            description="Membresía con todo incluido o compra individual del curso que necesites. Cancelás cuando quieras."
+            eyebrow="Cursos individuales"
+            title="Elegí el curso que necesitás"
+            description="Pago único, acceso permanente. Sin suscripciones ni cargos automáticos."
           />
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Button variant="hero" size="xl" asChild>
+              <Link to="/cursos">Ver todos los cursos <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+            <Button variant="outlineGold" size="xl" asChild>
+              <Link to="/registro">Crear cuenta gratis</Link>
+            </Button>
+          </div>
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Acceso inmediato después del pago
+            <span className="mx-3">·</span>
+            <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Pago seguro en Guaraníes
+          </p>
         </AnimateIn>
-        <div className="mt-16 grid items-stretch gap-8 lg:grid-cols-3 lg:gap-6">
-          {plans.map((plan, i) => (
-            <AnimateIn key={plan.id} direction="up" delay={i * 120}>
-              <PlanCard {...plan} to={plan.id === "individual" ? "/cursos" : `/registro?plan=${plan.id}`} />
-            </AnimateIn>
-          ))}
-        </div>
-
-        <p className="mt-10 text-center text-xs text-muted-foreground">
-          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Acceso inmediato después del pago
-          <span className="mx-3">·</span>
-          <CheckCircle2 className="mr-1 inline h-3 w-3 text-primary" /> Pago seguro
-        </p>
       </div>
     </section>
   );

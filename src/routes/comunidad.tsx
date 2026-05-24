@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Users, Star, Calendar, BookOpen, Crown, ArrowRight, CheckCircle2,
+  Users, Star, Calendar, BookOpen, ArrowRight, CheckCircle2,
   Bell, Lock, Send, Loader2, MessageSquare, ChevronDown, ChevronUp,
   Star as StarIcon, X, AlertCircle, Pin,
 } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { formatPYG } from "@/lib/format";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { AnimateIn } from "@/components/AnimateIn";
@@ -44,7 +43,7 @@ export const Route = createFileRoute("/comunidad")({
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 function EspacioAlumnasPage() {
-  const { user, isAuthenticated, hasMembership, isAdmin, loading } = useAuth();
+  const { user, isAuthenticated, isAdmin, loading } = useAuth();
   const { data: courses = [] } = useCourses();
 
   const [statusFilter, setStatusFilter] = useState<QuestionStatus | "all">("all");
@@ -53,7 +52,7 @@ function EspacioAlumnasPage() {
   const [showForm, setShowForm] = useState(false);
 
   const canRead = isAuthenticated;
-  const canPost = isAuthenticated && (hasMembership || isAdmin);
+  const canPost = isAuthenticated;
 
   const { data: questionsData, isLoading: questionsLoading } = useStudentQuestions({
     status: statusFilter,
@@ -142,7 +141,6 @@ function EspacioAlumnasPage() {
               {/* Sidebar card — adapts to auth state */}
               <HeroSidebar
                 isAuthenticated={isAuthenticated}
-                hasMembership={hasMembership}
                 isAdmin={isAdmin}
                 loading={loading}
                 userName={user?.name}
@@ -182,11 +180,10 @@ function EspacioAlumnasPage() {
                 <div className="mb-8 flex items-start gap-3 rounded-xl border border-primary/30 bg-secondary/40 p-5">
                   <Lock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <div className="flex-1">
-                    <p className="font-medium">Podés leer las consultas, pero necesitás membresía activa para enviar las tuyas.</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Acceso inmediato tras activar tu plan.</p>
+                    <p className="font-medium">Iniciá sesión para participar en la comunidad.</p>
                   </div>
                   <Button variant="gold" size="sm" asChild>
-                    <Link to="/planes"><Crown className="h-4 w-4" /> Activar</Link>
+                    <Link to="/login">Iniciar sesión</Link>
                   </Button>
                 </div>
               )}
@@ -289,21 +286,21 @@ function EspacioAlumnasPage() {
         </div>
       </section>
 
-      {/* ── CTA final ────────────────────────────────────────────────────── */}
-      {!hasMembership && !isAdmin && (
+      {/* ── CTA final — solo para no autenticadas ────────────────────────── */}
+      {!isAuthenticated && (
         <section className="bg-secondary/40 py-16">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-            <GoldBadge><Crown className="h-3 w-3" /> Acceso exclusivo</GoldBadge>
-            <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Sumate al espacio de alumnas</h2>
+            <GoldBadge><Sparkles className="h-3 w-3" /> Comunidad de alumnas</GoldBadge>
+            <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Unite al espacio de alumnas</h2>
             <p className="mt-4 text-base text-muted-foreground">
-              Acceso inmediato a cursos, materiales y acompañamiento real de la docente.
+              Hacé preguntas, compartí tu progreso y recibí acompañamiento real de la docente.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button variant="hero" size="xl" asChild>
-                <Link to="/registro?plan=monthly">Activar membresía <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/registro">Crear cuenta gratis <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button variant="outlineGold" size="xl" asChild>
-                <Link to="/planes">Ver planes</Link>
+                <Link to="/cursos">Ver cursos</Link>
               </Button>
             </div>
           </div>
@@ -316,10 +313,9 @@ function EspacioAlumnasPage() {
 // ─── Hero sidebar ──────────────────────────────────────────────────────────────
 
 function HeroSidebar({
-  isAuthenticated, hasMembership, isAdmin, loading, userName, todayCount, onNewQuestion,
+  isAuthenticated, isAdmin, loading, userName, todayCount, onNewQuestion,
 }: {
   isAuthenticated: boolean;
-  hasMembership: boolean;
   isAdmin: boolean;
   loading: boolean;
   userName?: string;
@@ -337,33 +333,13 @@ function HeroSidebar({
   if (!isAuthenticated) {
     return (
       <aside className="rounded-xl border border-border bg-secondary/40 p-5">
-        <p className="font-serif text-lg">Acceso exclusivo</p>
-        <p className="mt-1 text-xs text-muted-foreground">Iniciá sesión para ver y enviar consultas.</p>
+        <p className="font-serif text-lg">Comunidad de alumnas</p>
+        <p className="mt-1 text-xs text-muted-foreground">Iniciá sesión para participar en la comunidad.</p>
         <Button variant="gold" className="mt-5 w-full" asChild>
           <Link to="/login"><Lock className="h-4 w-4" /> Iniciar sesión</Link>
         </Button>
         <Button variant="ghost" className="mt-2 w-full" asChild>
-          <Link to="/planes">Ver planes</Link>
-        </Button>
-        <p className="mt-3 text-center text-[10px] text-muted-foreground">Cancelás cuando quieras</p>
-      </aside>
-    );
-  }
-
-  if (!hasMembership && !isAdmin) {
-    return (
-      <aside className="rounded-xl border border-border bg-secondary/40 p-5">
-        <p className="font-serif text-lg">Membresía activa</p>
-        <p className="mt-1 text-xs text-muted-foreground">Necesitás membresía para enviar consultas.</p>
-        <div className="mt-4 flex items-end gap-1">
-          <span className="font-serif text-3xl">{formatPYG(220000)}</span>
-          <span className="pb-1 text-xs text-muted-foreground">/ mes</span>
-        </div>
-        <Button variant="gold" className="mt-5 w-full" asChild>
-          <Link to="/registro?plan=monthly"><Crown className="h-4 w-4" /> Activar membresía</Link>
-        </Button>
-        <Button variant="ghost" className="mt-2 w-full" asChild>
-          <Link to="/planes">Ver todos los planes</Link>
+          <Link to="/registro">Crear cuenta gratis</Link>
         </Button>
       </aside>
     );
@@ -373,7 +349,7 @@ function HeroSidebar({
 
   return (
     <aside className="rounded-xl border border-primary/40 bg-secondary/40 p-5">
-      <GoldBadge><Crown className="h-3 w-3" /> {isAdmin ? "Docente / Admin" : "Membresía activa"}</GoldBadge>
+      <GoldBadge><Sparkles className="h-3 w-3" /> {isAdmin ? "Docente / Admin" : "Alumna"}</GoldBadge>
       <p className="mt-3 font-serif text-lg">
         Bienvenida{userName ? `, ${userName.split(" ")[0]}` : ""}
       </p>
@@ -414,15 +390,14 @@ function NonAuthBanner() {
         <Lock className="mx-auto h-10 w-10 text-muted-foreground/50" />
         <h3 className="mt-5 font-serif text-xl">Contenido exclusivo para alumnas</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Iniciá sesión para ver las consultas publicadas y enviar las tuyas.
-          <br />Si todavía no tenés membresía, podés ver los planes disponibles.
+          Iniciá sesión o creá tu cuenta gratuita para ver las consultas y enviar las tuyas.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button variant="gold" asChild>
             <Link to="/login">Iniciar sesión <ArrowRight className="h-4 w-4" /></Link>
           </Button>
           <Button variant="outlineGold" asChild>
-            <Link to="/planes">Ver planes</Link>
+            <Link to="/registro">Crear cuenta gratis</Link>
           </Button>
         </div>
       </div>
