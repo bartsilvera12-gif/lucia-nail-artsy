@@ -65,7 +65,7 @@ function PlanesPage() {
               </AnimateIn>
             ))}
           </div>
-          <p className="mt-10 text-center text-xs text-muted-foreground">Precios en USD. Podés cancelar la membresía cuando quieras desde tu panel.</p>
+          <p className="mt-10 text-center text-xs text-muted-foreground">Precios en Guaraníes (₲). Podés cancelar la membresía cuando quieras desde tu panel.</p>
         </div>
       </section>
 

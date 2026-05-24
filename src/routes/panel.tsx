@@ -4,6 +4,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
 import { useAuth, formatExpiry } from "@/lib/auth";
+import { formatPYG } from "@/lib/format";
 import { useCourses, resolveCourseImage, useMyProgress } from "@/hooks/useCourses";
 
 export const Route = createFileRoute("/panel")({
@@ -172,7 +173,7 @@ function PanelPage() {
                         {img && <img src={img} alt="" className="h-14 w-20 rounded object-cover opacity-80" />}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{c.title}</p>
-                          <p className="text-[11px] text-muted-foreground">{c.included_in_membership ? "Incluido con membresía" : `Solo individual · USD ${c.price}`}</p>
+                          <p className="text-[11px] text-muted-foreground">{c.included_in_membership ? "Incluido con membresía" : `Solo individual · ${formatPYG(c.price)}`}</p>
                         </div>
                       </Link>
                     );

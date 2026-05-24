@@ -9,6 +9,7 @@ import { Paywall } from "@/components/Paywall";
 import { PagoparCheckout } from "@/components/PagoparCheckout";
 import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
+import { formatPYG } from "@/lib/format";
 
 interface CursoSearch { buy?: boolean }
 
@@ -148,7 +149,7 @@ function CursoDetailPage() {
 
                 <div className="relative p-4">
                   <div className="flex items-end gap-1">
-                    <span className="font-serif text-2xl tracking-tight">USD {course.price}</span>
+                    <span className="font-serif text-2xl tracking-tight">{formatPYG(course.price)}</span>
                     <span className="pb-0.5 text-xs text-muted-foreground">pago único</span>
                   </div>
 
@@ -359,7 +360,7 @@ function CursoDetailPage() {
             slug:        course.slug,
             nombre:      course.title,
             descripcion: course.short_description || course.title,
-            precio_usd:  Number(course.price),
+            precio_pyg:  Number(course.price), // ya en guaraníes, sin conversión
             imagen_url:  heroImg ?? undefined,
           }}
           defaultEmail={user?.email}

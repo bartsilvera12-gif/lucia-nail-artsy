@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth, type PlanId } from "@/lib/auth";
 import { plans } from "@/data/site";
+import { formatPYG } from "@/lib/format";
 
 interface RegistroSearch {
   plan?: PlanId;
@@ -78,7 +79,7 @@ function RegistroPage() {
                     <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-serif text-xl">USD {p.price}</p>
+                    <p className="font-serif text-xl">{formatPYG(p.price)}</p>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.period}</p>
                   </div>
                 </button>
@@ -122,7 +123,7 @@ function RegistroPage() {
 
             {selectedPlan && !isIndividualCheckout && (
               <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
-                <p className="font-medium">{selectedPlan.name} · USD {selectedPlan.price}{selectedPlan.period}</p>
+                <p className="font-medium">{selectedPlan.name} · {formatPYG(selectedPlan.price)}{selectedPlan.period}</p>
                 <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                   {selectedPlan.features.slice(0, 3).map((f) => (
                     <li key={f} className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {f}</li>

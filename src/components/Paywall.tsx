@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Lock, Sparkles, Crown, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoldBadge } from "@/components/Badge";
+import { formatPYG } from "@/lib/format";
 
 interface PaywallProps {
   courseSlug: string;
@@ -40,7 +41,7 @@ export function Paywall({ courseSlug, courseTitle, price, includedInMembership, 
           )}
           <Button variant="outlineGold" asChild>
             <Link to="/curso/$slug" params={{ slug: courseSlug }} hash="comprar">
-              Comprar curso ${price}
+              Comprar curso {formatPYG(price)}
             </Link>
           </Button>
           {!authenticated && (
