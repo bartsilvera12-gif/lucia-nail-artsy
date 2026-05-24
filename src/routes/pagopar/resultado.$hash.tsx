@@ -71,7 +71,8 @@ function ResultadoPagoPage() {
           const userId = sessionData.session?.user?.id;
           if (!userId) return;
 
-          if (ctx.tipo === "course" && ctx.curso_id) {
+          // Pagopar solo aplica para compra de cursos individuales
+          if (ctx.curso_id) {
             // Check if already has access (idempotent)
             const { data: existing } = await supabase
               .from("course_purchases")
@@ -95,46 +96,6 @@ function ResultadoPagoPage() {
                 .eq("user_id", userId)
                 .eq("reference_id", ctx.hash_pedido)
                 .eq("method", "pagopar");
-            }
-          } else if (ctx.tipo === "plan" && ctx.plan_id) {
-            // Get plan duration
-            const { data: planRow } = await supabase
-              .from("plans")
-              .select("price,duration_days")
-              .eq("id", ctx.plan_id)
-              .maybeSingle<{ price: number; duration_days: number }>();
-
-            if (planRow) {
-              const now = new Date();
-              const expires = new Date(now);
-              expires.setDate(expires.getDate() + planRow.duration_days);
-
-              // Cancel previous active subscriptions
-              await supabase
-                .from("subscriptions")
-                .update({ status: "canceled" })
-                .eq("user_id", userId)
-                .eq("status", "active");
-
-              const { data: newSub } = await supabase
-                .from("subscriptions")
-                .insert({
-                  user_id:        userId,
-                  plan:           ctx.plan_id,
-                  started_at:     now.toISOString(),
-                  expires_at:     expires.toISOString(),
-                  status:         "active",
-                  payment_method: "pagopar",
-                })
-                .select("id")
-                .single<{ id: string }>();
-
-              if (newSub) {
-                await supabase.from("payments").update({ status: "succeeded", reference_id: newSub.id })
-                  .eq("user_id", userId)
-                  .eq("reference_id", ctx.hash_pedido)
-                  .eq("method", "pagopar");
-              }
             }
           }
 

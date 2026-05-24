@@ -34,8 +34,7 @@ export interface IniciarPayload {
   comprador: PagoparComprador;
   productos: PagoparProducto[];
   user_id: string;
-  curso_id?: string;
-  plan_id?: string;
+  curso_id: string;          // Pagopar solo aplica para compra de cursos individuales
 }
 
 export interface IniciarResult {
@@ -109,10 +108,9 @@ export async function pagoparEstado(
 // Stores purchase context so the result page knows what to grant access to.
 
 export interface PagoparContext {
-  tipo: "course" | "plan";
-  curso_id?: string;
+  tipo: "course";        // Pagopar solo para cursos individuales
+  curso_id: string;
   curso_slug?: string;
-  plan_id?: string;
   precio_pyg: number;   // monto en Guaraníes, sin conversión
   hash_pedido: string;
 }
