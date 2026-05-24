@@ -11,7 +11,7 @@ export function Footer() {
           {/* Logo + tagline */}
           <div>
             <Link to="/" aria-label={site.name}>
-              <img src={logoUrl} alt={site.name} className="h-16 w-auto" />
+              <img src={logoUrl} alt={site.name} className="h-28 w-auto" />
             </Link>
             <p className="mt-2 text-xs text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
           </div>
