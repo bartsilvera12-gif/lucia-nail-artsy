@@ -157,12 +157,27 @@ async function handlePagoparIniciar(req, res) {
 
   const { monto_pyg, curso_id, plan_id, descripcion, comprador, productos, user_id } = body;
 
-  // Validate — monto must be a positive integer in PYG, no conversion
+  // Validate — monto must be a positive integer in PYG (Guaraníes), no conversion
   const montoInt = Math.round(Number(monto_pyg));
   if (!monto_pyg || montoInt <= 0) {
     jsonError(res, 400, "monto_pyg requerido: monto en Guaraníes, entero positivo");
     return;
   }
+
+  // ⚠️ Sanity check: valores menores a 1000 son casi seguramente dólares (precio viejo en USD).
+  // El campo `price` en Supabase debe estar en Guaraníes. Actualizarlo desde el panel admin.
+  if (montoInt < 1000) {
+    console.warn(
+      `[pagopar/iniciar] ADVERTENCIA: monto_pyg=${montoInt} parece ser USD, no PYG. ` +
+      `Actualizá el precio del curso en el panel admin (Gs. reales, ej: 89000 en lugar de 89).`
+    );
+    jsonError(res, 400,
+      `monto_pyg=${montoInt} parece ser un precio en dólares, no en Guaraníes. ` +
+      `El precio del curso debe estar en PYG (ej: 89000). Actualizalo desde el panel admin.`
+    );
+    return;
+  }
+
   if (!comprador || !productos?.length || !user_id) {
     jsonError(res, 400, "Campos requeridos: monto_pyg, comprador, productos, user_id");
     return;
@@ -178,6 +193,13 @@ async function handlePagoparIniciar(req, res) {
   }
 
   const id_pedido_local = `lrs-${user_id.slice(0, 8)}-${Date.now()}`;
+
+  // Log incoming request (no private token)
+  console.log(`[pagopar/iniciar] monto_pyg=${montoInt} productos=${productos.length} id_pedido=${id_pedido_local} user=${user_id}`);
+  productos.forEach((p, i) => {
+    const precioUnitario = Math.round(Number(p.precio_pyg || montoInt));
+    console.log(`[pagopar/iniciar]   producto[${i}] nombre="${p.nombre}" precio_pyg=${precioUnitario} cantidad=${p.cantidad || 1}`);
+  });
 
   // Token: sha1(public + monto_en_guaranies + private) — sent as exact integer string
   const token = sha1(PAGOPAR_PUBLIC + String(montoInt) + PAGOPAR_PRIVATE);
@@ -212,15 +234,39 @@ async function handlePagoparIniciar(req, res) {
     return;
   }
 
+  // Log Pagopar response (resultado + hash only, no private data)
+  console.log(`[pagopar/iniciar] Pagopar resultado=${pagoparRes?.resultado} respuesta=${JSON.stringify(pagoparRes?.respuesta)}`);
+
   if (!pagoparRes?.resultado) {
     console.error("[pagopar/iniciar] error de Pagopar:", JSON.stringify(pagoparRes));
-    jsonError(res, 502, pagoparRes?.respuesta || "Error iniciando transacción en Pagopar");
+    jsonError(res, 502,
+      typeof pagoparRes?.respuesta === "string" && pagoparRes.respuesta
+        ? pagoparRes.respuesta
+        : "No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador."
+    );
     return;
   }
 
+  // ── Validate hash returned by Pagopar ────────────────────────────────────────
+  // Pagopar devuelve el hash en `respuesta` cuando resultado=true.
+  // Si por alguna razón es falsy, boolean, o la string "false"/"null", NO redirigimos.
   const hash_pedido = pagoparRes.respuesta;
+  const hashIsValid =
+    typeof hash_pedido === "string" &&
+    hash_pedido.length > 4 &&
+    hash_pedido !== "false" &&
+    hash_pedido !== "null" &&
+    hash_pedido !== "undefined" &&
+    hash_pedido !== "0";
+
+  if (!hashIsValid) {
+    console.error(`[pagopar/iniciar] hash inválido recibido de Pagopar: ${JSON.stringify(hash_pedido)}`);
+    jsonError(res, 502, "No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador.");
+    return;
+  }
+
   const url_pago = `https://www.pagopar.com/pagos/${hash_pedido}`;
-  console.log(`[pagopar/iniciar] hash=${hash_pedido} monto_pyg=${montoInt} user=${user_id}`);
+  console.log(`[pagopar/iniciar] ✓ hash=${hash_pedido} url=${url_pago}`);
 
   // Record pending payment in Supabase using the user's JWT (respects RLS)
   const jwt = (req.headers.authorization || "").replace("Bearer ", "") || undefined;
