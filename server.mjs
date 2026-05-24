@@ -112,16 +112,28 @@ const server = createServer((req, res) => {
       const contentType = MIME[ext] || "application/octet-stream";
       const isHashed = pathname.startsWith("/assets/");
 
+      // No Content-Length — let Node use chunked transfer encoding.
+      // Explicit Content-Length + Hostinger's reverse proxy can mismatch
+      // if the proxy applies compression, truncating JS/CSS in the browser.
       res.writeHead(200, {
         "Content-Type": contentType,
-        "Content-Length": stat.size,
         "Cache-Control": isHashed
           ? "public, max-age=31536000, immutable"
           : "no-cache",
       });
 
-      // Stream the file — never block the event loop with readFileSync on assets
-      createReadStream(filePath).pipe(res);
+      const stream = createReadStream(filePath);
+
+      // If the stream errors (e.g. file deleted mid-transfer), end cleanly
+      stream.on("error", (err) => {
+        console.error(`[lrs] stream error for ${pathname}:`, err.message);
+        if (!res.headersSent) {
+          res.writeHead(500, { "Content-Type": "text/plain" });
+        }
+        res.end();
+      });
+
+      stream.pipe(res);
       return;
     }
   }
