@@ -43,7 +43,7 @@ export function Footer() {
 
         <div className="mt-5 flex flex-col items-center gap-1 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} {site.name}. Todos los derechos reservados.</span>
-          <span>
+          <span className="pr-14 sm:pr-16">
             Desarrollado por{" "}
             <a href="https://neura.com.py" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
               Neura
