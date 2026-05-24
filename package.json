@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "postbuild": "node scripts/copy-server.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "start": "node server.mjs",
+    "start:dist": "node dist/server.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
