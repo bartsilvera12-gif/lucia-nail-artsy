@@ -1,45 +1,67 @@
-// server.mjs — Node.js static file server for SPA deployment on Hostinger
-//
-// Auto-detects the client folder so the same file works in two positions:
-//   • dist/server.mjs  → serves ./client   (dist/client)
-//   • root/server.mjs  → serves ./dist/client
+// server.mjs — Node.js HTTP server for Hostinger SPA deployment
 //
 // Hostinger config:
 //   Build command   : npm run build
 //   Output directory: dist
 //   Entry file      : server.mjs
 //   Node version    : 20.x
+//
+// After build, postbuild copies this file to dist/server.mjs.
+// Hostinger then runs:  node server.mjs  inside dist/
+//
+// Path resolution strategy:
+//   __dirname  ← resolved from import.meta.url  (reliable regardless of cwd)
+//   Candidates tested in order:
+//     1. {__dirname}/client          ← running from dist/
+//     2. {__dirname}/dist/client     ← running from project root
+//     3. {__dirname}/../dist/client  ← running from a sub-folder of project root
+//     4. {cwd}/dist/client           ← cwd-based fallback
 import { createServer } from "node:http";
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, statSync, readFileSync } from "node:fs";
 import { join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// ── Path resolution ──────────────────────────────────────────────────────────
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
 
-// ── Locate the client dist folder ────────────────────────────────────────────
-// Running from dist/ → __dirname ends in dist/ → sibling "client" exists
-// Running from root/ → __dirname ends in root/ → "dist/client" exists
-const CLIENT_DIST = existsSync(join(__dirname, "client"))
-  ? join(__dirname, "client")
-  : join(__dirname, "dist", "client");
+const candidates = [
+  join(__dirname, "client"),
+  join(__dirname, "dist", "client"),
+  join(__dirname, "..", "dist", "client"),
+  join(process.cwd(), "dist", "client"),
+];
 
-const INDEX_PATH = join(CLIENT_DIST, "index.html");
+const CLIENT_DIST = candidates.find(
+  (p) => existsSync(p) && existsSync(join(p, "index.html"))
+);
 
 // ── Startup diagnostics ──────────────────────────────────────────────────────
-console.log(`[lrs] PORT           : ${PORT}`);
-console.log(`[lrs] Static folder  : ${CLIENT_DIST}`);
-console.log(`[lrs] index.html     : ${existsSync(INDEX_PATH) ? "✓ found" : "✗ NOT FOUND — build may be missing"}`);
+console.log("[lrs] ── Startup diagnostics ─────────────────────────────────");
+console.log("[lrs] __dirname (import.meta.url) :", __dirname);
+console.log("[lrs] process.cwd()               :", process.cwd());
+console.log("[lrs] PORT                         :", PORT);
+candidates.forEach((p, i) => {
+  const found = existsSync(p) && existsSync(join(p, "index.html"));
+  console.log(`[lrs] candidate[${i}] ${found ? "✓" : "✗"} : ${p}`);
+});
 
-if (!existsSync(CLIENT_DIST)) {
-  console.error("[lrs] ERROR: client folder not found. Run 'npm run build' first.");
+if (!CLIENT_DIST) {
+  console.error("[lrs] FATAL: no client/index.html found in any candidate path.");
+  console.error("[lrs] Run 'npm run build' first.");
   process.exit(1);
 }
 
+const INDEX_PATH = join(CLIENT_DIST, "index.html");
+console.log("[lrs] Using static folder :", CLIENT_DIST);
+console.log("[lrs] index.html          :", existsSync(INDEX_PATH) ? "✓ found" : "✗ MISSING");
+console.log("[lrs] ─────────────────────────────────────────────────────────");
+
+// Pre-read index.html once (it's small and served frequently)
 const INDEX_HTML = readFileSync(INDEX_PATH);
 
 // ── MIME types ───────────────────────────────────────────────────────────────
-const MIME_TYPES = {
+const MIME = {
   ".html":  "text/html; charset=utf-8",
   ".js":    "application/javascript; charset=utf-8",
   ".mjs":   "application/javascript; charset=utf-8",
@@ -55,9 +77,10 @@ const MIME_TYPES = {
   ".woff":  "font/woff",
   ".woff2": "font/woff2",
   ".ttf":   "font/ttf",
-  ".map":   "application/json",
+  ".otf":   "font/otf",
   ".txt":   "text/plain",
   ".xml":   "application/xml",
+  ".map":   "application/json",
 };
 
 // ── HTTP server ───────────────────────────────────────────────────────────────
@@ -71,32 +94,51 @@ const server = createServer((req, res) => {
     return;
   }
 
+  // Resolve to absolute path inside CLIENT_DIST
   const filePath = join(CLIENT_DIST, pathname);
 
   // Path traversal guard
   if (!filePath.startsWith(CLIENT_DIST)) {
-    res.writeHead(403);
+    res.writeHead(403, { "Content-Type": "text/plain" });
     res.end("Forbidden");
     return;
   }
 
-  // Serve static file if it exists on disk
-  if (existsSync(filePath) && statSync(filePath).isFile()) {
-    const ext = extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || "application/octet-stream";
-    // Hashed assets (/assets/*) get long-lived immutable cache
-    const isHashed = pathname.startsWith("/assets/");
-    res.writeHead(200, {
-      "Content-Type": contentType,
-      "Cache-Control": isHashed
-        ? "public, max-age=31536000, immutable"
-        : "no-cache",
-    });
-    res.end(readFileSync(filePath));
+  // Try to serve the file if it exists on disk
+  if (existsSync(filePath)) {
+    const stat = statSync(filePath);
+    if (stat.isFile()) {
+      const ext = extname(filePath).toLowerCase();
+      const contentType = MIME[ext] || "application/octet-stream";
+      const isHashed = pathname.startsWith("/assets/");
+
+      res.writeHead(200, {
+        "Content-Type": contentType,
+        "Content-Length": stat.size,
+        "Cache-Control": isHashed
+          ? "public, max-age=31536000, immutable"
+          : "no-cache",
+      });
+
+      // Stream the file — never block the event loop with readFileSync on assets
+      createReadStream(filePath).pipe(res);
+      return;
+    }
+  }
+
+  // ── Asset 404 (don't fall through to SPA for /assets/* or known static exts) ──
+  const isStaticPath =
+    pathname.startsWith("/assets/") ||
+    pathname.startsWith("/favicon") ||
+    /\.(js|mjs|css|png|jpg|jpeg|webp|gif|svg|ico|woff|woff2|ttf|otf|map)$/.test(pathname);
+
+  if (isStaticPath) {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not found");
     return;
   }
 
-  // SPA fallback — unknown routes return index.html so the client router takes over
+  // SPA fallback — all app routes (/, /cursos, /planes, …) get index.html
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "no-cache",
