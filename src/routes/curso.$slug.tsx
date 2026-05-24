@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart } from "lucide-react";
+import { Clock, BookOpen, Crown, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart, CreditCard } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Paywall } from "@/components/Paywall";
+import { PagoparCheckout } from "@/components/PagoparCheckout";
 import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
@@ -46,6 +47,9 @@ function CursoDetailPage() {
       purchaseCourse(courseId, Number(data.course.price));
     }
   }, [search.buy, isAuthenticated, user, data, purchaseCourse]);
+
+  // Pagopar checkout dialog state (isolated — does not affect existing purchase flow)
+  const [pagoparOpen, setPagoparOpen] = useState(false);
 
   // Pedir OTP de VdoCipher para la lección actual
   const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
@@ -189,6 +193,21 @@ function CursoDetailPage() {
                         >
                           <ShoppingCart className="h-4 w-4" /> Comprar individual
                         </Button>
+
+                        {/* Pagopar — pago online con tarjeta/transferencia (Paraguay) */}
+                        <Button
+                          variant="outline"
+                          className="w-full text-sm"
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}#comprar`)}`;
+                              return;
+                            }
+                            setPagoparOpen(true);
+                          }}
+                        >
+                          <CreditCard className="h-4 w-4" /> Pagar con Pagopar
+                        </Button>
                       </div>
                       <div aria-hidden className="my-4 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
                       <ul className="space-y-2 text-xs">
@@ -328,6 +347,25 @@ function CursoDetailPage() {
           </aside>
         </div>
       </section>
+
+      {/* Pagopar checkout dialog — isolated, does not affect existing purchase flow */}
+      {pagoparOpen && (
+        <PagoparCheckout
+          open={pagoparOpen}
+          onClose={() => setPagoparOpen(false)}
+          item={{
+            tipo:        "course",
+            id:          course.id,
+            slug:        course.slug,
+            nombre:      course.title,
+            descripcion: course.short_description || course.title,
+            precio_usd:  Number(course.price),
+            imagen_url:  heroImg ?? undefined,
+          }}
+          defaultEmail={user?.email}
+          defaultNombre={user?.name}
+        />
+      )}
     </PublicLayout>
   );
 }
