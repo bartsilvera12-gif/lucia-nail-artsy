@@ -110,7 +110,22 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
     const { data: result, error } = await pagoparIniciar(payload, jwt);
 
     if (error || !result) {
-      setApiError(error || "Error iniciando el pago");
+      setApiError(error || "No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador.");
+      setIsLoading(false);
+      return;
+    }
+
+    // ── Guard: validate hash and URL before redirecting ───────────────────────
+    // Never redirect to /pagos/false, /pagos/null, /pagos/undefined, etc.
+    const hashOk =
+      typeof result.hash_pedido === "string" &&
+      result.hash_pedido.length > 4 &&
+      result.hash_pedido !== "false" &&
+      result.hash_pedido !== "null" &&
+      result.hash_pedido !== "undefined";
+
+    if (!hashOk || !result.url_pago?.includes("/pagos/")) {
+      setApiError("No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador.");
       setIsLoading(false);
       return;
     }
@@ -125,7 +140,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
     };
     savePagoparContext(ctx);
 
-    // Redirect to Pagopar checkout (same tab)
+    // Redirect to Pagopar checkout (same tab) — only after hash is confirmed valid
     window.location.href = result.url_pago;
   };
 
