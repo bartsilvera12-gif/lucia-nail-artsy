@@ -22,6 +22,8 @@ export const Route = createFileRoute("/registro")({
   component: RegistroPage,
 });
 
+type PlanChoice = PlanId | "free";
+
 function RegistroPage() {
   const { register, subscribe, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -29,18 +31,18 @@ function RegistroPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [plan, setPlan] = useState<PlanId>(search.plan ?? "monthly");
+  const [plan, setPlan] = useState<PlanChoice>(search.plan ?? "free");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const selectedPlan = plans.find((p) => p.id === plan);
   const isIndividualCheckout = !!search.next && !search.plan;
 
-  // Usuario ya autenticado: pasamos directo al cobro
+  // Usuario ya autenticado: pasamos directo al cobro o al panel
   useEffect(() => {
     if (!isAuthenticated) return;
     (async () => {
-      if (search.plan && search.plan !== "individual") {
+      if (search.plan && search.plan !== "individual" && search.plan !== "free") {
         await subscribe(search.plan);
       }
       if (search.next) window.location.href = search.next;
@@ -84,6 +86,20 @@ function RegistroPage() {
                   </div>
                 </button>
               ))}
+              {/* Opción sin pago */}
+              <button
+                type="button"
+                onClick={() => setPlan("free")}
+                className={"flex w-full items-start justify-between gap-4 rounded-xl border p-4 text-left transition-all " + (plan === "free" ? "border-primary bg-card shadow-elegant" : "border-border bg-card/60 hover:bg-card")}
+              >
+                <div>
+                  <p className="font-serif text-base">Solo crear cuenta</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Sin membresía. Explorá la plataforma y comprá cursos cuando quieras.</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-serif text-xl">Gratis</p>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -96,7 +112,7 @@ function RegistroPage() {
               setLoading(true);
               const { error: regError } = await register(email, name, password);
               if (regError) { setLoading(false); setError(regError); return; }
-              if (search.plan && search.plan !== "individual") {
+              if (plan !== "free" && plan !== "individual") {
                 const { error: subError } = await subscribe(plan as Exclude<PlanId, "individual">);
                 if (subError) { setLoading(false); setError(subError); return; }
               }
@@ -121,14 +137,23 @@ function RegistroPage() {
               </div>
             </div>
 
-            {selectedPlan && !isIndividualCheckout && (
+            {!isIndividualCheckout && (
               <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
-                <p className="font-medium">{selectedPlan.name} · {formatPYG(selectedPlan.price)}{selectedPlan.period}</p>
-                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  {selectedPlan.features.slice(0, 3).map((f) => (
-                    <li key={f} className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {f}</li>
-                  ))}
-                </ul>
+                {selectedPlan ? (
+                  <>
+                    <p className="font-medium">{selectedPlan.name} · {formatPYG(selectedPlan.price)}{selectedPlan.period}</p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {selectedPlan.features.slice(0, 3).map((f) => (
+                        <li key={f} className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {f}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium">Sin membresía</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Podés suscribirte desde tu panel en cualquier momento.</p>
+                  </>
+                )}
               </div>
             )}
 
@@ -139,7 +164,7 @@ function RegistroPage() {
             )}
 
             <Button type="submit" variant="gold" className="mt-6 w-full" disabled={loading}>
-              {loading ? "Procesando…" : isIndividualCheckout ? "Crear cuenta y continuar" : "Crear cuenta y pagar"}
+              {loading ? "Procesando…" : isIndividualCheckout ? "Crear cuenta y continuar" : plan === "free" ? "Crear cuenta gratis" : "Crear cuenta y empezar"}
             </Button>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               ¿Ya sos alumna? <Link to="/login" className="text-primary underline">Ingresar</Link>
