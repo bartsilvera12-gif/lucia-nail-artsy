@@ -61,6 +61,18 @@ console.log("[lrs] index.html          :", existsSync(INDEX_PATH) ? "✓ found" 
 const PAGOPAR_PUBLIC  = process.env.PAGOPAR_PUBLIC_TOKEN  || "";
 const PAGOPAR_PRIVATE = process.env.PAGOPAR_PRIVATE_TOKEN || "";
 const PAGOPAR_ENV_VAR = process.env.PAGOPAR_ENV           || "development";
+
+// Pagopar API endpoints. Override with PAGOPAR_API_URL if Pagopar provides a different sandbox.
+// As of 2025 Pagopar does NOT have a separate sandbox URL — tokens differ per environment.
+const PAGOPAR_API_URLS = {
+  production:  "https://api.pagopar.com/api/comercios/2.0/iniciar-transaccion",
+  development: "https://api.pagopar.com/api/comercios/2.0/iniciar-transaccion",
+};
+const PAGOPAR_API_URL =
+  process.env.PAGOPAR_API_URL ||
+  PAGOPAR_API_URLS[PAGOPAR_ENV_VAR] ||
+  PAGOPAR_API_URLS.production;
+
 // Lucía Rojas opera en Guaraníes (PYG). No hay conversión de moneda.
 
 // Supabase (for recording orders — service key required for webhook)
@@ -72,6 +84,8 @@ if (!PAGOPAR_PUBLIC || !PAGOPAR_PRIVATE) {
   console.warn("[pagopar] PAGOPAR_PUBLIC_TOKEN o PAGOPAR_PRIVATE_TOKEN no configurados — endpoints desactivados");
 } else {
   console.log(`[pagopar] env=${PAGOPAR_ENV_VAR} — moneda: PYG (Guaraníes)`);
+  console.log(`[pagopar] API URL: ${PAGOPAR_API_URL}`);
+  console.log(`[pagopar] token_publico length: ${PAGOPAR_PUBLIC.length} chars`);
 }
 if (!SUPA_SERVICE) {
   console.warn("[pagopar] SUPABASE_SERVICE_KEY no configurado — webhook no actualizará DB");
@@ -92,6 +106,20 @@ function jsonOk(res, data) {
 function jsonError(res, status, message) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ error: message }));
+}
+
+// Pagopar-specific error — includes structured response for frontend diagnosis
+function jsonErrorPagopar(res, status, message, pagoparRaw) {
+  const pagopar_respuesta = pagoparRaw?.resultado ?? false;
+  // Extract the human-readable message from Pagopar (various possible fields)
+  const pagopar_mensaje =
+    (typeof pagoparRaw?.respuesta === "string" ? pagoparRaw.respuesta : null) ||
+    pagoparRaw?.mensaje ||
+    pagoparRaw?.error ||
+    pagoparRaw?.descripcion ||
+    null;
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: message, pagopar_respuesta, pagopar_mensaje }));
 }
 
 async function readJsonBody(req) {
@@ -195,14 +223,21 @@ async function handlePagoparIniciar(req, res) {
   const id_pedido_local = `lrs-${user_id.slice(0, 8)}-${Date.now()}`;
 
   // Log incoming request (no private token)
-  console.log(`[pagopar/iniciar] monto_pyg=${montoInt} productos=${productos.length} id_pedido=${id_pedido_local} user=${user_id}`);
+  console.log(`[pagopar/iniciar] ── nuevo pedido ────────────────────────────`);
+  console.log(`[pagopar/iniciar]   id_pedido     : ${id_pedido_local}`);
+  console.log(`[pagopar/iniciar]   monto_total   : ${montoInt} PYG`);
+  console.log(`[pagopar/iniciar]   productos     : ${productos.length}`);
+  console.log(`[pagopar/iniciar]   ambiente      : ${PAGOPAR_ENV_VAR}`);
+  console.log(`[pagopar/iniciar]   api_url       : ${PAGOPAR_API_URL}`);
+  console.log(`[pagopar/iniciar]   token_publico : ${PAGOPAR_PUBLIC.slice(0, 6)}... (${PAGOPAR_PUBLIC.length} chars)`);
   productos.forEach((p, i) => {
     const precioUnitario = Math.round(Number(p.precio_pyg || montoInt));
-    console.log(`[pagopar/iniciar]   producto[${i}] nombre="${p.nombre}" precio_pyg=${precioUnitario} cantidad=${p.cantidad || 1}`);
+    console.log(`[pagopar/iniciar]   producto[${i}]  nombre="${p.nombre}" precio_pyg=${precioUnitario} cantidad=${p.cantidad || 1}`);
   });
 
   // Token: sha1(public + monto_en_guaranies + private) — sent as exact integer string
   const token = sha1(PAGOPAR_PUBLIC + String(montoInt) + PAGOPAR_PRIVATE);
+  console.log(`[pagopar/iniciar]   token sha1    : ${token.slice(0, 8)}... (generado OK)`);
 
   const pagoparPayload = {
     token,
@@ -221,28 +256,38 @@ async function handlePagoparIniciar(req, res) {
   };
 
   let pagoparRes;
+  let pagoparHttpStatus;
   try {
-    const r = await fetch("https://api.pagopar.com/api/comercios/2.0/iniciar-transaccion", {
+    console.log(`[pagopar/iniciar] → enviando request a Pagopar...`);
+    const r = await fetch(PAGOPAR_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pagoparPayload),
     });
-    pagoparRes = await r.json();
+    pagoparHttpStatus = r.status;
+    const rawText = await r.text();
+    console.log(`[pagopar/iniciar] ← HTTP ${pagoparHttpStatus} respuesta raw: ${rawText.slice(0, 500)}`);
+    try { pagoparRes = JSON.parse(rawText); } catch { pagoparRes = { _raw: rawText }; }
   } catch (err) {
     console.error("[pagopar/iniciar] fetch error:", err.message);
-    jsonError(res, 502, "No se pudo conectar con Pagopar");
+    jsonError(res, 502, "No se pudo conectar con Pagopar: " + err.message);
     return;
   }
 
-  // Log Pagopar response (resultado + hash only, no private data)
-  console.log(`[pagopar/iniciar] Pagopar resultado=${pagoparRes?.resultado} respuesta=${JSON.stringify(pagoparRes?.respuesta)}`);
+  // Log full Pagopar response (no private tokens in output)
+  console.log(`[pagopar/iniciar] ← Pagopar resultado=${pagoparRes?.resultado} respuesta=${JSON.stringify(pagoparRes?.respuesta)}`);
+  if (pagoparRes && Object.keys(pagoparRes).length > 0) {
+    const safeRes = { ...pagoparRes };
+    delete safeRes.token;           // never log tokens
+    delete safeRes.token_privado;
+    console.log(`[pagopar/iniciar] ← respuesta completa:`, JSON.stringify(safeRes));
+  }
 
   if (!pagoparRes?.resultado) {
-    console.error("[pagopar/iniciar] error de Pagopar:", JSON.stringify(pagoparRes));
-    jsonError(res, 502,
-      typeof pagoparRes?.respuesta === "string" && pagoparRes.respuesta
-        ? pagoparRes.respuesta
-        : "No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador."
+    console.error(`[pagopar/iniciar] ✗ Pagopar rechazó el pedido (HTTP ${pagoparHttpStatus})`);
+    jsonErrorPagopar(res, 502,
+      "No se pudo crear el pedido en Pagopar.",
+      pagoparRes
     );
     return;
   }
@@ -260,8 +305,11 @@ async function handlePagoparIniciar(req, res) {
     hash_pedido !== "0";
 
   if (!hashIsValid) {
-    console.error(`[pagopar/iniciar] hash inválido recibido de Pagopar: ${JSON.stringify(hash_pedido)}`);
-    jsonError(res, 502, "No se pudo crear el pedido en Pagopar. Verificá el monto y los datos del comprador.");
+    console.error(`[pagopar/iniciar] ✗ hash inválido de Pagopar: ${JSON.stringify(hash_pedido)}`);
+    jsonErrorPagopar(res, 502,
+      "Pagopar no devolvió un hash válido.",
+      pagoparRes
+    );
     return;
   }
 

@@ -75,7 +75,14 @@ export async function pagoparIniciar(
     });
 
     const json = await res.json();
-    if (!res.ok) return { data: null, error: json.error || `Error ${res.status}` };
+    if (!res.ok) {
+      // Build a human-readable error that includes Pagopar's own message when available
+      let msg = json.error || `Error ${res.status}`;
+      if (json.pagopar_mensaje && typeof json.pagopar_mensaje === "string") {
+        msg = `${msg} — Pagopar dice: "${json.pagopar_mensaje}"`;
+      }
+      return { data: null, error: msg };
+    }
     return { data: json as IniciarResult, error: null };
   } catch (e) {
     return { data: null, error: "No se pudo conectar con el servidor de pagos" };
