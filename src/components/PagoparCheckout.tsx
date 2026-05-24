@@ -31,9 +31,9 @@ type FormData = z.infer<typeof schema>;
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Course or plan being purchased */
+  /** Curso individual a comprar — Pagopar solo se usa para cursos */
   item: {
-    tipo: "course" | "plan";
+    tipo: "course";
     id: string;
     slug?: string;
     nombre: string;
@@ -83,8 +83,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
       monto_pyg:   Math.round(item.precio_pyg), // PYG exacto, sin conversión
       descripcion: `${item.nombre} — Lucía Rojas Studio`,
       user_id:     userId,
-      ...(item.tipo === "course" && { curso_id: item.id }),
-      ...(item.tipo === "plan"   && { plan_id:  item.id }),
+      curso_id:    item.id,
       comprador: {
         nombre:              data.nombre,
         apellido:            data.apellido,
@@ -132,11 +131,11 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
 
     // Save context so the result page knows what to grant access to
     const ctx: PagoparContext = {
-      tipo:        item.tipo,
+      tipo:        "course",
       precio_pyg:  item.precio_pyg,
       hash_pedido: result.hash_pedido,
-      ...(item.tipo === "course" && { curso_id: item.id, curso_slug: item.slug }),
-      ...(item.tipo === "plan"   && { plan_id: item.id }),
+      curso_id:    item.id,
+      curso_slug:  item.slug,
     };
     savePagoparContext(ctx);
 
