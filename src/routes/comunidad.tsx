@@ -6,6 +6,7 @@ import {
   Star as StarIcon, X, AlertCircle, Pin,
 } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { formatPYG } from "@/lib/format";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
 import { AnimateIn } from "@/components/AnimateIn";
@@ -355,7 +356,7 @@ function HeroSidebar({
         <p className="font-serif text-lg">Membresía activa</p>
         <p className="mt-1 text-xs text-muted-foreground">Necesitás membresía para enviar consultas.</p>
         <div className="mt-4 flex items-end gap-1">
-          <span className="font-serif text-3xl">USD 29</span>
+          <span className="font-serif text-3xl">{formatPYG(220000)}</span>
           <span className="pb-1 text-xs text-muted-foreground">/ mes</span>
         </div>
         <Button variant="gold" className="mt-5 w-full" asChild>

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Clock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resolveCourseImage, type CourseRow } from "@/hooks/useCourses";
+import { formatPYG } from "@/lib/format";
 
 export function CourseCard({ course }: { course: CourseRow }) {
   const img = resolveCourseImage(course.image_path);
@@ -27,7 +28,7 @@ export function CourseCard({ course }: { course: CourseRow }) {
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <div>
             <p className="text-[10px] text-muted-foreground">Desde</p>
-            <p className="font-serif text-base">USD {course.price}</p>
+            <p className="font-serif text-base">{formatPYG(course.price)}</p>
           </div>
           <Button variant="outlineGold" size="sm" asChild>
             <Link to="/curso/$slug" params={{ slug: course.slug }}>Ver curso</Link>

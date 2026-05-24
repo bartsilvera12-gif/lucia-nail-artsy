@@ -22,14 +22,14 @@ export interface PagoparComprador {
 export interface PagoparProducto {
   nombre: string;
   cantidad: number;
-  precio_usd: number;       // Server converts to PYG using configured rate
+  precio_pyg: number;        // Monto en Guaraníes (PYG), entero, sin conversión
   descripcion: string;
   categoria_pagopar: string; // e.g. "Servicios" or "Cursos online"
   url_imagen?: string;
 }
 
 export interface IniciarPayload {
-  monto_usd: number;
+  monto_pyg: number;         // Monto total en Guaraníes (PYG), entero positivo, sin conversión
   descripcion: string;
   comprador: PagoparComprador;
   productos: PagoparProducto[];
@@ -113,7 +113,7 @@ export interface PagoparContext {
   curso_id?: string;
   curso_slug?: string;
   plan_id?: string;
-  precio_usd: number;
+  precio_pyg: number;   // monto en Guaraníes, sin conversión
   hash_pedido: string;
 }
 

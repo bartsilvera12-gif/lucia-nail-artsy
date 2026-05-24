@@ -61,7 +61,7 @@ console.log("[lrs] index.html          :", existsSync(INDEX_PATH) ? "✓ found" 
 const PAGOPAR_PUBLIC  = process.env.PAGOPAR_PUBLIC_TOKEN  || "";
 const PAGOPAR_PRIVATE = process.env.PAGOPAR_PRIVATE_TOKEN || "";
 const PAGOPAR_ENV_VAR = process.env.PAGOPAR_ENV           || "development";
-const PAGOPAR_RATE    = Number(process.env.PAGOPAR_RATE_PYG) || 7500; // USD → PYG
+// Lucía Rojas opera en Guaraníes (PYG). No hay conversión de moneda.
 
 // Supabase (for recording orders — service key required for webhook)
 const SUPA_URL     = process.env.VITE_SUPABASE_URL        || "";
@@ -71,7 +71,7 @@ const SUPA_SERVICE = process.env.SUPABASE_SERVICE_KEY     || ""; // optional, ne
 if (!PAGOPAR_PUBLIC || !PAGOPAR_PRIVATE) {
   console.warn("[pagopar] PAGOPAR_PUBLIC_TOKEN o PAGOPAR_PRIVATE_TOKEN no configurados — endpoints desactivados");
 } else {
-  console.log(`[pagopar] env=${PAGOPAR_ENV_VAR} rate=${PAGOPAR_RATE} PYG/USD`);
+  console.log(`[pagopar] env=${PAGOPAR_ENV_VAR} — moneda: PYG (Guaraníes)`);
 }
 if (!SUPA_SERVICE) {
   console.warn("[pagopar] SUPABASE_SERVICE_KEY no configurado — webhook no actualizará DB");
@@ -143,7 +143,8 @@ async function supaRest({ table, method = "GET", body, match = {}, select, jwt }
 }
 
 // ── Pagopar: POST /api/pagopar/iniciar ───────────────────────────────────────
-// Body: { monto_usd, curso_id?, plan_id?, descripcion, comprador, productos[], user_id }
+// Body: { monto_pyg, curso_id?, plan_id?, descripcion, comprador, productos[], user_id }
+// monto_pyg: monto en Guaraníes (PYG), entero, sin conversión.
 // Headers: Authorization: Bearer <supabase_jwt>
 async function handlePagoparIniciar(req, res) {
   if (!PAGOPAR_PUBLIC || !PAGOPAR_PRIVATE) {
@@ -154,10 +155,16 @@ async function handlePagoparIniciar(req, res) {
   const body = await readJsonBody(req);
   if (!body) { jsonError(res, 400, "JSON inválido"); return; }
 
-  const { monto_usd, curso_id, plan_id, descripcion, comprador, productos, user_id } = body;
+  const { monto_pyg, curso_id, plan_id, descripcion, comprador, productos, user_id } = body;
 
-  if (!monto_usd || !comprador || !productos?.length || !user_id) {
-    jsonError(res, 400, "Campos requeridos: monto_usd, comprador, productos, user_id");
+  // Validate — monto must be a positive integer in PYG, no conversion
+  const montoInt = Math.round(Number(monto_pyg));
+  if (!monto_pyg || montoInt <= 0) {
+    jsonError(res, 400, "monto_pyg requerido: monto en Guaraníes, entero positivo");
+    return;
+  }
+  if (!comprador || !productos?.length || !user_id) {
+    jsonError(res, 400, "Campos requeridos: monto_pyg, comprador, productos, user_id");
     return;
   }
 
@@ -170,23 +177,23 @@ async function handlePagoparIniciar(req, res) {
     }
   }
 
-  const monto_guaranies = Math.round(Number(monto_usd) * PAGOPAR_RATE);
   const id_pedido_local = `lrs-${user_id.slice(0, 8)}-${Date.now()}`;
 
-  // Token: sha1(public + monto + private)
-  const token = sha1(PAGOPAR_PUBLIC + String(monto_guaranies) + PAGOPAR_PRIVATE);
+  // Token: sha1(public + monto_en_guaranies + private) — sent as exact integer string
+  const token = sha1(PAGOPAR_PUBLIC + String(montoInt) + PAGOPAR_PRIVATE);
 
   const pagoparPayload = {
     token,
     token_publico: PAGOPAR_PUBLIC,
     id_pedido: id_pedido_local,
     descripcion_pedido: descripcion || "Compra Lucía Rojas Studio",
-    monto_total: String(monto_guaranies),
+    monto_total: String(montoInt),   // exact PYG, no conversion
     tipo_pedido: "1",
     comprador,
     productos: productos.map((p) => ({
       ...p,
-      precio_unitario: String(Math.round(Number(p.precio_usd || monto_usd) * PAGOPAR_RATE)),
+      // precio_pyg already in Guaraníes — send as-is
+      precio_unitario: String(Math.round(Number(p.precio_pyg || montoInt))),
       cantidad: String(p.cantidad || 1),
     })),
   };
@@ -213,7 +220,7 @@ async function handlePagoparIniciar(req, res) {
 
   const hash_pedido = pagoparRes.respuesta;
   const url_pago = `https://www.pagopar.com/pagos/${hash_pedido}`;
-  console.log(`[pagopar/iniciar] hash=${hash_pedido} monto_gs=${monto_guaranies} user=${user_id}`);
+  console.log(`[pagopar/iniciar] hash=${hash_pedido} monto_pyg=${montoInt} user=${user_id}`);
 
   // Record pending payment in Supabase using the user's JWT (respects RLS)
   const jwt = (req.headers.authorization || "").replace("Bearer ", "") || undefined;
@@ -223,7 +230,7 @@ async function handlePagoparIniciar(req, res) {
     jwt,
     body: {
       user_id,
-      amount: Number(monto_usd),
+      amount: montoInt,  // stored in PYG
       type: curso_id ? "course_purchase" : "subscription",
       status: "pending",
       reference_id: hash_pedido,

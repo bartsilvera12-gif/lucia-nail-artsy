@@ -13,11 +13,13 @@ export const site = {
   },
 };
 
+// ── NOTA: todos los precios están en Guaraníes (PYG), enteros, sin conversión. ──
+// Actualizar estos valores con los precios reales en PYG.
 export const plans = [
   {
     id: "monthly",
     name: "Membresía Mensual",
-    price: 29,
+    price: 220000,   // Gs. 220.000 / mes — ajustar según tarifa real
     period: "/ mes",
     description: "Acceso completo, renovación mensual flexible.",
     features: [
@@ -33,7 +35,7 @@ export const plans = [
   {
     id: "yearly",
     name: "Membresía Anual",
-    price: 249,
+    price: 1800000,  // Gs. 1.800.000 / año — ajustar según tarifa real
     period: "/ año",
     description: "El mejor precio. Acceso completo durante 12 meses.",
     features: [

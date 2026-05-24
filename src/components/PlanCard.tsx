@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Sparkles, Crown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPYG } from "@/lib/format";
 
 export interface PlanCardProps {
   name: string;
@@ -64,11 +65,11 @@ export function PlanCard({ name, price, period, description, features, cta, high
         {individualPrice ? (
           <>
             <span className="text-sm text-muted-foreground pb-1">desde</span>
-            <span className="font-serif text-5xl tracking-tight">USD 59</span>
+            <span className="font-serif text-4xl tracking-tight">{formatPYG(price)}</span>
           </>
         ) : (
           <>
-            <span className="font-serif text-5xl tracking-tight">USD {price}</span>
+            <span className="font-serif text-4xl tracking-tight">{formatPYG(price)}</span>
             <span className="pb-2 text-sm text-muted-foreground">{period}</span>
           </>
         )}

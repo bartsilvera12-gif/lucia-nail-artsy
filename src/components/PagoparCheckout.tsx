@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { pagoparIniciar, savePagoparContext, type PagoparContext } from "@/lib/pagopar";
+import { formatPYG } from "@/lib/format";
 
 // ── Form schema ───────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -37,7 +38,7 @@ interface Props {
     slug?: string;
     nombre: string;
     descripcion: string;
-    precio_usd: number;
+    precio_pyg: number;    // monto en Guaraníes, entero, sin conversión
     imagen_url?: string;
   };
   /** Pre-filled from auth context */
@@ -79,7 +80,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
     }
 
     const payload = {
-      monto_usd:   item.precio_usd,
+      monto_pyg:   Math.round(item.precio_pyg), // PYG exacto, sin conversión
       descripcion: `${item.nombre} — Lucía Rojas Studio`,
       user_id:     userId,
       ...(item.tipo === "course" && { curso_id: item.id }),
@@ -98,7 +99,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
         {
           nombre:            item.nombre,
           cantidad:          1,
-          precio_usd:        item.precio_usd,
+          precio_pyg:        Math.round(item.precio_pyg), // PYG exacto
           descripcion:       item.descripcion,
           categoria_pagopar: "Cursos online",
           ...(item.imagen_url && { url_imagen: item.imagen_url }),
@@ -116,8 +117,8 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
 
     // Save context so the result page knows what to grant access to
     const ctx: PagoparContext = {
-      tipo:       item.tipo,
-      precio_usd: item.precio_usd,
+      tipo:        item.tipo,
+      precio_pyg:  item.precio_pyg,
       hash_pedido: result.hash_pedido,
       ...(item.tipo === "course" && { curso_id: item.id, curso_slug: item.slug }),
       ...(item.tipo === "plan"   && { plan_id: item.id }),
@@ -144,7 +145,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
         {/* Item summary */}
         <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
           <p className="font-medium">{item.nombre}</p>
-          <p className="text-muted-foreground">USD {item.precio_usd} — pago único</p>
+          <p className="text-muted-foreground">{formatPYG(item.precio_pyg)} — pago único</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">

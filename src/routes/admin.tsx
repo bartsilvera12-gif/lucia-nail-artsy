@@ -5,6 +5,7 @@ import {
   Plus, Pencil, Trash2, Eye, EyeOff, Pin, Check, X, Crown, Calendar,
 } from "lucide-react";
 import { useAuth, formatExpiry } from "@/lib/auth";
+import { formatPYG } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -178,7 +179,7 @@ function DashboardTab() {
         <Stat label="Cursos" value={courses.length} />
         <Stat label="Alumnas" value={students.length} />
         <Stat label="Membresías activas" value={activeSubs} />
-        <Stat label="Ingresos totales" value={`USD ${revenue.toFixed(2)}`} />
+        <Stat label="Ingresos totales" value={formatPYG(Math.round(revenue))} />
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -191,7 +192,7 @@ function DashboardTab() {
                   <p className="font-medium">{prof?.name ?? prof?.email ?? "—"}</p>
                   <p className="text-xs text-muted-foreground">{p.type === "subscription" ? "Suscripción" : "Curso individual"} · {new Date(p.created_at).toLocaleString()}</p>
                 </div>
-                <span className="font-medium">USD {Number(p.amount).toFixed(2)}</span>
+                <span className="font-medium">{formatPYG(p.amount)}</span>
               </div>
             );
           })}
@@ -277,7 +278,7 @@ function CoursesTab() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-xs">{c.category}</td>
-                <td className="px-4 py-3">USD {c.price}</td>
+                <td className="px-4 py-3">{formatPYG(c.price)}</td>
                 <td className="px-4 py-3">{c.included_in_membership ? <Check className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}</td>
                 <td className="px-4 py-3">
                   <span className={"rounded-full px-2 py-0.5 text-[10px] " + (c.status === "available" ? "bg-primary/15 text-primary" : c.status === "draft" ? "bg-muted text-muted-foreground" : "bg-secondary")}>
@@ -386,7 +387,7 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
           <Field label="Nivel">
             <Select value={c.level ?? "Principiante"} onChange={(v) => setC({ ...c, level: v as CourseRow["level"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio"]} />
           </Field>
-          <Field label="Precio (USD)">
+          <Field label="Precio (Gs.)">
             <Input type="number" value={c.price ?? 0} onChange={(e) => setC({ ...c, price: Number(e.target.value) })} />
           </Field>
           <Field label="Duración (texto)">
@@ -779,7 +780,7 @@ function PaymentsTab() {
         </div>
         <div className="rounded-xl border border-border bg-card px-4 py-3 text-right shadow-soft">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total cobrado</p>
-          <p className="font-serif text-2xl">USD {total.toFixed(2)}</p>
+          <p className="font-serif text-2xl">{formatPYG(Math.round(total))}</p>
         </div>
       </div>
 
@@ -813,7 +814,7 @@ function PaymentsTab() {
                       {p.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium">USD {Number(p.amount).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatPYG(p.amount)}</td>
                 </tr>
               );
             })}

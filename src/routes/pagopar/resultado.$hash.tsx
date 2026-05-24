@@ -84,7 +84,7 @@ function ResultadoPagoPage() {
               await supabase.from("course_purchases").insert({
                 user_id:        userId,
                 course_id:      ctx.curso_id,
-                price_paid:     ctx.precio_usd,
+                price_paid:     ctx.precio_pyg,  // PYG, sin conversión
                 payment_method: "pagopar",
               });
 
