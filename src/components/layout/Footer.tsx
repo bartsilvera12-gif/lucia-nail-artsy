@@ -1,26 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Mail } from "lucide-react";
 import { site } from "@/data/site";
-import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
-import esmalte2Img from "@/assets/esmalte2.png";
+import logoUrl from "@/assets/logo/logo.png";
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-[var(--beige)]">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 sm:grid-cols-3">
           {/* Logo + tagline */}
           <div>
-            <Link to="/" className="flex items-center" aria-label={site.name}>
-              <img src={logoUrl} alt={site.name} className="h-24 w-auto sm:h-32" />
+            <Link to="/" aria-label={site.name}>
+              <img src={logoUrl} alt={site.name} className="h-16 w-auto" />
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Academia online premium para profesionales de las uñas.</p>
           </div>
 
           {/* Plataforma */}
           <div>
-            <h4 className="text-sm font-medium text-foreground">Plataforma</h4>
-            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground/70">Plataforma</h4>
+            <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
               <li><Link to="/cursos" className="hover:text-primary transition-colors">Cursos</Link></li>
               <li><Link to="/planes" className="hover:text-primary transition-colors">Planes</Link></li>
               <li><Link to="/sobre" className="hover:text-primary transition-colors">Sobre Lucía</Link></li>
@@ -30,33 +29,23 @@ export function Footer() {
 
           {/* Contacto */}
           <div>
-            <h4 className="text-sm font-medium text-foreground">Contacto</h4>
-            <ul className="mt-3 space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> {site.email}</li>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground/70">Contacto</h4>
+            <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0" /> {site.email}</li>
               <li>
                 <a href={site.social.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-primary transition-colors">
-                  <Instagram className="h-4 w-4" /> Instagram
+                  <Instagram className="h-3.5 w-3.5 shrink-0" /> Instagram
                 </a>
               </li>
             </ul>
           </div>
-
-          {/* Ilustración decorativa */}
-          <div className="flex items-end justify-center">
-            <img src={esmalte2Img} alt="" aria-hidden className="pointer-events-none h-72 w-auto object-contain opacity-70" />
-          </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center gap-2 border-t border-border pt-5 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+        <div className="mt-5 flex flex-col items-center gap-1 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} {site.name}. Todos los derechos reservados.</span>
-          <span className="sm:mr-12">
+          <span>
             Desarrollado por{" "}
-            <a
-              href="https://neura.com.py"
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-primary hover:underline"
-            >
+            <a href="https://neura.com.py" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
               Neura
             </a>
           </span>
