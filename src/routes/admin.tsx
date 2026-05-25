@@ -514,11 +514,17 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
               value={c.status ?? "available"}
               onChange={(v) => setC({ ...c, status: v as CourseRow["status"] })}
               options={[
-                { value: "draft",       label: "Borrador" },
-                { value: "available",   label: "Publicado" },
-                { value: "coming_soon", label: "Próximamente" },
+                { value: "draft",       label: "Borrador — solo visible para vos" },
+                { value: "available",   label: "Publicado — visible y a la venta" },
+                { value: "coming_soon", label: "Próximamente — anunciado, sin compra" },
               ]}
             />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {c.status === "draft" && "El curso no aparece en el catálogo público."}
+              {c.status === "available" && "El curso está visible y las alumnas pueden comprarlo."}
+              {c.status === "coming_soon" && "Aparece en el catálogo con un badge \"Próximamente\". No se puede comprar todavía."}
+              {!c.status && "El curso está visible y las alumnas pueden comprarlo."}
+            </p>
           </Field>
         </div>
       </section>
