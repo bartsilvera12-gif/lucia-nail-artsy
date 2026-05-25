@@ -919,6 +919,8 @@ function LessonRowItem({
   const [title, setTitle] = useState(lesson.title);
   const [editing, setEditing] = useState(false);
   const [videoId, setVideoId] = useState(lesson.video_path ?? "");
+  const [showTheory, setShowTheory] = useState(false);
+  const [theory, setTheory] = useState(lesson.description ?? "");
 
   const saveVideoId = () => {
     const v = videoId.trim();
@@ -958,8 +960,48 @@ function LessonRowItem({
         <Button size="sm" variant={lesson.video_path ? "ghost" : "outlineGold"} onClick={() => setEditing((v) => !v)}>
           <Video className="h-3.5 w-3.5" /> {lesson.video_path ? "Cambiar ID" : "Asignar video"}
         </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowTheory((v) => !v)}
+          title={lesson.description ? "Editar material teórico" : "Agregar material teórico"}
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          {lesson.description ? "Teoría ✓" : "Teoría"}
+        </Button>
         <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
       </div>
+
+      {showTheory && (
+        <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-3">
+          <label className="text-xs font-medium text-muted-foreground">
+            Material teórico (notas, instrucciones, links, lo que necesite la alumna además del video)
+          </label>
+          <textarea
+            value={theory}
+            onChange={(e) => setTheory(e.target.value)}
+            rows={6}
+            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. La alumna lo va a ver debajo del video al cursar esta lección."
+            className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setTheory(lesson.description ?? ""); setShowTheory(false); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              variant="outlineGold"
+              onClick={() => { onUpdate({ description: theory }); setShowTheory(false); }}
+            >
+              Guardar
+            </Button>
+          </div>
+        </div>
+      )}
 
       {editing && (
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">

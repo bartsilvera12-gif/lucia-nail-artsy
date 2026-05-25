@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, BookOpen } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress } from "@/hooks/useCourses";
@@ -141,8 +141,18 @@ function VerPage() {
               <div className="mt-5">
                 <p className="text-[11px] uppercase tracking-wider text-primary">{current.moduleTitle}</p>
                 <h1 className="mt-1 font-serif text-2xl sm:text-3xl">{current.title}</h1>
+
+                {/* Material teórico de la lección */}
                 {current.description && (
-                  <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-400">{current.description}</p>
+                  <div className="mt-5 rounded-xl border border-zinc-700/60 bg-zinc-900/60 p-5 shadow-inner">
+                    <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Material teórico
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+                      {current.description}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
