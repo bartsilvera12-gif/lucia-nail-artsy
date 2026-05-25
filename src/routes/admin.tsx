@@ -1268,8 +1268,41 @@ function CourseTheoryFormModal({
   const [title, setTitle] = useState(theory.title ?? "");
   const [content, setContent] = useState(theory.content ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importInfo, setImportInfo] = useState<string | null>(null);
+  const docxInputRef = useRef<HTMLInputElement | null>(null);
 
   const valid = title.trim().length >= 2;
+
+  // Importar archivo Word (.docx) y convertir a HTML preservando formato.
+  // Usa mammoth.convertToHtml para mantener negritas, títulos, listas, etc.
+  const importDocx = async (file: File) => {
+    setImporting(true);
+    setImportInfo(null);
+    setError(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const mammoth = await import("mammoth");
+      const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+      const html = (result.value || "").trim();
+      if (!html) {
+        setError("El archivo no tiene texto legible.");
+      } else {
+        setContent(html);
+        // Si el título está vacío, usar el nombre del archivo (sin extensión)
+        if (!title.trim()) {
+          const baseName = file.name.replace(/\.docx$/i, "").trim();
+          if (baseName) setTitle(baseName);
+        }
+        setImportInfo(`Importado desde ${file.name}. Revisalo y guardá.`);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo leer el archivo Word.");
+    } finally {
+      setImporting(false);
+      if (docxInputRef.current) docxInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     if (!valid) { setError("El título es obligatorio (mínimo 2 caracteres)."); return; }
@@ -1306,13 +1339,45 @@ function CourseTheoryFormModal({
             />
           </Field>
 
-          <Field label="Contenido">
+          <div>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <label className="text-xs font-medium text-muted-foreground">Contenido</label>
+              <div>
+                <input
+                  ref={docxInputRef}
+                  type="file"
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) importDocx(f);
+                  }}
+                  className="hidden"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => docxInputRef.current?.click()}
+                  disabled={importing || saving}
+                  title="Importar contenido desde un archivo Word (.docx)"
+                >
+                  {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  {importing ? "Importando…" : "Importar Word"}
+                </Button>
+              </div>
+            </div>
             <RichTextEditor
               value={content}
               onChange={setContent}
-              placeholder="Escribí o pegá el contenido teórico. Soporta títulos, listas, negritas, enlaces, etc."
+              placeholder="Escribí, pegá o importá desde Word. Soporta títulos, listas, negritas, enlaces, etc."
             />
-          </Field>
+          </div>
+
+          {importInfo && (
+            <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              ✓ {importInfo}
+            </p>
+          )}
 
           {error && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
