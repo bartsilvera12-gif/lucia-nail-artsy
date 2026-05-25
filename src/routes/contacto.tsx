@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Mail, MessageCircle, Instagram, Send, CheckCircle2 } from "lucide-react";
+import { Mail, MessageCircle, Instagram } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { site } from "@/data/site";
 import pinzaImg from "@/assets/pinza.png";
+import manoesmalteImg from "@/assets/manoesmalte.png";
 import { AnimateIn } from "@/components/AnimateIn";
 
 export const Route = createFileRoute("/contacto")({
@@ -19,7 +17,6 @@ export const Route = createFileRoute("/contacto")({
 });
 
 function ContactoPage() {
-  const [sent, setSent] = useState(false);
   return (
     <PublicLayout>
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-cream">
@@ -66,39 +63,16 @@ function ContactoPage() {
           </AnimateIn>
 
           <AnimateIn direction="left" delay={100}>
-          <form
-            onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-            className="rounded-2xl border border-border bg-card p-8 shadow-soft"
-          >
-            {sent ? (
-              <div className="flex flex-col items-center text-center">
-                <CheckCircle2 className="h-10 w-10 text-primary" />
-                <h3 className="mt-4 font-serif text-xl">¡Mensaje enviado!</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Te respondemos a la brevedad.</p>
-              </div>
-            ) : (
-              <>
-                <h3 className="font-serif text-xl">Enviarnos un mensaje</h3>
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Nombre</label>
-                    <Input required placeholder="Tu nombre" className="mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Email</label>
-                    <Input required type="email" placeholder="vos@email.com" className="mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Mensaje</label>
-                    <textarea required rows={5} placeholder="Contanos en qué podemos ayudarte" className="mt-1 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-                  </div>
-                  <Button type="submit" variant="gold" className="w-full">
-                    Enviar mensaje <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </>
-            )}
-          </form>
+            <div className="relative flex h-full min-h-[360px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-cream p-6 shadow-soft">
+              <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-gradient-gold opacity-20 blur-3xl" />
+              <div aria-hidden className="pointer-events-none absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-[var(--nude)] opacity-25 blur-3xl" />
+              <img
+                src={manoesmalteImg}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none relative max-h-80 w-auto select-none opacity-90"
+              />
+            </div>
           </AnimateIn>
         </div>
       </section>
