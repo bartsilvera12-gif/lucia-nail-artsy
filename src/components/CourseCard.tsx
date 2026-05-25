@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, Crown } from "lucide-react";
+import { Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resolveCourseImage, type CourseRow } from "@/hooks/useCourses";
 import { formatPYG } from "@/lib/format";
@@ -12,9 +12,9 @@ export function CourseCard({ course }: { course: CourseRow }) {
         {img && (
           <img src={img} alt={course.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
         )}
-        {course.included_in_membership && (
+        {course.is_featured && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--blush)]/90 px-2 py-0.5 text-[10px] font-medium backdrop-blur text-foreground">
-            <Crown className="h-2.5 w-2.5 text-primary" /> Membresía
+            <Star className="h-2.5 w-2.5 fill-primary text-primary" /> Destacado
           </span>
         )}
       </Link>
