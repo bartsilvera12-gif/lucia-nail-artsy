@@ -195,6 +195,59 @@ export function useCourseDelete() {
   });
 }
 
+// ── Course categories (admin) ───────────────────────────────────────────
+export interface CourseCategory {
+  id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useCourseCategories() {
+  return useQuery({
+    queryKey: ["course_categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_categories")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CourseCategory[];
+    },
+  });
+}
+
+export function useCategoryUpsert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cat: Partial<CourseCategory> & { name: string }) => {
+      const payload = {
+        name: cat.name.trim(),
+        sort_order: cat.sort_order ?? 100,
+      };
+      const { data, error } = cat.id
+        ? await supabase.from("course_categories").update(payload).eq("id", cat.id).select().single()
+        : await supabase.from("course_categories").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["course_categories"] }),
+  });
+}
+
+export function useCategoryDelete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("course_categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["course_categories"] }),
+  });
+}
+
 export function useGrantSubscription() {
   const qc = useQueryClient();
   return useMutation({

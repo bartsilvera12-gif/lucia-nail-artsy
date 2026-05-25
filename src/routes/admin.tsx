@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -14,12 +14,14 @@ import {
   useSetRole, usePosts, usePostUpsert, usePostDelete,
   useCourseStructure, useModuleUpsert, useModuleDelete,
   useLessonUpsert, useLessonDelete,
+  useCourseCategories, useCategoryUpsert, useCategoryDelete,
   resolveCourseImage, type CourseRow, type ModuleRow, type LessonRow,
+  type CourseCategory,
 } from "@/hooks/useCourses";
 import { Video, Film, GripVertical, FolderPlus, FilePlus } from "lucide-react";
 import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
-type Tab = "dashboard" | "cursos" | "alumnas" | "pagos" | "comunidad";
+type Tab = "dashboard" | "cursos" | "categorias" | "alumnas" | "pagos" | "comunidad";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Lucía Rojas Studio" }] }),
@@ -49,11 +51,12 @@ function AdminPage() {
   }
 
   const tabs: { id: Tab; label: string; icon: typeof LayoutDashboard; hint?: string }[] = [
-    { id: "dashboard", label: "Resumen",   icon: LayoutDashboard, hint: "Vista general" },
-    { id: "cursos",    label: "Cursos",    icon: BookOpen,        hint: "Catálogo y clases" },
-    { id: "alumnas",   label: "Alumnas",   icon: Users,           hint: "Cuentas y accesos" },
-    { id: "pagos",     label: "Pagos",     icon: CreditCard,      hint: "Transacciones" },
-    { id: "comunidad", label: "Comunidad", icon: MessageSquare,   hint: "Posts y anuncios" },
+    { id: "dashboard",  label: "Resumen",    icon: LayoutDashboard, hint: "Vista general" },
+    { id: "cursos",     label: "Cursos",     icon: BookOpen,        hint: "Catálogo y clases" },
+    { id: "categorias", label: "Categorías", icon: Tag,             hint: "Lista de categorías" },
+    { id: "alumnas",    label: "Alumnas",    icon: Users,           hint: "Cuentas y accesos" },
+    { id: "pagos",      label: "Pagos",      icon: CreditCard,      hint: "Transacciones" },
+    { id: "comunidad",  label: "Comunidad",  icon: MessageSquare,   hint: "Posts y anuncios" },
   ];
 
   const currentTab = tabs.find((t) => t.id === tab);
@@ -151,6 +154,7 @@ function AdminPage() {
         <main className="flex-1 overflow-auto bg-secondary/40 p-6 text-foreground lg:p-10">
           {tab === "dashboard" && <DashboardTab />}
           {tab === "cursos" && <CoursesTab />}
+          {tab === "categorias" && <CategoriesTab />}
           {tab === "alumnas" && <StudentsTab />}
           {tab === "pagos" && <PaymentsTab />}
           {tab === "comunidad" && <CommunityTab />}
@@ -439,6 +443,7 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
   // Slug se genera automáticamente del título solo para cursos nuevos
   // (existentes conservan su slug para no romper URLs).
   const isNew = !c.id;
+  const { data: dbCategories = [] } = useCourseCategories();
 
   const handleTitleChange = (title: string) => {
     if (isNew) {
@@ -448,39 +453,14 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
     }
   };
 
-  const CATEGORIES = ["Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"] as const;
+  // Fallback si la DB todavía no tiene categorías (antes de aplicar migración 008)
+  const FALLBACK_CATEGORIES = ["Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"];
+  const categoryOptions = dbCategories.length > 0
+    ? dbCategories.map((cat) => cat.name)
+    : FALLBACK_CATEGORIES;
 
   return (
-    <div className="space-y-8">
-      {/* ── Sección: Categoría ─────────────────────────────────── */}
-      <section className="rounded-xl border border-border bg-gradient-cream/40 p-5">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="font-serif text-sm uppercase tracking-wider text-foreground">Categoría</h3>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">Elegí la categoría principal con la que se va a mostrar el curso.</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => {
-            const active = (c.category ?? "Principiante") === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setC({ ...c, category: cat as CourseRow["category"] })}
-                className={
-                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-all " +
-                  (active
-                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                    : "border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5")
-                }
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
+    <div className="space-y-6">
       {/* ── Sección: Datos básicos ─────────────────────────────── */}
       <section>
         <h3 className="font-serif text-sm uppercase tracking-wider text-muted-foreground">Datos básicos</h3>
@@ -493,6 +473,16 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
                 {isNew && <span className="ml-1">(se genera automáticamente)</span>}
               </p>
             )}
+          </Field>
+          <Field label="Categoría">
+            <Select
+              value={c.category ?? categoryOptions[0]}
+              onChange={(v) => setC({ ...c, category: v as CourseRow["category"] })}
+              options={categoryOptions}
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Administrá la lista en la pestaña <span className="font-medium">Categorías</span>.
+            </p>
           </Field>
           <Field label="Nivel">
             <Select value={c.level ?? "Principiante"} onChange={(v) => setC({ ...c, level: v as CourseRow["level"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio"]} />
@@ -889,6 +879,153 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// Categorías
+// ============================================================
+function CategoriesTab() {
+  const { data: cats = [], isLoading } = useCourseCategories();
+  const upsert = useCategoryUpsert();
+  const del = useCategoryDelete();
+
+  const [editing, setEditing] = useState<Partial<CourseCategory> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async (cat: Partial<CourseCategory> & { name: string }) => {
+    setError(null);
+    try {
+      await upsert.mutateAsync(cat);
+      setEditing(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar la categoría.");
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-3xl">Categorías</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Administrá las categorías que aparecen en el dropdown al editar un curso.</p>
+        </div>
+        <Button variant="gold" onClick={() => setEditing({ name: "", sort_order: (cats.at(-1)?.sort_order ?? 0) + 10 })}>
+          <Plus className="h-4 w-4" /> Nueva categoría
+        </Button>
+      </div>
+
+      {error && (
+        <div role="alert" className="mt-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <X className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="flex-1">{error}</p>
+        </div>
+      )}
+
+      <div className="mt-8 overflow-x-auto rounded-xl border border-border bg-card shadow-soft">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/60 text-left">
+            <tr>
+              <th className="px-4 py-3">Nombre</th>
+              <th className="px-4 py-3 w-32">Orden</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {!isLoading && cats.length === 0 && (
+              <tr><td colSpan={3} className="px-4 py-10 text-center text-muted-foreground">
+                No hay categorías cargadas todavía. Aplicá la migración 008_course_categories.sql en Supabase o creá la primera con el botón de arriba.
+              </td></tr>
+            )}
+            {cats.map((cat) => (
+              <tr key={cat.id} className="border-t border-border">
+                <td className="px-4 py-3 font-medium">{cat.name}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{cat.sort_order}</td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(cat)}><Pencil className="h-4 w-4" /></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm(`¿Borrar la categoría "${cat.name}"? Los cursos que la usaban conservarán el texto, pero ya no podrás elegirla del dropdown.`)) {
+                          del.mutate(cat.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <CategoryEditor
+          category={editing}
+          onClose={() => setEditing(null)}
+          onSave={save}
+          saving={upsert.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+function CategoryEditor({
+  category,
+  onClose,
+  onSave,
+  saving,
+}: {
+  category: Partial<CourseCategory>;
+  onClose: () => void;
+  onSave: (cat: Partial<CourseCategory> & { name: string }) => void;
+  saving: boolean;
+}) {
+  const [c, setC] = useState<Partial<CourseCategory>>(category);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-elegant">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-xl">{category.id ? "Editar categoría" : "Nueva categoría"}</h2>
+          <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
+        </div>
+        <div className="mt-6 space-y-4">
+          <Field label="Nombre">
+            <Input
+              value={c.name ?? ""}
+              onChange={(e) => setC({ ...c, name: e.target.value })}
+              placeholder="Principiante"
+              autoFocus
+            />
+          </Field>
+          <Field label="Orden (menor = aparece primero)">
+            <Input
+              type="number"
+              value={c.sort_order ?? 100}
+              onChange={(e) => setC({ ...c, sort_order: Number(e.target.value) })}
+            />
+          </Field>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <Button
+            variant="gold"
+            disabled={saving || !c.name || c.name.trim().length < 2}
+            onClick={() => onSave({ ...c, name: (c.name || "").trim() })}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Guardar
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
