@@ -373,14 +373,32 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
       }
       setAutoSaving(true);
       try {
-        const saved = await upsert.mutateAsync(c);
+        // Asegurar defaults para campos NOT NULL del schema de courses.
+        // Si el usuario solo cargó título y categoría, completamos vacíos
+        // para que el INSERT no falle. Luego puede editar todo en la
+        // pestaña Datos del curso.
+        const payload: Partial<CourseRow> = {
+          ...c,
+          slug:              c.slug              ?? slugify(c.title || ""),
+          short_description: c.short_description ?? "",
+          description:       c.description       ?? "",
+          duration:          c.duration          ?? "",
+          price:             c.price             ?? 0,
+          category:          c.category          ?? "Principiante",
+          level:             c.level             ?? "Principiante",
+          status:            c.status            ?? "draft",
+          sort_order:        c.sort_order        ?? 100,
+          learnings:         c.learnings         ?? [],
+          audience:          c.audience          ?? [],
+          bonuses:           c.bonuses           ?? [],
+        };
+        const saved = await upsert.mutateAsync(payload);
         if (saved) setC(saved);
         setTab("curriculum");
       } catch (err: unknown) {
-        setInlineMsg({
-          kind: "error",
-          text: err instanceof Error ? err.message : "No se pudo guardar el curso.",
-        });
+        // Extraer el mensaje real de Supabase/Postgrest (no es siempre instance of Error)
+        const msg = extractErrorMessage(err) || "No se pudo guardar el curso.";
+        setInlineMsg({ kind: "error", text: msg });
         setTab("data");
       } finally {
         setAutoSaving(false);
@@ -469,6 +487,22 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
       </div>
     </div>
   );
+}
+
+// Extrae un mensaje legible de cualquier tipo de error
+// (Error, PostgrestError plano de Supabase, string, etc.)
+function extractErrorMessage(err: unknown): string {
+  if (!err) return "";
+  if (typeof err === "string") return err;
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    const parts = [e.message, e.details, e.hint, e.code]
+      .filter((v) => v !== undefined && v !== null && v !== "")
+      .map(String);
+    if (parts.length > 0) return parts.join(" — ");
+  }
+  try { return JSON.stringify(err); } catch { return String(err); }
 }
 
 function ImagePreview({ url }: { url: string }) {
