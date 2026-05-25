@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   Users, Star, Calendar, BookOpen, ArrowRight, CheckCircle2,
   Bell, Lock, Send, Loader2, MessageSquare, ChevronDown, ChevronUp,
-  Star as StarIcon, X, AlertCircle, Pin,
+  Star as StarIcon, X, AlertCircle, Pin, Sparkles,
 } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
