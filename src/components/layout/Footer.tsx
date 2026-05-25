@@ -14,7 +14,7 @@ export function Footer() {
         src={esmalteUrl}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 h-40 w-auto select-none opacity-90 sm:h-52 lg:h-64"
+        className="pointer-events-none absolute bottom-0 right-6 h-40 w-auto select-none opacity-90 sm:right-10 sm:h-52 lg:right-16 lg:h-64"
       />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

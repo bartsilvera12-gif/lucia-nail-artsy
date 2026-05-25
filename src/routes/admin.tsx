@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   useCourses, useCourseUpsert, useCourseDelete, useAllStudents,
   usePayments,
@@ -247,6 +248,7 @@ function CoursesTab() {
   const del = useCourseDelete();
   const [editing, setEditing] = useState<Partial<CourseRow> | null>(null);
   const [q, setQ] = useState("");
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   // Cursos ordenados por sort_order (ascendente). Si la query ya los devuelve así
   // este sort no cambia nada; si no, asegura consistencia con la UI de flechas.
@@ -371,7 +373,11 @@ function CoursesTab() {
                       <Star className={"h-4 w-4 " + (c.is_featured ? "fill-primary text-primary" : "text-muted-foreground")} />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(c)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => { if (confirm(`¿Borrar "${c.title}"?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button size="sm" variant="ghost" onClick={async () => {
+                      if (await confirm(`¿Estás segura de que querés borrar el curso "${c.title}"? Esta acción no se puede deshacer.`, { title: "Borrar curso", confirmLabel: "Borrar" })) {
+                        del.mutate(c.id);
+                      }
+                    }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </td>
               </tr>
@@ -390,6 +396,7 @@ function CoursesTab() {
           }}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -759,6 +766,7 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
   const delMod = useModuleDelete();
   const upsertLes = useLessonUpsert();
   const delLes = useLessonDelete();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [newModule, setNewModule] = useState("");
 
@@ -807,7 +815,11 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
           module={m}
           lessons={lessons.filter((l) => l.module_id === m.id)}
           onRenameModule={(title) => upsertMod.mutate({ id: m.id, course_id: courseId, title })}
-          onDeleteModule={() => { if (confirm(`¿Borrar módulo "${m.title}" y todas sus lecciones?`)) delMod.mutate({ id: m.id, courseId }); }}
+          onDeleteModule={async () => {
+            if (await confirm(`¿Borrar el módulo "${m.title}" y todas sus lecciones? Esta acción no se puede deshacer.`, { title: "Borrar módulo", confirmLabel: "Borrar" })) {
+              delMod.mutate({ id: m.id, courseId });
+            }
+          }}
           onAddLesson={(title) => upsertLes.mutate({
             module_id: m.id,
             courseId,
@@ -819,10 +831,15 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
             video_path: null,
           })}
           onUpdateLesson={(l) => upsertLes.mutate({ ...l, courseId })}
-          onDeleteLesson={(l) => { if (confirm(`¿Borrar lección "${l.title}"?`)) delLes.mutate({ id: l.id, courseId, videoPath: l.video_path }); }}
+          onDeleteLesson={async (l) => {
+            if (await confirm(`¿Borrar la lección "${l.title}"? El video también se borra de VdoCipher.`, { title: "Borrar lección", confirmLabel: "Borrar" })) {
+              delLes.mutate({ id: l.id, courseId, videoPath: l.video_path });
+            }
+          }}
           courseSlug={courseSlug}
         />
       ))}
+      {confirmDialog}
     </div>
   );
 }
@@ -1099,6 +1116,7 @@ function CategoriesTab() {
 
   const [editing, setEditing] = useState<Partial<CourseCategory> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const save = async (cat: Partial<CourseCategory> & { name: string }) => {
     setError(null);
@@ -1192,8 +1210,11 @@ function CategoriesTab() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
-                        if (confirm(`¿Borrar la categoría "${cat.name}"? Los cursos que la usaban conservarán el texto, pero ya no podrás elegirla del dropdown.`)) {
+                      onClick={async () => {
+                        if (await confirm(
+                          `¿Borrar la categoría "${cat.name}"? Los cursos que la usaban conservarán el texto, pero ya no podrás elegirla del dropdown.`,
+                          { title: "Borrar categoría", confirmLabel: "Borrar" }
+                        )) {
                           del.mutate(cat.id);
                         }
                       }}
@@ -1216,6 +1237,7 @@ function CategoriesTab() {
           saving={upsert.isPending}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -1408,6 +1430,7 @@ function CommunityTab() {
   const upsert = usePostUpsert();
   const del = usePostDelete();
   const [editing, setEditing] = useState<{ id?: string; title: string; body: string; category: "announcement" | "student_work" | "question" | "general"; pinned?: boolean } | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   return (
     <div>
@@ -1439,7 +1462,11 @@ function CommunityTab() {
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => setEditing({ id: p.id, title: p.title, body: p.body, category: p.category, pinned: p.pinned })}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => { if (confirm("¿Borrar publicación?")) del.mutate(p.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <Button size="sm" variant="ghost" onClick={async () => {
+                    if (await confirm("¿Borrar esta publicación? Esta acción no se puede deshacer.", { title: "Borrar publicación", confirmLabel: "Borrar" })) {
+                      del.mutate(p.id);
+                    }
+                  }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </div>
             </div>
@@ -1486,6 +1513,7 @@ function CommunityTab() {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
