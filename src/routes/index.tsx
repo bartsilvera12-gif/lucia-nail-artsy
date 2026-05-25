@@ -208,7 +208,7 @@ function SkoolStyle() {
             El Espacio de Alumnas es un canal directo entre vos y Lucía. Enviá tus consultas técnicas, seguí las preguntas de otras alumnas y accedé a respuestas oficiales en un solo lugar.
           </p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {["Consultas técnicas","Respuestas de la docente","Preguntas destacadas","Filtros por curso","Historial completo","Solo para miembras"].map((f) => (
+            {["Consultas técnicas","Respuestas de la docente","Preguntas destacadas","Filtros por curso","Historial completo","Solo para miembros"].map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-primary" /> {f}
               </li>
@@ -231,7 +231,7 @@ function SkoolStyle() {
                 <MessageCircle className="h-4 w-4 text-primary" />
                 <span className="font-serif text-sm">Espacio de Alumnas</span>
               </div>
-              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium">Solo miembras</span>
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium">Solo miembros</span>
             </div>
 
             {/* Pregunta destacada respondida */}
