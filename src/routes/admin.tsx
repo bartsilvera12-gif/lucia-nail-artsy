@@ -9,6 +9,7 @@ import { formatPYG } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { supabase } from "@/lib/supabase";
 import {
   useCourses, useCourseUpsert, useCourseDelete, useAllStudents,
   usePayments,
@@ -921,6 +922,39 @@ function LessonRowItem({
   const [videoId, setVideoId] = useState(lesson.video_path ?? "");
   const [showTheory, setShowTheory] = useState(false);
   const [theory, setTheory] = useState(lesson.description ?? "");
+  const [theorySaving, setTheorySaving] = useState(false);
+  const [theoryFeedback, setTheoryFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  // Mantener theory sincronizado con la lección cuando llega data nueva
+  // del servidor (ej: después de invalidar la query).
+  useEffect(() => { setTheory(lesson.description ?? ""); }, [lesson.description]);
+
+  // Guardar teoría directamente vía Supabase (con await para feedback real).
+  // No usa el wrapper onUpdate porque ese hace fire-and-forget y los errores
+  // de RLS se tragan silenciosamente — el usuario creía que se guardaba pero
+  // la mutación fallaba sin avisar.
+  const saveTheory = async () => {
+    setTheorySaving(true);
+    setTheoryFeedback(null);
+    try {
+      const { error } = await supabase
+        .from("lessons")
+        .update({ description: theory })
+        .eq("id", lesson.id);
+      if (error) throw error;
+      setTheoryFeedback({ kind: "ok", text: "Material teórico guardado." });
+      // Invalidar el listado de lecciones se hace via onUpdate "ligero"
+      // para que el padre refresque la UI con el valor nuevo
+      onUpdate({ description: theory });
+      setTimeout(() => setTheoryFeedback(null), 2500);
+    } catch (err: unknown) {
+      const e = err as { message?: string; details?: string; hint?: string };
+      const msg = e?.message || e?.details || e?.hint || "No se pudo guardar.";
+      setTheoryFeedback({ kind: "err", text: msg });
+    } finally {
+      setTheorySaving(false);
+    }
+  };
 
   const saveVideoId = () => {
     const v = videoId.trim();
@@ -980,24 +1014,34 @@ function LessonRowItem({
           <textarea
             value={theory}
             onChange={(e) => setTheory(e.target.value)}
-            rows={6}
-            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. La alumna lo va a ver debajo del video al cursar esta lección."
+            rows={8}
+            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. La alumna lo va a ver al lado del video al cursar esta lección."
             className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
+
+          {theoryFeedback && (
+            <p className={"text-xs " + (theoryFeedback.kind === "ok" ? "text-emerald-700" : "text-destructive")}>
+              {theoryFeedback.kind === "ok" ? "✓ " : "✗ "}{theoryFeedback.text}
+            </p>
+          )}
+
           <div className="flex justify-end gap-2">
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => { setTheory(lesson.description ?? ""); setShowTheory(false); }}
+              onClick={() => { setTheory(lesson.description ?? ""); setShowTheory(false); setTheoryFeedback(null); }}
+              disabled={theorySaving}
             >
               Cancelar
             </Button>
             <Button
               size="sm"
               variant="outlineGold"
-              onClick={() => { onUpdate({ description: theory }); setShowTheory(false); }}
+              onClick={saveTheory}
+              disabled={theorySaving}
             >
-              Guardar
+              {theorySaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {theorySaving ? "Guardando…" : "Guardar"}
             </Button>
           </div>
         </div>
