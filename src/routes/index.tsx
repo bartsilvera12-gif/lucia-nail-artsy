@@ -28,6 +28,7 @@ import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
 import esmalteImg from "@/assets/esmalte.png";
+import manoesmalteImg from "@/assets/manoesmalte.png";
 
 
 export const Route = createFileRoute("/")({
@@ -455,6 +456,14 @@ function PlansSection() {
     <section className="relative overflow-hidden py-24 sm:py-32">
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-4xl gold-divider" />
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-20 -z-10 h-96 w-[90%] -translate-x-1/2 rounded-full bg-gradient-gold opacity-10 blur-3xl" />
+
+      {/* Line-art decorativo: mano con esmalte a la derecha */}
+      <img
+        src={manoesmalteImg}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 select-none opacity-80 md:block md:h-72 lg:h-96 xl:right-4"
+      />
 
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
         <AnimateIn direction="up">
