@@ -186,7 +186,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ciudad" error={errors.ciudad?.message}>
-              <input {...register("ciudad")} className={inputCls} placeholder="Asunción" />
+              <input {...register("ciudad")} className={inputCls} placeholder="Ej: Asunción, San Lorenzo, Luque" />
             </Field>
             <Field label="Departamento" error={errors.departamento?.message}>
               <select {...register("departamento")} className={inputCls}>

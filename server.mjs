@@ -248,6 +248,16 @@ async function handlePagoparIniciar(req, res) {
   const token = sha1(PAGOPAR_PRIVATE + id_pedido_comercio + montoTotalStr);
   console.log(`[pagopar/iniciar]   token sha1              : ${token.slice(0, 8)}... (generado OK)`);
 
+  // Validación específica: Pagopar requiere ciudad
+  if (!comprador.ciudad || String(comprador.ciudad).trim().length < 2) {
+    console.error(`[pagopar/iniciar] ✗ comprador.ciudad faltante o inválida: ${JSON.stringify(comprador.ciudad)}`);
+    jsonError(res, 400, "La ciudad del comprador es obligatoria para pagar con Pagopar.");
+    return;
+  }
+
+  console.log(`[pagopar/iniciar]   ciudad recibida         : "${comprador.ciudad}"`);
+  console.log(`[pagopar/iniciar]   departamento recibido   : "${comprador.departamento || ""}"`);
+
   // Mapear comprador interno → formato Pagopar
   const compradorPagopar = {
     nombre:         `${comprador.nombre} ${comprador.apellido}`.trim(),
@@ -258,7 +268,11 @@ async function handlePagoparIniciar(req, res) {
     ruc:            comprador.documento_identidad,
     razon_social:   `${comprador.nombre} ${comprador.apellido}`.trim(),
     direccion:      comprador.direccion,
+    ciudad:         String(comprador.ciudad).trim(),
+    departamento:   comprador.departamento ? String(comprador.departamento).trim() : "",
   };
+
+  console.log(`[pagopar/iniciar]   comprador.ciudad enviado: "${compradorPagopar.ciudad}"`);
 
   // Mapear productos internos → compras_items de Pagopar
   // precio_total = precio_unitario × cantidad (entero PYG)
