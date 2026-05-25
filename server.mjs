@@ -274,25 +274,37 @@ async function handlePagoparIniciar(req, res) {
 
   console.log(`[pagopar/iniciar]   comprador.ciudad enviado: "${compradorPagopar.ciudad}"`);
 
+  // Dirección del vendedor (config opcional vía env — para productos digitales puede ir vacío)
+  const VENDOR_ADDRESS = process.env.PAGOPAR_VENDOR_ADDRESS || "";
+
   // Mapear productos internos → compras_items de Pagopar
   // precio_total = precio_unitario × cantidad (entero PYG)
+  // Para productos digitales (sin courier):
+  //   - ciudad = 1 (valor literal según docs Pagopar)
+  //   - categoria = 909 (categoría sin envío físico)
+  //   - vendedor_* en blanco (no se entrega nada)
   const compras_items = productos.map((p, i) => {
     const cantidad = Number(p.cantidad) || 1;
     const precioUnitario = Math.round(Number(p.precio_pyg || montoInt));
     const precioTotal = precioUnitario * cantidad;
     return {
-      nombre:        p.nombre,
-      cantidad:      String(cantidad),
-      precio_total:  String(precioTotal),
-      descripcion:   p.descripcion || p.nombre,
-      id_producto:   curso_id || `item-${i + 1}`,
-      public_key:    PAGOPAR_PUBLIC,
-      categoria:     p.categoria_pagopar || "Cursos online",
+      nombre:                          p.nombre,
+      cantidad:                        String(cantidad),
+      precio_total:                    String(precioTotal),
+      descripcion:                     p.descripcion || p.nombre,
+      id_producto:                     curso_id || `item-${i + 1}`,
+      public_key:                      PAGOPAR_PUBLIC,
+      categoria:                       909,            // curso digital — sin courier
+      ciudad:                          1,              // valor literal Pagopar para items sin envío físico
+      vendedor_direccion:              VENDOR_ADDRESS,
+      vendedor_direccion_referencia:   "",
+      vendedor_direccion_coordenadas:  "",
+      vendedor_telefono:               "",
     };
   });
 
   compras_items.forEach((it, i) => {
-    console.log(`[pagopar/iniciar]   item[${i}] nombre="${it.nombre}" cantidad=${it.cantidad} precio_total=${it.precio_total} id_producto=${it.id_producto}`);
+    console.log(`[pagopar/iniciar]   item[${i}] nombre="${it.nombre}" cantidad=${it.cantidad} precio_total=${it.precio_total} id_producto=${it.id_producto} categoria=${it.categoria} ciudad=${it.ciudad} vendedor_direccion="${it.vendedor_direccion}"`);
   });
 
   const pagoparPayload = {
