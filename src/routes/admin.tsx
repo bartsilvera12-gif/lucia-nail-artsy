@@ -1159,8 +1159,8 @@ function StudentsTab() {
                       value={s.role}
                       onChange={(v) => setRole.mutate({ userId: s.id, role: v as "student" | "admin" })}
                       options={[
-                        { value: "student", label: "👩 Estudiante" },
-                        { value: "admin",   label: "👑 Administradora" },
+                        { value: "student", label: "Estudiante" },
+                        { value: "admin",   label: "Administradora" },
                       ]}
                     />
                   </div>
