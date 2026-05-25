@@ -93,6 +93,11 @@ if (!PAGOPAR_PUBLIC || !PAGOPAR_PRIVATE) {
 if (!SUPA_SERVICE) {
   console.warn("[pagopar] SUPABASE_SERVICE_KEY no configurado — webhook no actualizará DB");
 }
+if (!VDOCIPHER_API_SECRET) {
+  console.warn("[vdocipher] VDOCIPHER_API_SECRET no configurado — endpoint /api/vdocipher-otp desactivado");
+} else {
+  console.log(`[vdocipher] API Secret configurado (${VDOCIPHER_API_SECRET.length} chars) — endpoint activo`);
+}
 console.log("[lrs] ─────────────────────────────────────────────────────────");
 
 // Pre-read index.html once (it's small and served frequently)
@@ -177,6 +182,164 @@ async function supaRest({ table, method = "GET", body, match = {}, select, jwt }
 // Body: { monto_pyg, curso_id?, plan_id?, descripcion, comprador, productos[], user_id }
 // monto_pyg: monto en Guaraníes (PYG), entero, sin conversión.
 // Headers: Authorization: Bearer <supabase_jwt>
+// ── VdoCipher: POST /api/vdocipher-otp ───────────────────────────────────────
+// Body: { lessonId }
+// Headers: Authorization: Bearer <supabase_jwt>
+// Devuelve: { otp, playbackInfo, userEmail }
+//
+// Replica la Vercel edge function api/vdocipher-otp.ts:
+//  1. Verifica JWT contra Supabase /auth/v1/user
+//  2. Lee la lección + curso desde lucianails.lessons (con embed de module/course)
+//  3. Verifica acceso: free preview, admin, o compra individual (course_purchases)
+//  4. Si pasa, pide OTP a VdoCipher con licenseRules (Widevine L1 + PlayReady SL3000)
+async function handleVdoCipherOtp(req, res) {
+  if (!SUPA_URL || !SUPA_ANON) {
+    jsonError(res, 500, "Supabase no configurado en este servidor");
+    return;
+  }
+  if (!VDOCIPHER_API_SECRET) {
+    console.error("[vdocipher] VDOCIPHER_API_SECRET no configurado");
+    jsonError(res, 500, "VdoCipher no configurado en este servidor");
+    return;
+  }
+
+  const auth = req.headers.authorization || "";
+  if (!auth.startsWith("Bearer ")) {
+    jsonError(res, 401, "Sin autenticación");
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  if (!body?.lessonId) {
+    jsonError(res, 400, "Falta lessonId");
+    return;
+  }
+  const lessonId = String(body.lessonId);
+
+  // 1. Verificar sesión: pedir el usuario actual
+  let user;
+  try {
+    const userResp = await fetch(`${SUPA_URL}/auth/v1/user`, {
+      headers: { apikey: SUPA_ANON, Authorization: auth },
+    });
+    if (!userResp.ok) {
+      jsonError(res, 401, "Token inválido");
+      return;
+    }
+    user = await userResp.json();
+  } catch (err) {
+    console.error("[vdocipher] error verificando JWT:", err.message);
+    jsonError(res, 502, "No se pudo verificar la sesión");
+    return;
+  }
+
+  // 2. Cargar la lección + curso (vía embed de PostgREST)
+  let lesson;
+  try {
+    const url = new URL(`${SUPA_URL}/rest/v1/lessons`);
+    url.searchParams.set("id", `eq.${lessonId}`);
+    url.searchParams.set("select", "id,is_free_preview,video_path,module:modules(course:courses(id,included_in_membership))");
+    const r = await fetch(url.toString(), {
+      headers: {
+        apikey: SUPA_ANON,
+        Authorization: auth,
+        "Accept-Profile": "lucianails",
+      },
+    });
+    if (!r.ok) {
+      const text = await r.text();
+      console.error(`[vdocipher] error leyendo lección: ${r.status} ${text}`);
+      jsonError(res, 502, "No se pudo leer la lección");
+      return;
+    }
+    const rows = await r.json();
+    lesson = Array.isArray(rows) ? rows[0] : null;
+  } catch (err) {
+    console.error("[vdocipher] error leyendo lección:", err.message);
+    jsonError(res, 502, "No se pudo leer la lección");
+    return;
+  }
+
+  if (!lesson) { jsonError(res, 404, "Lección no encontrada"); return; }
+  if (!lesson.video_path) { jsonError(res, 404, "La lección no tiene video"); return; }
+
+  const course = lesson.module?.course;
+  if (!course) { jsonError(res, 404, "Curso no encontrado"); return; }
+
+  // 3. ¿El usuario tiene acceso?
+  let hasAccess = !!lesson.is_free_preview;
+
+  if (!hasAccess) {
+    // admin?
+    try {
+      const r = await fetch(
+        `${SUPA_URL}/rest/v1/profiles?id=eq.${user.id}&select=role`,
+        { headers: { apikey: SUPA_ANON, Authorization: auth, "Accept-Profile": "lucianails" } },
+      );
+      if (r.ok) {
+        const profiles = await r.json();
+        if (profiles[0]?.role === "admin") hasAccess = true;
+      }
+    } catch { /* silenciar */ }
+  }
+
+  if (!hasAccess) {
+    // compra individual?
+    try {
+      const r = await fetch(
+        `${SUPA_URL}/rest/v1/course_purchases?user_id=eq.${user.id}&course_id=eq.${course.id}&select=id&limit=1`,
+        { headers: { apikey: SUPA_ANON, Authorization: auth, "Accept-Profile": "lucianails" } },
+      );
+      if (r.ok) {
+        const purchases = await r.json();
+        if (purchases.length > 0) hasAccess = true;
+      }
+    } catch { /* silenciar */ }
+  }
+
+  if (!hasAccess) {
+    console.warn(`[vdocipher] sin acceso — user=${user.id} lesson=${lessonId} course=${course.id}`);
+    jsonError(res, 403, "Sin acceso a esta lección");
+    return;
+  }
+
+  // 4. Pedir OTP a VdoCipher forzando hardware DRM
+  const licenseRules = JSON.stringify({
+    rules: {
+      widevineSecurityLevel: "HW_SECURE_DECODE",
+      playreadyMinSecurityLevel: 3000,
+    },
+  });
+
+  try {
+    const vdoResp = await fetch(`https://dev.vdocipher.com/api/videos/${lesson.video_path}/otp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Apisecret ${VDOCIPHER_API_SECRET}`,
+      },
+      body: JSON.stringify({ ttl: 300, licenseRules }),
+    });
+    if (!vdoResp.ok) {
+      const errText = await vdoResp.text();
+      console.error(`[vdocipher] OTP error ${vdoResp.status}: ${errText}`);
+      jsonError(res, 502, `VdoCipher error: ${vdoResp.status}`);
+      return;
+    }
+    const vdo = await vdoResp.json();
+    console.log(`[vdocipher] OTP generado — user=${user.id} lesson=${lessonId} video=${lesson.video_path}`);
+    jsonOk(res, {
+      otp: vdo.otp,
+      playbackInfo: vdo.playbackInfo,
+      userEmail: user.email,
+    });
+  } catch (err) {
+    console.error("[vdocipher] fetch error:", err.message);
+    jsonError(res, 502, "No se pudo conectar con VdoCipher");
+  }
+}
+
 async function handlePagoparIniciar(req, res) {
   if (!PAGOPAR_PUBLIC || !PAGOPAR_PRIVATE) {
     jsonError(res, 503, "Pagopar no configurado en este servidor");
@@ -578,6 +741,12 @@ const server = createServer(async (req, res) => {
   if (pathname === "/healthz") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("OK");
+    return;
+  }
+
+  // ── VdoCipher API route ───────────────────────────────────────────────────
+  if (method === "POST" && pathname === "/api/vdocipher-otp") {
+    await handleVdoCipherOtp(req, res);
     return;
   }
 
