@@ -22,8 +22,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { CourseCard } from "@/components/CourseCard";
 import { TestimonialCard } from "@/components/TestimonialCard";
 import { FAQAccordion } from "@/components/FAQAccordion";
-import { useCourses } from "@/hooks/useCourses";
-import { testimonials, faqs } from "@/data/site";
+import { useCourses, useTestimonials } from "@/hooks/useCourses";
+import { testimonials as fallbackTestimonials, faqs } from "@/data/site";
 import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
@@ -492,6 +492,15 @@ function PlansSection() {
 }
 
 function Testimonials() {
+  const { data: dbTestimonials = [] } = useTestimonials({ onlyActive: true });
+  // Si la DB tiene reseñas activas, usar esas. Si no (migración 011 sin aplicar,
+  // o no hay nada en la tabla), fallback a las hardcodeadas.
+  const items = dbTestimonials.length > 0
+    ? dbTestimonials.map((t) => ({ name: t.name, role: t.role, quote: t.quote, result: t.result }))
+    : fallbackTestimonials;
+
+  if (items.length === 0) return null;
+
   return (
     <section className="bg-secondary/40 py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -499,8 +508,8 @@ function Testimonials() {
           <SectionHeader eyebrow="Alumnas" title="Resultados reales de la academia" />
         </AnimateIn>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <AnimateIn key={t.name} direction="up" delay={i * 100}>
+          {items.map((t, i) => (
+            <AnimateIn key={`${t.name}-${i}`} direction="up" delay={i * 100}>
               <TestimonialCard {...t} />
             </AnimateIn>
           ))}

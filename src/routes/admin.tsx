@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText, Eye, EyeOff, Quote,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -17,13 +17,14 @@ import {
   useCourseStructure, useModuleUpsert, useModuleDelete,
   useLessonUpsert, useLessonDelete,
   useCourseCategories, useCategoryUpsert, useCategoryDelete,
+  useTestimonials, useTestimonialUpsert, useTestimonialDelete,
   resolveCourseImage, type CourseRow, type ModuleRow, type LessonRow,
-  type CourseCategory,
+  type CourseCategory, type Testimonial,
 } from "@/hooks/useCourses";
 import { Video, Film, GripVertical, FolderPlus, FilePlus } from "lucide-react";
 import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
-type Tab = "dashboard" | "cursos" | "categorias" | "alumnas" | "pagos" | "comunidad";
+type Tab = "dashboard" | "cursos" | "categorias" | "alumnas" | "pagos" | "comunidad" | "resenas";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Lucía Rojas Studio" }] }),
@@ -56,6 +57,7 @@ function AdminPage() {
     { id: "dashboard",  label: "Resumen",    icon: LayoutDashboard, hint: "Vista general" },
     { id: "cursos",     label: "Cursos",     icon: BookOpen,        hint: "Catálogo y clases" },
     { id: "categorias", label: "Categorías", icon: Tag,             hint: "Lista de categorías" },
+    { id: "resenas",    label: "Reseñas",    icon: Quote,           hint: "Testimonios del home" },
     { id: "alumnas",    label: "Alumnas",    icon: Users,           hint: "Cuentas y accesos" },
     { id: "pagos",      label: "Pagos",      icon: CreditCard,      hint: "Transacciones" },
     { id: "comunidad",  label: "Comunidad",  icon: MessageSquare,   hint: "Posts y anuncios" },
@@ -157,6 +159,7 @@ function AdminPage() {
           {tab === "dashboard" && <DashboardTab />}
           {tab === "cursos" && <CoursesTab />}
           {tab === "categorias" && <CategoriesTab />}
+          {tab === "resenas" && <TestimonialsTab />}
           {tab === "alumnas" && <StudentsTab />}
           {tab === "pagos" && <PaymentsTab />}
           {tab === "comunidad" && <CommunityTab />}
@@ -1423,6 +1426,189 @@ function CategoryEditor({
             variant="gold"
             disabled={saving || !c.name || c.name.trim().length < 2}
             onClick={() => onSave({ ...c, name: (c.name || "").trim() })}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Guardar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Reseñas / Testimonials
+// ============================================================
+function TestimonialsTab() {
+  const { data: items = [], isLoading } = useTestimonials();
+  const upsert = useTestimonialUpsert();
+  const del = useTestimonialDelete();
+  const [editing, setEditing] = useState<Partial<Testimonial> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
+
+  const save = async (t: Partial<Testimonial> & { name: string; quote: string }) => {
+    setError(null);
+    try {
+      await upsert.mutateAsync(t);
+      setEditing(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar la reseña.");
+    }
+  };
+
+  const toggleActive = (t: Testimonial) => {
+    upsert.mutate({ id: t.id, name: t.name, quote: t.quote, role: t.role, result: t.result, sort_order: t.sort_order, is_active: !t.is_active });
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-3xl">Reseñas</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Testimonios que aparecen en la sección "Resultados reales" del home.</p>
+        </div>
+        <Button variant="gold" onClick={() => setEditing({ name: "", role: "", quote: "", result: "", is_active: true, sort_order: (items.at(-1)?.sort_order ?? 0) + 10 })}>
+          <Plus className="h-4 w-4" /> Nueva reseña
+        </Button>
+      </div>
+
+      {error && (
+        <div role="alert" className="mt-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <X className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="flex-1">{error}</p>
+        </div>
+      )}
+
+      <div className="mt-8 space-y-3">
+        {isLoading && <p className="text-sm text-muted-foreground">Cargando…</p>}
+        {!isLoading && items.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+            No hay reseñas todavía. Aplicá la migración 011_testimonials.sql en Supabase o creá la primera con el botón.
+          </div>
+        )}
+        {items.map((t) => (
+          <div key={t.id} className={"rounded-xl border bg-card p-5 shadow-soft " + (t.is_active ? "border-border" : "border-dashed border-muted-foreground/30 opacity-60")}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">{t.name}</p>
+                  {t.role && <span className="text-xs text-muted-foreground">· {t.role}</span>}
+                  {!t.is_active && <span className="rounded bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Oculta</span>}
+                </div>
+                <blockquote className="mt-2 text-sm leading-relaxed text-foreground/90">"{t.quote}"</blockquote>
+                {t.result && (
+                  <span className="mt-3 inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-foreground/80">
+                    {t.result}
+                  </span>
+                )}
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button size="sm" variant="ghost" onClick={() => toggleActive(t)} title={t.is_active ? "Ocultar del home" : "Mostrar en el home"}>
+                  {t.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(t)}><Pencil className="h-4 w-4" /></Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={async () => {
+                    if (await confirm(`¿Borrar la reseña de "${t.name}"? No se puede deshacer.`, { title: "Borrar reseña", confirmLabel: "Borrar" })) {
+                      del.mutate(t.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {editing && (
+        <TestimonialEditor
+          testimonial={editing}
+          onClose={() => setEditing(null)}
+          onSave={save}
+          saving={upsert.isPending}
+        />
+      )}
+      {confirmDialog}
+    </div>
+  );
+}
+
+function TestimonialEditor({
+  testimonial, onClose, onSave, saving,
+}: {
+  testimonial: Partial<Testimonial>;
+  onClose: () => void;
+  onSave: (t: Partial<Testimonial> & { name: string; quote: string }) => void;
+  saving: boolean;
+}) {
+  const [t, setT] = useState<Partial<Testimonial>>({
+    is_active: true,
+    sort_order: 100,
+    ...testimonial,
+  });
+
+  const valid = !!(t.name && t.name.trim().length >= 2 && t.quote && t.quote.trim().length >= 5);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-elegant">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-xl">{testimonial.id ? "Editar reseña" : "Nueva reseña"}</h2>
+          <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
+        </div>
+        <div className="mt-6 space-y-4">
+          <Field label="Nombre">
+            <Input
+              value={t.name ?? ""}
+              onChange={(e) => setT({ ...t, name: e.target.value })}
+              placeholder="Camila Fernández"
+              autoFocus
+            />
+          </Field>
+          <Field label="Rol / ciudad (opcional)">
+            <Input
+              value={t.role ?? ""}
+              onChange={(e) => setT({ ...t, role: e.target.value })}
+              placeholder="Manicurista — Buenos Aires"
+            />
+          </Field>
+          <Field label="Testimonio">
+            <textarea
+              value={t.quote ?? ""}
+              onChange={(e) => setT({ ...t, quote: e.target.value })}
+              rows={4}
+              placeholder="Empecé sin saber nada y en 3 meses…"
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+            />
+          </Field>
+          <Field label="Resultado destacado (opcional — aparece como chip)">
+            <Input
+              value={t.result ?? ""}
+              onChange={(e) => setT({ ...t, result: e.target.value })}
+              placeholder="Llené mi agenda en 3 meses"
+            />
+          </Field>
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={!!t.is_active}
+              onChange={(e) => setT({ ...t, is_active: e.target.checked })}
+              className="h-4 w-4 cursor-pointer accent-primary"
+            />
+            <span>Mostrar en el home</span>
+          </label>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <Button
+            variant="gold"
+            disabled={saving || !valid}
+            onClick={() => onSave({ ...t, name: (t.name || "").trim(), quote: (t.quote || "").trim() } as Partial<Testimonial> & { name: string; quote: string })}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Guardar
