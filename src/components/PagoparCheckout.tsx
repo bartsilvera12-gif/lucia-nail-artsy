@@ -149,10 +149,10 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-serif text-xl">
             <CreditCard className="h-5 w-5 text-primary" />
-            Pagar con Pagopar
+            Realizar compra
           </DialogTitle>
           <DialogDescription>
-            Completá tus datos para continuar al checkout seguro de Pagopar.
+            Completá tus datos para continuar al checkout seguro.
           </DialogDescription>
         </DialogHeader>
 
@@ -214,7 +214,7 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
               {isLoading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Procesando…</>
               ) : (
-                <><ExternalLink className="h-4 w-4" /> Ir a Pagopar</>
+                <><ExternalLink className="h-4 w-4" /> Finalizar compra</>
               )}
             </Button>
           </div>
