@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { supabase } from "@/lib/supabase";
+import { RichTextEditor } from "@/components/RichTextEditor";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourses, useCourseUpsert, useCourseDelete, useAllStudents,
   usePayments,
@@ -407,7 +409,7 @@ function CoursesTab() {
 
 function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>; onClose: () => void; onSave: (c: Partial<CourseRow>) => void | Promise<void> }) {
   const [c, setC] = useState<Partial<CourseRow>>(course);
-  const [tab, setTab] = useState<"data" | "curriculum">("data");
+  const [tab, setTab] = useState<"data" | "curriculum" | "theory">("data");
   const [autoSaving, setAutoSaving] = useState(false);
   const [inlineMsg, setInlineMsg] = useState<{ kind: "warn" | "error"; text: string } | null>(null);
   const upsert = useCourseUpsert();
@@ -415,9 +417,9 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   // Si el usuario quiere ir a "Lecciones y videos" y el curso aún no fue
   // guardado, lo guardamos automáticamente en background y conservamos
   // el editor abierto con el id+slug actualizados.
-  const handleTabClick = async (id: "data" | "curriculum") => {
+  const handleTabClick = async (id: "data" | "curriculum" | "theory") => {
     setInlineMsg(null);
-    if (id === "curriculum" && !c.id) {
+    if ((id === "curriculum" || id === "theory") && !c.id) {
       if (!c.title || c.title.trim().length < 3) {
         setInlineMsg({ kind: "warn", text: "Escribí un título (al menos 3 caracteres) antes de cargar módulos." });
         setTab("data");
@@ -461,7 +463,7 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         }
         if (!saved) throw new Error("No se pudo generar un slug único después de varios intentos.");
         setC(saved);
-        setTab("curriculum");
+        setTab(id);
       } catch (err: unknown) {
         // Extraer el mensaje real de Supabase/Postgrest (no es siempre instance of Error)
         const msg = extractErrorMessage(err) || "No se pudo guardar el curso.";
@@ -490,6 +492,7 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
           {([
             { id: "data", label: "Datos del curso" },
             { id: "curriculum", label: "Lecciones y videos" },
+            { id: "theory", label: "Teoría" },
           ] as const).map((t) => (
             <button
               key={t.id}
@@ -503,7 +506,7 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
               }
             >
               {t.label}
-              {autoSaving && t.id === "curriculum" && " · Guardando…"}
+              {autoSaving && (t.id === "curriculum" || t.id === "theory") && " · Guardando…"}
             </button>
           ))}
         </div>
@@ -531,10 +534,10 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
             </div>
           )}
 
-          {tab === "data" ? (
-            <CourseDataForm c={c} setC={setC} />
-          ) : (
-            c.id && c.slug && <CurriculumEditor courseId={c.id} courseSlug={c.slug} />
+          {tab === "data" && <CourseDataForm c={c} setC={setC} />}
+          {tab === "curriculum" && c.id && c.slug && <CurriculumEditor courseId={c.id} courseSlug={c.slug} />}
+          {tab === "theory" && c.id && (
+            <CourseTheoryEditor course={c as CourseRow} onSaved={(html) => setC({ ...c, theory_content: html })} />
           )}
         </div>
 
@@ -1247,6 +1250,81 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// Editor de Teoría del curso (TipTap WYSIWYG)
+// ============================================================
+function CourseTheoryEditor({
+  course,
+  onSaved,
+}: {
+  course: CourseRow;
+  onSaved: (html: string) => void;
+}) {
+  const [html, setHtml] = useState(course.theory_content ?? "");
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const qc = useQueryClient();
+
+  // Re-sincronizar si el curso cambia externamente
+  useEffect(() => { setHtml(course.theory_content ?? ""); }, [course.id, course.theory_content]);
+
+  const save = async () => {
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const { error } = await supabase
+        .from("courses")
+        .update({ theory_content: html })
+        .eq("id", course.id);
+      if (error) throw error;
+      onSaved(html);
+      qc.invalidateQueries({ queryKey: ["courses"] });
+      qc.invalidateQueries({ queryKey: ["course", course.slug] });
+      setFeedback({ kind: "ok", text: "Teoría guardada." });
+      setTimeout(() => setFeedback(null), 2500);
+    } catch (err: unknown) {
+      const e = err as { message?: string; details?: string; hint?: string };
+      setFeedback({ kind: "err", text: e?.message || e?.details || "No se pudo guardar la teoría." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="font-serif text-lg">Contenido teórico del curso</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Acá podés cargar la teoría completa del curso. Las alumnas la van a ver desde un botón "Teoría" en la página del curso.
+          Soporta títulos, negritas, listas, enlaces y más. Solo se ve si la alumna tiene acceso al curso.
+        </p>
+      </div>
+
+      <RichTextEditor
+        value={html}
+        onChange={setHtml}
+        placeholder="Escribí o pegá el contenido teórico (también podés importar desde Word a nivel de lección individual)."
+      />
+
+      {feedback && (
+        <p className={"text-xs " + (feedback.kind === "ok" ? "text-emerald-700" : "text-destructive")}>
+          {feedback.kind === "ok" ? "✓ " : "✗ "}{feedback.text}
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+        <p className="text-[11px] text-muted-foreground">
+          Vista pública: <code className="font-mono">/curso/{course.slug}/teoria</code>
+        </p>
+        <Button variant="gold" onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {saving ? "Guardando…" : "Guardar teoría"}
+        </Button>
+      </div>
     </div>
   );
 }

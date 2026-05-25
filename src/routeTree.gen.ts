@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerSlugRouteImport } from './routes/ver.$slug'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
 import { Route as PagoparResultadoHashRouteImport } from './routes/pagopar/resultado.$hash'
+import { Route as CursoSlugTeoriaRouteImport } from './routes/curso.$slug.teoria'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -100,6 +101,11 @@ const PagoparResultadoHashRoute = PagoparResultadoHashRouteImport.update({
   path: '/pagopar/resultado/$hash',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CursoSlugTeoriaRoute = CursoSlugTeoriaRouteImport.update({
+  id: '/teoria',
+  path: '/teoria',
+  getParentRoute: () => CursoSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -114,8 +120,9 @@ export interface FileRoutesByFullPath {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
-  '/curso/$slug': typeof CursoSlugRoute
+  '/curso/$slug': typeof CursoSlugRouteWithChildren
   '/ver/$slug': typeof VerSlugRoute
+  '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
   '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRoutesByTo {
@@ -131,8 +138,9 @@ export interface FileRoutesByTo {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
-  '/curso/$slug': typeof CursoSlugRoute
+  '/curso/$slug': typeof CursoSlugRouteWithChildren
   '/ver/$slug': typeof VerSlugRoute
+  '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
   '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRoutesById {
@@ -149,8 +157,9 @@ export interface FileRoutesById {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
-  '/curso/$slug': typeof CursoSlugRoute
+  '/curso/$slug': typeof CursoSlugRouteWithChildren
   '/ver/$slug': typeof VerSlugRoute
+  '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
   '/pagopar/resultado/$hash': typeof PagoparResultadoHashRoute
 }
 export interface FileRouteTypes {
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/curso/$slug/teoria'
     | '/pagopar/resultado/$hash'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/curso/$slug/teoria'
     | '/pagopar/resultado/$hash'
   id:
     | '__root__'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/curso/$slug'
     | '/ver/$slug'
+    | '/curso/$slug/teoria'
     | '/pagopar/resultado/$hash'
   fileRoutesById: FileRoutesById
 }
@@ -220,7 +232,7 @@ export interface RootRouteChildren {
   PlanesRoute: typeof PlanesRoute
   RegistroRoute: typeof RegistroRoute
   SobreRoute: typeof SobreRoute
-  CursoSlugRoute: typeof CursoSlugRoute
+  CursoSlugRoute: typeof CursoSlugRouteWithChildren
   VerSlugRoute: typeof VerSlugRoute
   PagoparResultadoHashRoute: typeof PagoparResultadoHashRoute
 }
@@ -332,8 +344,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PagoparResultadoHashRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/curso/$slug/teoria': {
+      id: '/curso/$slug/teoria'
+      path: '/teoria'
+      fullPath: '/curso/$slug/teoria'
+      preLoaderRoute: typeof CursoSlugTeoriaRouteImport
+      parentRoute: typeof CursoSlugRoute
+    }
   }
 }
+
+interface CursoSlugRouteChildren {
+  CursoSlugTeoriaRoute: typeof CursoSlugTeoriaRoute
+}
+
+const CursoSlugRouteChildren: CursoSlugRouteChildren = {
+  CursoSlugTeoriaRoute: CursoSlugTeoriaRoute,
+}
+
+const CursoSlugRouteWithChildren = CursoSlugRoute._addFileChildren(
+  CursoSlugRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -348,7 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanesRoute: PlanesRoute,
   RegistroRoute: RegistroRoute,
   SobreRoute: SobreRoute,
-  CursoSlugRoute: CursoSlugRoute,
+  CursoSlugRoute: CursoSlugRouteWithChildren,
   VerSlugRoute: VerSlugRoute,
   PagoparResultadoHashRoute: PagoparResultadoHashRoute,
 }
