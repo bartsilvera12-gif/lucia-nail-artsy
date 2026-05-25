@@ -95,30 +95,31 @@ export function useStudentQuestions({
 
       const questions = (data ?? []) as StudentQuestion[];
 
-      // 2) Fallback: cargar respuestas con una query separada y mergear.
-      //    El embed PostgREST a veces no trae las respuestas (por RLS o por
-      //    detección de FK en schema custom). Esto garantiza visibilidad.
+      // 2) Cargar respuestas con una query separada y SIEMPRE mergear.
+      //    El embed PostgREST en schemas custom (lucianails) a veces no
+      //    detecta el FK y devuelve [] silenciosamente. Usamos esta query
+      //    como fuente de verdad — si existe la respuesta en DB, se ve.
       const questionIds = questions.map((q) => q.id);
       if (questionIds.length > 0) {
-        const { data: answers } = await supabase
+        const { data: answers, error: answersErr } = await supabase
           .from("student_question_answers")
           .select("id, question_id, body, teacher_id, created_at, updated_at")
           .in("question_id", questionIds);
 
-        if (answers && answers.length > 0) {
-          const byQuestion = new Map<string, QuestionAnswer[]>();
-          for (const a of answers as (QuestionAnswer & { question_id: string })[]) {
-            const arr = byQuestion.get(a.question_id) ?? [];
-            arr.push(a);
-            byQuestion.set(a.question_id, arr);
-          }
-          for (const q of questions) {
-            const fallback = byQuestion.get(q.id);
-            // Reemplazar solo si la query embedded no trajo respuestas
-            if (fallback && (!q.student_question_answers || q.student_question_answers.length === 0)) {
-              q.student_question_answers = fallback;
-            }
-          }
+        if (answersErr) {
+          console.error("[student_questions] error cargando respuestas:", answersErr);
+        }
+
+        const byQuestion = new Map<string, QuestionAnswer[]>();
+        for (const a of (answers ?? []) as (QuestionAnswer & { question_id: string })[]) {
+          const arr = byQuestion.get(a.question_id) ?? [];
+          arr.push(a);
+          byQuestion.set(a.question_id, arr);
+        }
+        // SIEMPRE asignar (incluso si el embed trajo algo) — esta query es
+        // la fuente confiable. Si no hay respuesta para una pregunta, queda [].
+        for (const q of questions) {
+          q.student_question_answers = byQuestion.get(q.id) ?? [];
         }
       }
 
@@ -203,8 +204,10 @@ export function useAnswerQuestion() {
         .eq("id", questionId);
       if (statusErr) throw statusErr;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["student_questions"] });
+    onSuccess: async () => {
+      // Invalidar + refetch inmediato para que la respuesta nueva se vea sin esperar
+      await qc.invalidateQueries({ queryKey: ["student_questions"] });
+      await qc.refetchQueries({ queryKey: ["student_questions"] });
     },
   });
 }
