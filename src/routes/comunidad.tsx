@@ -577,6 +577,10 @@ function QuestionCard({
   const isOwn = currentUserId === question.user_id;
   const colors = STATUS_COLORS[question.status];
 
+  // Owner (no admin) puede borrar su propia consulta
+  const { mutateAsync: deleteOwn, isPending: deletingOwn } = useDeleteQuestion();
+  const canOwnerDelete = isOwn && !isAdmin;
+
   return (
     <div className={`rounded-xl border bg-card shadow-soft transition-shadow hover:shadow-elegant ${
       question.is_featured ? "border-primary/40" : "border-border"
@@ -646,6 +650,28 @@ function QuestionCard({
             showAnswerForm={showAnswerForm}
             onToggleAnswerForm={() => setShowAnswerForm((v) => !v)}
           />
+        )}
+
+        {/* Owner controls — alumna que cargó la consulta puede borrarla */}
+        {canOwnerDelete && (
+          <div className="mt-4 flex justify-end border-t border-border pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={deletingOwn}
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                if (confirm("¿Eliminar tu consulta? Esta acción no se puede deshacer.")) {
+                  deleteOwn(question.id).catch((err: unknown) => {
+                    alert(err instanceof Error ? err.message : "No se pudo eliminar la consulta.");
+                  });
+                }
+              }}
+            >
+              {deletingOwn ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+              Eliminar mi consulta
+            </Button>
+          </div>
         )}
       </div>
     </div>
