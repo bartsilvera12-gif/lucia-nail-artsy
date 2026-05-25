@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Mail } from "lucide-react";
+import { Instagram, MessageCircle } from "lucide-react";
 import { site } from "@/data/site";
 import logoUrl from "@/assets/logo/logo.png";
 import esmalteUrl from "@/assets/esmalte2.png";
@@ -42,10 +42,24 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">Contacto</h4>
             <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0" /> {site.email}</li>
               <li>
-                <a href={site.social.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-primary transition-colors">
-                  <Instagram className="h-3.5 w-3.5 shrink-0" /> Instagram
+                <a
+                  href="https://wa.me/595992970573"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" /> WhatsApp 0992 970 573
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://instagram.com/_luciarojasstudio_"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 hover:text-primary transition-colors"
+                >
+                  <Instagram className="h-3.5 w-3.5 shrink-0" /> @_luciarojasstudio_
                 </a>
               </li>
             </ul>
