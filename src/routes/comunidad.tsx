@@ -634,17 +634,22 @@ function QuestionCard({
         )}
 
         {/* Official answer */}
-        {answer && (
-          <div className="mt-4 rounded-lg border border-primary/20 bg-gradient-cream p-4">
+        {answer ? (
+          <div className="mt-4 rounded-lg border border-primary/30 bg-gradient-cream p-4 shadow-sm">
             <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
               <MessageSquare className="h-3.5 w-3.5" /> Respuesta oficial de la docente
               <span className="ml-auto font-normal normal-case tracking-normal text-muted-foreground">
                 {new Date(answer.updated_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
               </span>
             </p>
-            <p className="text-sm leading-relaxed">{answer.body}</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{answer.body}</p>
           </div>
-        )}
+        ) : question.status === "answered" ? (
+          <div className="mt-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+            La consulta fue marcada como respondida, pero el contenido todavía no está cargado.
+            Recargá la página en unos segundos.
+          </div>
+        ) : null}
 
         {/* Admin controls */}
         {isAdmin && (
