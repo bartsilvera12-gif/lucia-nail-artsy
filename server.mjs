@@ -57,6 +57,9 @@ const INDEX_PATH = join(CLIENT_DIST, "index.html");
 console.log("[lrs] Using static folder :", CLIENT_DIST);
 console.log("[lrs] index.html          :", existsSync(INDEX_PATH) ? "✓ found" : "✗ MISSING");
 
+// ── VdoCipher config (server-side only — NEVER expose API SECRET to client) ──
+const VDOCIPHER_API_SECRET = process.env.VDOCIPHER_API_SECRET || "";
+
 // ── Pagopar config (server-side only — NEVER expose PRIVATE_TOKEN to client) ─
 const PAGOPAR_PUBLIC  = process.env.PAGOPAR_PUBLIC_TOKEN  || "";
 const PAGOPAR_PRIVATE = process.env.PAGOPAR_PRIVATE_TOKEN || "";

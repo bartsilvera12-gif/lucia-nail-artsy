@@ -8,6 +8,8 @@ import {
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
+import { BrandSelect } from "@/components/BrandSelect";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { AnimateIn } from "@/components/AnimateIn";
 import { useAuth } from "@/lib/auth";
 import { useCourses } from "@/hooks/useCourses";
@@ -208,16 +210,16 @@ function EspacioAlumnasPage() {
                   </div>
 
                   {courses.length > 0 && (
-                    <select
+                    <BrandSelect
                       value={courseFilter}
-                      onChange={(e) => { setCourseFilter(e.target.value); setPage(0); }}
-                      className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground focus:outline-none"
-                    >
-                      <option value="">Todos los cursos</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>{c.title}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => { setCourseFilter(v); setPage(0); }}
+                      placeholder="Todos los cursos"
+                      className="w-56"
+                      options={[
+                        { value: "", label: "Todos los cursos" },
+                        ...courses.map((c) => ({ value: c.id, label: c.title })),
+                      ]}
+                    />
                   )}
 
                   <span className="ml-auto text-xs text-muted-foreground">
@@ -519,16 +521,17 @@ function NewQuestionForm({
         {courses.length > 0 && (
           <div>
             <label className="text-xs font-medium text-muted-foreground">Curso relacionado (opcional)</label>
-            <select
-              value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/60"
-            >
-              <option value="">Sin curso específico</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <BrandSelect
+                value={courseId}
+                onChange={(v) => setCourseId(v)}
+                placeholder="Sin curso específico"
+                options={[
+                  { value: "", label: "Sin curso específico" },
+                  ...courses.map((c) => ({ value: c.id, label: c.title })),
+                ]}
+              />
+            </div>
           </div>
         )}
 
@@ -580,6 +583,7 @@ function QuestionCard({
   // Owner (no admin) puede borrar su propia consulta
   const { mutateAsync: deleteOwn, isPending: deletingOwn } = useDeleteQuestion();
   const canOwnerDelete = isOwn && !isAdmin;
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   return (
     <div className={`rounded-xl border bg-card shadow-soft transition-shadow hover:shadow-elegant ${
@@ -660,8 +664,8 @@ function QuestionCard({
               size="sm"
               disabled={deletingOwn}
               className="text-destructive hover:text-destructive"
-              onClick={() => {
-                if (confirm("¿Eliminar tu consulta? Esta acción no se puede deshacer.")) {
+              onClick={async () => {
+                if (await confirm("¿Eliminar tu consulta? Esta acción no se puede deshacer.", { title: "Eliminar consulta", confirmLabel: "Eliminar" })) {
                   deleteOwn(question.id).catch((err: unknown) => {
                     alert(err instanceof Error ? err.message : "No se pudo eliminar la consulta.");
                   });
@@ -673,6 +677,7 @@ function QuestionCard({
             </Button>
           </div>
         )}
+        {confirmDialog}
       </div>
     </div>
   );
@@ -697,6 +702,7 @@ function AdminControls({
   const { mutateAsync: answerQ, isPending: answeringQ } = useAnswerQuestion();
   const { mutateAsync: updateQ, isPending: updatingQ } = useUpdateQuestion();
   const { mutateAsync: deleteQ, isPending: deletingQ } = useDeleteQuestion();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { user } = useAuth();
 
@@ -764,14 +770,15 @@ function AdminControls({
           size="sm"
           disabled={deletingQ}
           className="ml-auto text-destructive hover:text-destructive"
-          onClick={() => {
-            if (confirm("¿Eliminar esta consulta? Esta acción no se puede deshacer.")) {
+          onClick={async () => {
+            if (await confirm("¿Eliminar esta consulta? Esta acción no se puede deshacer.", { title: "Eliminar consulta", confirmLabel: "Eliminar" })) {
               deleteQ(question.id);
             }
           }}
         >
           {deletingQ ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
         </Button>
+        {confirmDialog}
       </div>
 
       {/* Answer form */}
