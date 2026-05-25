@@ -309,6 +309,33 @@ function CoursesTab() {
 function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>; onClose: () => void; onSave: (c: Partial<CourseRow>) => void | Promise<void> }) {
   const [c, setC] = useState<Partial<CourseRow>>(course);
   const [tab, setTab] = useState<"data" | "curriculum">("data");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const upsert = useCourseUpsert();
+
+  // Si el usuario quiere ir a "Lecciones y videos" y el curso aún no fue
+  // guardado, lo guardamos automáticamente en background y conservamos
+  // el editor abierto con el id+slug actualizados.
+  const handleTabClick = async (id: "data" | "curriculum") => {
+    if (id === "curriculum" && !c.id) {
+      if (!c.title || c.title.trim().length < 3) {
+        alert("Necesitás escribir un título antes de cargar módulos.");
+        return;
+      }
+      setAutoSaving(true);
+      try {
+        const saved = await upsert.mutateAsync(c);
+        if (saved) setC(saved);
+        setTab("curriculum");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "No se pudo guardar el curso.");
+      } finally {
+        setAutoSaving(false);
+      }
+      return;
+    }
+    setTab(id);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-elegant">
@@ -327,8 +354,8 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
           ] as const).map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
-              disabled={t.id === "curriculum" && !c.id}
+              onClick={() => handleTabClick(t.id)}
+              disabled={autoSaving}
               className={
                 "border-b-2 px-3 py-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 " +
                 (tab === t.id
@@ -337,6 +364,7 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
               }
             >
               {t.label}
+              {autoSaving && t.id === "curriculum" && " · Guardando…"}
             </button>
           ))}
         </div>
@@ -352,7 +380,9 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         {tab === "data" && (
           <div className="flex items-center justify-between border-t border-border px-6 py-4">
             <p className="text-xs text-muted-foreground">
-              {course.id ? "Tip: guardá los datos y después abrí la pestaña Lecciones para subir videos." : "Guardá el curso para empezar a cargar módulos y videos."}
+              {c.id
+                ? "Cambiá lo que necesites y guardá. La pestaña Lecciones queda lista para cargar contenido."
+                : "Escribí el título y abrí la pestaña Lecciones — el curso se guarda solo."}
             </p>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={onClose}>Cancelar</Button>
