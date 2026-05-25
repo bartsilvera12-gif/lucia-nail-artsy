@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, HelpCircle, Search, BookOpen, Crown, ShieldCheck, MessageCircle, Mail, Instagram } from "lucide-react";
+import { ArrowRight, HelpCircle, Search, BookOpen, Crown, ShieldCheck, MessageCircle, Instagram } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { Button } from "@/components/ui/button";
 import { faqs } from "@/data/site";
-import { site } from "@/data/site";
 import limaImg from "@/assets/lima.png";
 import { AnimateIn } from "@/components/AnimateIn";
 
@@ -133,11 +132,21 @@ function FaqPage() {
               <p className="mt-4 font-serif text-base">¿Necesitás ayuda?</p>
               <p className="mt-1 text-xs text-muted-foreground">Te respondemos en menos de 24 hs hábiles.</p>
               <div className="mt-4 space-y-2">
-                <a href={`mailto:${site.email}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary">
-                  <Mail className="h-3.5 w-3.5" /> {site.email}
+                <a
+                  href="https://wa.me/595992970573"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp 0992 970 573
                 </a>
-                <a href={site.social.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-foreground hover:text-primary">
-                  <Instagram className="h-3.5 w-3.5" /> @luciarojasstudio
+                <a
+                  href="https://instagram.com/_luciarojasstudio_"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                >
+                  <Instagram className="h-3.5 w-3.5" /> @_luciarojasstudio_
                 </a>
               </div>
               <Button variant="gold" size="sm" asChild className="mt-4 w-full">
