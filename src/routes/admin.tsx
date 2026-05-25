@@ -1591,12 +1591,20 @@ function CategoryEditor({
 // Reseñas / Testimonials
 // ============================================================
 function TestimonialsTab() {
-  const { data: items = [], isLoading } = useTestimonials();
+  const { data: items = [], isLoading, isError, error: queryError } = useTestimonials();
   const upsert = useTestimonialUpsert();
   const del = useTestimonialDelete();
   const [editing, setEditing] = useState<Partial<Testimonial> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
+
+  // Detectar si la tabla no existe (migración 011 sin aplicar)
+  const queryErrorMsg = (queryError as { message?: string; code?: string } | null)?.message ?? "";
+  const tableMissing = isError && (
+    queryErrorMsg.includes("does not exist") ||
+    queryErrorMsg.includes("relation") ||
+    (queryError as { code?: string } | null)?.code === "42P01"
+  );
 
   const save = async (t: Partial<Testimonial> & { name: string; quote: string }) => {
     setError(null);
@@ -1633,9 +1641,27 @@ function TestimonialsTab() {
 
       <div className="mt-8 space-y-3">
         {isLoading && <p className="text-sm text-muted-foreground">Cargando…</p>}
-        {!isLoading && items.length === 0 && (
+
+        {isError && tableMissing && (
+          <div role="alert" className="rounded-xl border-2 border-amber-300 bg-amber-50 p-6 text-sm text-amber-900">
+            <p className="font-semibold">⚠ La tabla <code className="font-mono text-xs">testimonials</code> no existe todavía en Supabase.</p>
+            <p className="mt-2">
+              Para usar esta sección, aplicá la migración <code className="font-mono text-xs">011_testimonials.sql</code> en el SQL Editor de Supabase.
+              La encontrás en el repo en <code className="font-mono text-xs">supabase/migrations/</code>.
+            </p>
+          </div>
+        )}
+
+        {isError && !tableMissing && (
+          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive">
+            <p className="font-semibold">No se pudieron cargar las reseñas.</p>
+            <p className="mt-2 font-mono text-xs">{queryErrorMsg || "Error desconocido."}</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && items.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No hay reseñas todavía. Aplicá la migración 011_testimonials.sql en Supabase o creá la primera con el botón.
+            No hay reseñas todavía. Creá la primera con el botón "Nueva reseña" arriba.
           </div>
         )}
         {items.map((t) => (
