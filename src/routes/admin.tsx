@@ -169,8 +169,11 @@ function AdminPage() {
 // ============================================================
 function DashboardTab() {
   const { data: courses = [] } = useCourses({ includeDrafts: true });
-  const { data: students = [] } = useAllStudents();
+  const { data: allProfiles = [] } = useAllStudents();
   const { data: payments = [] } = usePayments();
+
+  // Alumnas reales = perfiles que NO son admin
+  const realStudents = allProfiles.filter((s) => (s as { role?: string }).role !== "admin");
 
   const revenue = payments.filter((p) => p.status === "succeeded").reduce((a, p) => a + Number(p.amount), 0);
 
@@ -179,7 +182,7 @@ function DashboardTab() {
       <h1 className="font-serif text-3xl">Resumen</h1>
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat label="Cursos" value={courses.length} />
-        <Stat label="Alumnas" value={students.length} />
+        <Stat label="Alumnas" value={realStudents.length} />
         <Stat label="Ingresos totales" value={formatPYG(Math.round(revenue))} />
       </div>
 
@@ -201,7 +204,7 @@ function DashboardTab() {
         </Card>
 
         <Card title="Últimas altas">
-          {students.slice(0, 5).map((s) => (
+          {realStudents.slice(0, 5).map((s) => (
             <div key={s.id} className="flex items-center justify-between border-b border-border py-2 text-sm last:border-b-0">
               <div>
                 <p className="font-medium">{s.name || s.email}</p>
@@ -210,7 +213,7 @@ function DashboardTab() {
               <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
           ))}
-          {students.length === 0 && <p className="text-sm text-muted-foreground">Sin alumnas registradas.</p>}
+          {realStudents.length === 0 && <p className="text-sm text-muted-foreground">Sin alumnas registradas.</p>}
         </Card>
       </div>
     </div>
