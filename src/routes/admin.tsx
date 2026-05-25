@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -954,6 +954,20 @@ function CategoriesTab() {
     }
   };
 
+  // Mover una categoría hacia arriba o abajo intercambiando sort_order con la vecina
+  const move = async (idx: number, direction: -1 | 1) => {
+    const a = cats[idx];
+    const b = cats[idx + direction];
+    if (!a || !b) return;
+    try {
+      // Intercambiar los sort_order
+      await upsert.mutateAsync({ id: a.id, name: a.name, sort_order: b.sort_order });
+      await upsert.mutateAsync({ id: b.id, name: b.name, sort_order: a.sort_order });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo reordenar.");
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -977,8 +991,8 @@ function CategoriesTab() {
         <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-left">
             <tr>
+              <th className="px-4 py-3 w-24">Orden</th>
               <th className="px-4 py-3">Nombre</th>
-              <th className="px-4 py-3 w-32">Orden</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -989,10 +1003,33 @@ function CategoriesTab() {
                 No hay categorías cargadas todavía. Aplicá la migración 008_course_categories.sql en Supabase o creá la primera con el botón de arriba.
               </td></tr>
             )}
-            {cats.map((cat) => (
+            {cats.map((cat, i) => (
               <tr key={cat.id} className="border-t border-border">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === 0 || upsert.isPending}
+                      onClick={() => move(i, -1)}
+                      title="Subir"
+                      className="h-7 w-7 p-0"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === cats.length - 1 || upsert.isPending}
+                      onClick={() => move(i, 1)}
+                      title="Bajar"
+                      className="h-7 w-7 p-0"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 font-medium">{cat.name}</td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{cat.sort_order}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setEditing(cat)}><Pencil className="h-4 w-4" /></Button>
@@ -1056,13 +1093,9 @@ function CategoryEditor({
               autoFocus
             />
           </Field>
-          <Field label="Orden (menor = aparece primero)">
-            <Input
-              type="number"
-              value={c.sort_order ?? 100}
-              onChange={(e) => setC({ ...c, sort_order: Number(e.target.value) })}
-            />
-          </Field>
+          <p className="text-[11px] text-muted-foreground">
+            El orden en que aparece se ajusta con las flechas ↑↓ desde la tabla.
+          </p>
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
