@@ -37,6 +37,7 @@ export interface CourseRow {
   bonuses: string[];
   sort_order: number;
   is_featured?: boolean;
+  theory_content?: string;
 }
 
 export interface ModuleRow {

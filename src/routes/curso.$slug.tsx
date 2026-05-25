@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, CreditCard } from "lucide-react";
+import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, CreditCard, FileText } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
@@ -156,6 +156,15 @@ function CursoDetailPage() {
                         </span>
                         Ya tenés acceso
                       </div>
+
+                      {course.theory_content && course.theory_content.trim() && (
+                        <Button variant="outlineGold" className="mt-3 w-full" asChild>
+                          <Link to="/curso/$slug/teoria" params={{ slug: course.slug }}>
+                            <FileText className="h-4 w-4" /> Ver teoría del curso
+                          </Link>
+                        </Button>
+                      )}
+
                       <ul className="mt-3 space-y-2 text-xs">
                         <li className="flex items-center gap-2 text-muted-foreground">
                           <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} /> Acceso inmediato

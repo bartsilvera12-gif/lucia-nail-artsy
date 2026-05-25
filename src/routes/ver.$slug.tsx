@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, BookOpen, FileText } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress } from "@/hooks/useCourses";
@@ -90,10 +90,20 @@ function VerPage() {
             <p className="truncate text-sm font-medium">{data.course.title}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setSidebarOpen((v) => !v)} className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50">
-          {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          <span className="hidden sm:inline">{sidebarOpen ? "Ocultar" : "Lecciones"}</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          {data.course.theory_content && data.course.theory_content.trim() && (
+            <Button variant="ghost" size="sm" asChild className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50">
+              <Link to="/curso/$slug/teoria" params={{ slug }}>
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Teoría</span>
+              </Link>
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen((v) => !v)} className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50">
+            {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            <span className="hidden sm:inline">{sidebarOpen ? "Ocultar" : "Lecciones"}</span>
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
