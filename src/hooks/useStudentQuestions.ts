@@ -73,6 +73,7 @@ export function useStudentQuestions({
     queryKey: ["student_questions", { status, courseId, page }],
     enabled,
     queryFn: async () => {
+      // 1) Cargar preguntas (con autor y curso embebidos)
       let q = supabase
         .from("student_questions")
         .select(
@@ -91,7 +92,37 @@ export function useStudentQuestions({
 
       const { data, error, count } = await q;
       if (error) throw error;
-      return { questions: (data ?? []) as StudentQuestion[], count: count ?? 0 };
+
+      const questions = (data ?? []) as StudentQuestion[];
+
+      // 2) Fallback: cargar respuestas con una query separada y mergear.
+      //    El embed PostgREST a veces no trae las respuestas (por RLS o por
+      //    detección de FK en schema custom). Esto garantiza visibilidad.
+      const questionIds = questions.map((q) => q.id);
+      if (questionIds.length > 0) {
+        const { data: answers } = await supabase
+          .from("student_question_answers")
+          .select("id, question_id, body, teacher_id, created_at, updated_at")
+          .in("question_id", questionIds);
+
+        if (answers && answers.length > 0) {
+          const byQuestion = new Map<string, QuestionAnswer[]>();
+          for (const a of answers as (QuestionAnswer & { question_id: string })[]) {
+            const arr = byQuestion.get(a.question_id) ?? [];
+            arr.push(a);
+            byQuestion.set(a.question_id, arr);
+          }
+          for (const q of questions) {
+            const fallback = byQuestion.get(q.id);
+            // Reemplazar solo si la query embedded no trajo respuestas
+            if (fallback && (!q.student_question_answers || q.student_question_answers.length === 0)) {
+              q.student_question_answers = fallback;
+            }
+          }
+        }
+      }
+
+      return { questions, count: count ?? 0 };
     },
   });
 }
