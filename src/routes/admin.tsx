@@ -1,16 +1,16 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Eye, EyeOff, Pin, Check, X, Crown, Calendar,
+  Plus, Pencil, Trash2, Pin, X,
 } from "lucide-react";
-import { useAuth, formatExpiry } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   useCourses, useCourseUpsert, useCourseDelete, useAllStudents,
-  useAllSubscriptions, usePayments, useGrantSubscription, useRevokeSubscription,
+  usePayments,
   useSetRole, usePosts, usePostUpsert, usePostDelete,
   useCourseStructure, useModuleUpsert, useModuleDelete,
   useLessonUpsert, useLessonDelete,
@@ -166,19 +166,16 @@ function AdminPage() {
 function DashboardTab() {
   const { data: courses = [] } = useCourses({ includeDrafts: true });
   const { data: students = [] } = useAllStudents();
-  const { data: subs = [] } = useAllSubscriptions();
   const { data: payments = [] } = usePayments();
 
-  const activeSubs = subs.filter((s) => s.status === "active" && new Date(s.expires_at) > new Date()).length;
   const revenue = payments.filter((p) => p.status === "succeeded").reduce((a, p) => a + Number(p.amount), 0);
 
   return (
     <div>
       <h1 className="font-serif text-3xl">Resumen</h1>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat label="Cursos" value={courses.length} />
         <Stat label="Alumnas" value={students.length} />
-        <Stat label="Membresías activas" value={activeSubs} />
         <Stat label="Ingresos totales" value={formatPYG(Math.round(revenue))} />
       </div>
 
@@ -190,7 +187,7 @@ function DashboardTab() {
               <div key={p.id} className="flex items-center justify-between border-b border-border py-2 text-sm last:border-b-0">
                 <div>
                   <p className="font-medium">{prof?.name ?? prof?.email ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">{p.type === "subscription" ? "Suscripción" : "Curso individual"} · {new Date(p.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Curso individual · {new Date(p.created_at).toLocaleString()}</p>
                 </div>
                 <span className="font-medium">{formatPYG(p.amount)}</span>
               </div>
@@ -247,7 +244,7 @@ function CoursesTab() {
     <div>
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-serif text-3xl">Cursos</h1>
-        <Button variant="gold" onClick={() => setEditing({ status: "draft", included_in_membership: true, level: "Principiante", category: "Principiante", sort_order: 100 })}>
+        <Button variant="gold" onClick={() => setEditing({ status: "draft", level: "Principiante", category: "Principiante", sort_order: 100 })}>
           <Plus className="h-4 w-4" /> Nuevo curso
         </Button>
       </div>
@@ -259,13 +256,12 @@ function CoursesTab() {
               <th className="px-4 py-3">Curso</th>
               <th className="px-4 py-3">Categoría</th>
               <th className="px-4 py-3">Precio</th>
-              <th className="px-4 py-3">Membresía</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {isLoading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
             {courses.map((c) => (
               <tr key={c.id} className="border-t border-border">
                 <td className="px-4 py-3">
@@ -279,7 +275,6 @@ function CoursesTab() {
                 </td>
                 <td className="px-4 py-3 text-xs">{c.category}</td>
                 <td className="px-4 py-3">{formatPYG(c.price)}</td>
-                <td className="px-4 py-3">{c.included_in_membership ? <Check className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}</td>
                 <td className="px-4 py-3">
                   <span className={"rounded-full px-2 py-0.5 text-[10px] " + (c.status === "available" ? "bg-primary/15 text-primary" : c.status === "draft" ? "bg-muted text-muted-foreground" : "bg-secondary")}>
                     {c.status === "available" ? "Publicado" : c.status === "draft" ? "Borrador" : "Próximo"}
@@ -401,12 +396,6 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
           </Field>
           <Field label="Estado">
             <Select value={c.status ?? "available"} onChange={(v) => setC({ ...c, status: v as CourseRow["status"] })} options={["draft", "available", "coming_soon"]} />
-          </Field>
-          <Field label="Incluido en membresía">
-            <label className="mt-2 inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={!!c.included_in_membership} onChange={(e) => setC({ ...c, included_in_membership: e.target.checked })} />
-              Sí, incluido
-            </label>
           </Field>
         </div>
 
@@ -669,9 +658,6 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 // ============================================================
 function StudentsTab() {
   const { data: students = [], isLoading } = useAllStudents();
-  const { data: subs = [] } = useAllSubscriptions();
-  const grant = useGrantSubscription();
-  const revoke = useRevokeSubscription();
   const setRole = useSetRole();
   const [q, setQ] = useState("");
 
@@ -679,17 +665,6 @@ function StudentsTab() {
     (s.name ?? "").toLowerCase().includes(q.toLowerCase()) ||
     (s.email ?? "").toLowerCase().includes(q.toLowerCase()),
   );
-
-  const activeByUser = useMemo(() => {
-    const map = new Map<string, typeof subs[0]>();
-    for (const s of subs) {
-      if (s.status === "active" && new Date(s.expires_at) > new Date()) {
-        const prev = map.get(s.user_id);
-        if (!prev || new Date(s.expires_at) > new Date(prev.expires_at)) map.set(s.user_id, s);
-      }
-    }
-    return map;
-  }, [subs]);
 
   return (
     <div>
@@ -704,59 +679,26 @@ function StudentsTab() {
             <tr>
               <th className="px-4 py-3">Alumna</th>
               <th className="px-4 py-3">Rol</th>
-              <th className="px-4 py-3">Membresía</th>
               <th className="px-4 py-3">Alta</th>
-              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
-            {filtered.map((s) => {
-              const sub = activeByUser.get(s.id);
-              return (
-                <tr key={s.id} className="border-t border-border">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{s.name || s.email}</p>
-                    <p className="text-[11px] text-muted-foreground">{s.email}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <select value={s.role} onChange={(e) => setRole.mutate({ userId: s.id, role: e.target.value as "student" | "admin" })} className="rounded-md border border-input bg-transparent px-2 py-1 text-xs">
-                      <option value="student">student</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    {sub ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs">
-                        <Crown className="h-3 w-3 text-primary" />
-                        {sub.plan} · <Calendar className="h-3 w-3" /> {formatExpiry(sub.expires_at)}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Sin plan</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1">
-                      {sub ? (
-                        <Button size="sm" variant="ghost" onClick={() => revoke.mutate(sub.id)}>
-                          <EyeOff className="h-4 w-4" /> Revocar
-                        </Button>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outlineGold" onClick={() => grant.mutate({ userId: s.id, plan: "monthly", days: 30, note: "admin grant" })}>
-                            <Eye className="h-4 w-4" /> Mensual
-                          </Button>
-                          <Button size="sm" variant="outlineGold" onClick={() => grant.mutate({ userId: s.id, plan: "yearly", days: 365, note: "admin grant" })}>
-                            Anual
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {isLoading && <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {filtered.map((s) => (
+              <tr key={s.id} className="border-t border-border">
+                <td className="px-4 py-3">
+                  <p className="font-medium">{s.name || s.email}</p>
+                  <p className="text-[11px] text-muted-foreground">{s.email}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <select value={s.role} onChange={(e) => setRole.mutate({ userId: s.id, role: e.target.value as "student" | "admin" })} className="rounded-md border border-input bg-transparent px-2 py-1 text-xs">
+                    <option value="student">student</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -807,7 +749,7 @@ function PaymentsTab() {
                     <p className="font-medium">{prof?.name ?? "—"}</p>
                     <p className="text-[11px] text-muted-foreground">{prof?.email}</p>
                   </td>
-                  <td className="px-4 py-3 text-xs">{p.type === "subscription" ? "Suscripción" : "Curso individual"}</td>
+                  <td className="px-4 py-3 text-xs">Curso individual</td>
                   <td className="px-4 py-3 text-xs">{p.method ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className={"rounded-full px-2 py-0.5 text-[10px] " + (p.status === "succeeded" ? "bg-primary/15 text-primary" : p.status === "failed" ? "bg-destructive/15 text-destructive" : "bg-secondary")}>
