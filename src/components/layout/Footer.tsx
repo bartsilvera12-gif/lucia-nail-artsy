@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Instagram, Mail } from "lucide-react";
 import { site } from "@/data/site";
 import logoUrl from "@/assets/logo/logo.png";
-import esmalteUrl from "@/assets/esmalte.png";
+import esmalteUrl from "@/assets/esmalte2.png";
 
 export function Footer() {
   return (
