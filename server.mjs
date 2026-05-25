@@ -283,8 +283,15 @@ async function handlePagoparIniciar(req, res) {
     console.log(`[pagopar/iniciar] ← respuesta completa:`, JSON.stringify(safeRes));
   }
 
-  if (!pagoparRes?.resultado) {
-    console.error(`[pagopar/iniciar] ✗ Pagopar rechazó el pedido (HTTP ${pagoparHttpStatus})`);
+  // Normalize resultado — Pagopar may return boolean or string "true"/"false"
+  const resultadoOk =
+    pagoparRes?.resultado === true ||
+    pagoparRes?.resultado === "true" ||
+    pagoparRes?.resultado === 1 ||
+    pagoparRes?.resultado === "1";
+
+  if (!resultadoOk) {
+    console.error(`[pagopar/iniciar] ✗ Pagopar rechazó el pedido (HTTP ${pagoparHttpStatus}) resultado=${JSON.stringify(pagoparRes?.resultado)}`);
     jsonErrorPagopar(res, 502,
       "No se pudo crear el pedido en Pagopar.",
       pagoparRes
@@ -292,20 +299,29 @@ async function handlePagoparIniciar(req, res) {
     return;
   }
 
-  // ── Validate hash returned by Pagopar ────────────────────────────────────────
-  // Pagopar devuelve el hash en `respuesta` cuando resultado=true.
-  // Si por alguna razón es falsy, boolean, o la string "false"/"null", NO redirigimos.
-  const hash_pedido = pagoparRes.respuesta;
+  // ── Extract hash from Pagopar response ────────────────────────────────────────
+  // Pagopar v2.0 devuelve el hash en `respuesta` (string) cuando resultado=true.
+  // Intentamos múltiples ubicaciones posibles por compatibilidad entre versiones.
+  let hash_pedido =
+    (typeof pagoparRes.respuesta === "string" && pagoparRes.respuesta)
+      ? pagoparRes.respuesta
+      : pagoparRes.respuesta?.hash_pedido ||
+        pagoparRes.respuesta?.hash ||
+        pagoparRes.hash_pedido ||
+        pagoparRes.hash ||
+        null;
+
+  console.log(`[pagopar/iniciar]   hash extraído : ${JSON.stringify(hash_pedido)}`);
+  console.log(`[pagopar/iniciar]   respuesta raw : ${JSON.stringify(pagoparRes.respuesta)}`);
+
+  const BAD_VALUES = new Set(["false", "null", "undefined", "0", "", "true"]);
   const hashIsValid =
     typeof hash_pedido === "string" &&
     hash_pedido.length > 4 &&
-    hash_pedido !== "false" &&
-    hash_pedido !== "null" &&
-    hash_pedido !== "undefined" &&
-    hash_pedido !== "0";
+    !BAD_VALUES.has(hash_pedido.toLowerCase());
 
   if (!hashIsValid) {
-    console.error(`[pagopar/iniciar] ✗ hash inválido de Pagopar: ${JSON.stringify(hash_pedido)}`);
+    console.error(`[pagopar/iniciar] ✗ hash inválido: ${JSON.stringify(hash_pedido)} — respuesta completa: ${JSON.stringify(pagoparRes)}`);
     jsonErrorPagopar(res, 502,
       "Pagopar no devolvió un hash válido.",
       pagoparRes
