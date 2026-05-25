@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, ShoppingCart, CreditCard } from "lucide-react";
+import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, CreditCard } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
@@ -171,24 +171,10 @@ function CursoDetailPage() {
                   ) : (
                     <>
                       <div className="mt-3 space-y-2" id="comprar">
+                        {/* Pagopar — pago online con tarjeta/transferencia (Paraguay) */}
                         <Button
                           variant="outlineGold"
                           className="w-full"
-                          onClick={() => {
-                            if (!isAuthenticated) {
-                              window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}?buy=1`)}`;
-                              return;
-                            }
-                            purchaseCourse(course.id, Number(course.price));
-                          }}
-                        >
-                          <ShoppingCart className="h-4 w-4" /> Comprar individual
-                        </Button>
-
-                        {/* Pagopar — pago online con tarjeta/transferencia (Paraguay) */}
-                        <Button
-                          variant="outline"
-                          className="w-full text-sm"
                           onClick={() => {
                             if (!isAuthenticated) {
                               window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}#comprar`)}`;
@@ -197,7 +183,7 @@ function CursoDetailPage() {
                             setPagoparOpen(true);
                           }}
                         >
-                          <CreditCard className="h-4 w-4" /> Pagar con Pagopar
+                          <CreditCard className="h-4 w-4" /> Realizar compra
                         </Button>
                       </div>
                       <div aria-hidden className="my-4 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
