@@ -428,6 +428,50 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   );
 }
 
+function ImagePreview({ url }: { url: string }) {
+  const [errored, setErrored] = useState(false);
+  const trimmed = url.trim();
+  const isUrl = /^https?:\/\//i.test(trimmed);
+
+  // Reset estado de error si cambia la URL
+  useEffect(() => { setErrored(false); }, [trimmed]);
+
+  if (!trimmed) {
+    return (
+      <div className="mt-2 flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 text-[11px] text-muted-foreground">
+        Pegá una URL para ver la miniatura
+      </div>
+    );
+  }
+
+  if (!isUrl) {
+    return (
+      <p className="mt-2 text-[11px] text-destructive">
+        Tiene que ser una URL completa (https://…).
+      </p>
+    );
+  }
+
+  if (errored) {
+    return (
+      <p className="mt-2 text-[11px] text-destructive">
+        No se pudo cargar la imagen. Verificá que la URL sea pública y accesible.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-lg border border-border bg-secondary/30">
+      <img
+        src={trimmed}
+        alt="Vista previa"
+        onError={() => setErrored(true)}
+        className="h-32 w-full object-cover"
+      />
+    </div>
+  );
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -493,8 +537,14 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
           <Field label="Duración (texto)">
             <Input value={c.duration ?? ""} onChange={(e) => setC({ ...c, duration: e.target.value })} placeholder="5h 40m" />
           </Field>
-          <Field label="Imagen (nombre o URL)">
-            <Input value={c.image_path ?? ""} onChange={(e) => setC({ ...c, image_path: e.target.value })} placeholder="course-acrilicas.jpg" />
+          <Field label="Imagen (URL)">
+            <Input
+              type="url"
+              value={c.image_path ?? ""}
+              onChange={(e) => setC({ ...c, image_path: e.target.value })}
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+            <ImagePreview url={c.image_path ?? ""} />
           </Field>
           <Field label="Orden">
             <Input type="number" value={c.sort_order ?? 100} onChange={(e) => setC({ ...c, sort_order: Number(e.target.value) })} />
