@@ -1151,10 +1151,16 @@ function StudentsTab() {
                   <p className="text-[11px] text-muted-foreground">{s.email}</p>
                 </td>
                 <td className="px-4 py-3">
-                  <select value={s.role} onChange={(e) => setRole.mutate({ userId: s.id, role: e.target.value as "student" | "admin" })} className="rounded-md border border-input bg-transparent px-2 py-1 text-xs">
-                    <option value="student">student</option>
-                    <option value="admin">admin</option>
-                  </select>
+                  <div className="w-44">
+                    <Select
+                      value={s.role}
+                      onChange={(v) => setRole.mutate({ userId: s.id, role: v as "student" | "admin" })}
+                      options={[
+                        { value: "student", label: "👩 Estudiante" },
+                        { value: "admin",   label: "👑 Administradora" },
+                      ]}
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
               </tr>
