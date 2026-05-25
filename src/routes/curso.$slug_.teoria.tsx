@@ -1,33 +1,59 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, Lock, ChevronUp } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, BookOpen, Lock, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { useState, useEffect } from "react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { RichTextView } from "@/components/RichTextEditor";
 import { useCourseBySlug, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
+interface TeoriaSearch { n?: number }
+
 export const Route = createFileRoute("/curso/$slug_/teoria")({
+  validateSearch: (s: Record<string, unknown>): TeoriaSearch => {
+    const n = Number(s.n);
+    return Number.isFinite(n) && n > 0 ? { n } : {};
+  },
   head: ({ params }) => ({ meta: [{ title: `Teoría — ${params.slug} — Lucía Rojas Studio` }] }),
   component: TeoriaPage,
 });
 
 function TeoriaPage() {
   const { slug } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const { isAuthenticated, hasAccessTo, loading } = useAuth();
   const { data, isLoading } = useCourseBySlug(slug);
   const { data: theories = [], isLoading: loadingTheories } = useCourseTheories(data?.course?.id);
-  const topRef = useRef<HTMLDivElement | null>(null);
 
-  // Si llega con hash en la URL, intentar scrollear al elemento
+  // n es 1-indexed (1, 2, 3...). Default a 1.
+  const total = theories.length;
+  const currentIdx = Math.min(Math.max(0, (search.n ?? 1) - 1), Math.max(0, total - 1));
+  const current = theories[currentIdx];
+  const [showToc, setShowToc] = useState(false);
+
+  // Scroll al tope cuando cambia la teoría
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hash = window.location.hash.slice(1);
-    if (hash) {
-      const el = document.getElementById(hash);
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [theories]);
+  }, [currentIdx]);
+
+  // Navegación con teclado (← → para anterior/siguiente)
+  useEffect(() => {
+    if (total < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT/i.test(e.target.tagName)) return;
+      if (e.key === "ArrowLeft" && currentIdx > 0) {
+        navigate({ to: "/curso/$slug/teoria", params: { slug }, search: { n: currentIdx } });
+      }
+      if (e.key === "ArrowRight" && currentIdx < total - 1) {
+        navigate({ to: "/curso/$slug/teoria", params: { slug }, search: { n: currentIdx + 2 } });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [currentIdx, total, slug, navigate]);
 
   if (loading || isLoading) {
     return (
@@ -55,13 +81,19 @@ function TeoriaPage() {
   const course = data.course;
   const hasAccess = hasAccessTo(course.id, course.included_in_membership);
 
+  const goToTheory = (idx: number) => {
+    if (idx < 0 || idx >= total) return;
+    navigate({ to: "/curso/$slug/teoria", params: { slug }, search: { n: idx + 1 } });
+    setShowToc(false);
+  };
+
   return (
     <PublicLayout>
-      <article className="bg-gradient-cream" ref={topRef}>
-        {/* Hero */}
+      <article className="bg-gradient-cream">
+        {/* Hero compacto */}
         <header className="border-b border-border/60">
-          <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-            <Button asChild variant="ghost" size="sm" className="mb-6 -ml-2">
+          <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+            <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
               <Link to="/curso/$slug" params={{ slug }}>
                 <ArrowLeft className="h-4 w-4" /> Volver al curso
               </Link>
@@ -70,24 +102,13 @@ function TeoriaPage() {
             <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-primary">
               {course.category} · Teoría
             </p>
-            <h1 className="mt-3 font-serif text-3xl leading-tight sm:text-4xl">
+            <h1 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl">
               {course.title}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Material teórico completo del curso.
-            </p>
-
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              <BookOpen className="h-3.5 w-3.5" />
-              {theories.length > 0
-                ? `${theories.length} ${theories.length === 1 ? "teoría" : "teorías"}`
-                : "Contenido teórico"}
-            </div>
           </div>
         </header>
 
-        {/* Body */}
-        <section className="py-10 sm:py-14">
+        <section className="py-8 sm:py-12">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             {!hasAccess ? (
               <div className="rounded-2xl border-2 border-primary/30 bg-card p-10 text-center shadow-soft">
@@ -97,7 +118,6 @@ function TeoriaPage() {
                 <h2 className="mt-5 font-serif text-2xl">Esta teoría es para alumnas del curso</h2>
                 <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
                   El material teórico está disponible para quienes ya compraron el curso.
-                  Comprá el curso para acceder a todo el contenido.
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   <Button variant="gold" asChild>
@@ -112,7 +132,7 @@ function TeoriaPage() {
               </div>
             ) : loadingTheories ? (
               <p className="text-center text-sm text-muted-foreground">Cargando teorías…</p>
-            ) : theories.length === 0 ? (
+            ) : total === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
                 <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />
                 <p className="mt-4 font-serif text-lg">Material teórico en preparación</p>
@@ -123,85 +143,122 @@ function TeoriaPage() {
                   <Link to="/curso/$slug" params={{ slug }}>Volver al curso</Link>
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-8">
-                {/* Tabla de contenido — si hay 2+ teorías */}
-                {theories.length > 1 && (
-                  <nav className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                      Contenido
+            ) : !current ? null : (
+              <>
+                {/* Barra de navegación superior */}
+                <nav className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-soft">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-gold text-sm font-medium text-foreground shadow-gold">
+                      {String(currentIdx + 1).padStart(2, "0")}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Teoría {currentIdx + 1} de {total}
+                      </p>
+                      <p className="truncate text-sm font-medium text-foreground">{current.title}</p>
+                    </div>
+                  </div>
+
+                  {/* Botón índice */}
+                  {total > 1 && (
+                    <Button variant="ghost" size="sm" onClick={() => setShowToc((v) => !v)}>
+                      <List className="h-4 w-4" />
+                      <span className="hidden sm:inline">{showToc ? "Cerrar índice" : "Índice"}</span>
+                    </Button>
+                  )}
+                </nav>
+
+                {/* Índice expandible */}
+                {showToc && total > 1 && (
+                  <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-soft">
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      Índice de teorías
                     </p>
-                    <ol className="mt-3 space-y-1.5 text-sm">
+                    <ol className="space-y-1.5">
                       {theories.map((t, i) => (
                         <li key={t.id}>
-                          <a
-                            href={`#teoria-${t.id}`}
-                            className="inline-flex items-center gap-2 text-foreground transition-colors hover:text-primary"
+                          <button
+                            onClick={() => goToTheory(i)}
+                            className={
+                              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors " +
+                              (i === currentIdx
+                                ? "bg-primary/15 font-medium text-foreground"
+                                : "text-foreground hover:bg-secondary")
+                            }
                           >
                             <span className="font-mono text-xs text-muted-foreground">
                               {String(i + 1).padStart(2, "0")}.
                             </span>
-                            <span>{t.title}</span>
-                          </a>
+                            <span className="truncate">{t.title}</span>
+                          </button>
                         </li>
                       ))}
                     </ol>
-                  </nav>
+                  </div>
                 )}
 
-                {/* Lista de teorías */}
-                {theories.map((t, i) => (
-                  <section
-                    key={t.id}
-                    id={`teoria-${t.id}`}
-                    className="scroll-mt-24 rounded-2xl border border-border bg-card px-6 py-8 shadow-soft sm:px-10 sm:py-10"
+                {/* Contenido de la teoría actual */}
+                <article className="rounded-2xl border border-border bg-card px-6 py-8 shadow-soft sm:px-10 sm:py-12">
+                  <header className="mb-6 border-b border-border pb-5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
+                      Teoría {String(currentIdx + 1).padStart(2, "0")}
+                    </p>
+                    <h2 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl">
+                      {current.title}
+                    </h2>
+                  </header>
+
+                  {current.content ? (
+                    <RichTextView html={current.content} className="text-base leading-relaxed text-foreground" />
+                  ) : (
+                    <p className="italic text-muted-foreground">Sin contenido cargado todavía.</p>
+                  )}
+                </article>
+
+                {/* Navegación inferior — Anterior / Siguiente */}
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+                  <Button
+                    variant="outlineGold"
+                    onClick={() => goToTheory(currentIdx - 1)}
+                    disabled={currentIdx === 0}
+                    className="min-w-[140px]"
                   >
-                    <header className="mb-5 border-b border-border pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
-                        Teoría {String(i + 1).padStart(2, "0")}
-                      </p>
-                      <h2 className="mt-2 font-serif text-2xl sm:text-3xl">{t.title}</h2>
-                    </header>
-
-                    {t.content ? (
-                      <RichTextView html={t.content} className="text-base leading-relaxed text-foreground" />
-                    ) : (
-                      <p className="italic text-muted-foreground">Sin contenido cargado todavía.</p>
-                    )}
-
-                    {/* Botón volver al tope si hay tabla de contenidos */}
-                    {theories.length > 1 && (
-                      <div className="mt-6 flex justify-end">
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                          }}
-                          className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
-                        >
-                          <ChevronUp className="h-3 w-3" />
-                          Volver arriba
-                        </a>
-                      </div>
-                    )}
-                  </section>
-                ))}
-
-                {/* Footer de la página */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
-                  <Button asChild variant="outlineGold">
-                    <Link to="/curso/$slug" params={{ slug }}>
-                      <ArrowLeft className="h-4 w-4" /> Volver al curso
-                    </Link>
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
                   </Button>
-                  <Button asChild variant="gold">
-                    <Link to="/ver/$slug" params={{ slug }}>
-                      Ir a las clases en video
+
+                  <span className="text-xs text-muted-foreground">
+                    {currentIdx + 1} / {total}
+                  </span>
+
+                  {currentIdx < total - 1 ? (
+                    <Button
+                      variant="gold"
+                      onClick={() => goToTheory(currentIdx + 1)}
+                      className="min-w-[140px]"
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button asChild variant="gold" className="min-w-[140px]">
+                      <Link to="/ver/$slug" params={{ slug }}>
+                        Ir a las clases
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Footer con link al curso */}
+                <div className="mt-8 flex justify-center">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/curso/$slug" params={{ slug }}>
+                      <ArrowLeft className="h-4 w-4" /> Volver al detalle del curso
                     </Link>
                   </Button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </section>
