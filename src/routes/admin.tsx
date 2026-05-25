@@ -535,7 +535,16 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
             <Select value={c.level ?? "Principiante"} onChange={(v) => setC({ ...c, level: v as CourseRow["level"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio"]} />
           </Field>
           <Field label="Precio (Gs.)">
-            <Input type="number" value={c.price ?? 0} onChange={(e) => setC({ ...c, price: Number(e.target.value) })} />
+            <Input
+              type="number"
+              min={0}
+              value={c.price ? c.price : ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                setC({ ...c, price: v === "" ? 0 : Number(v) });
+              }}
+              placeholder="89000"
+            />
           </Field>
           <Field label="Duración (texto)">
             <Input value={c.duration ?? ""} onChange={(e) => setC({ ...c, duration: e.target.value })} placeholder="5h 40m" />
@@ -550,7 +559,15 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
             <ImagePreview url={c.image_path ?? ""} />
           </Field>
           <Field label="Orden">
-            <Input type="number" value={c.sort_order ?? 100} onChange={(e) => setC({ ...c, sort_order: Number(e.target.value) })} />
+            <Input
+              type="number"
+              value={c.sort_order ? c.sort_order : ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                setC({ ...c, sort_order: v === "" ? 100 : Number(v) });
+              }}
+              placeholder="100"
+            />
           </Field>
           <Field label="Estado">
             <Select
