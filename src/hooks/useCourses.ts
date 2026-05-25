@@ -249,6 +249,69 @@ export function useCategoryDelete() {
   });
 }
 
+// ── Testimonials / Reseñas ──────────────────────────────────────────────
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  quote: string;
+  result: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useTestimonials({ onlyActive = false }: { onlyActive?: boolean } = {}) {
+  return useQuery({
+    queryKey: ["testimonials", onlyActive],
+    queryFn: async () => {
+      let q = supabase
+        .from("testimonials")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+      if (onlyActive) q = q.eq("is_active", true);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as Testimonial[];
+    },
+  });
+}
+
+export function useTestimonialUpsert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (t: Partial<Testimonial> & { name: string; quote: string }) => {
+      const payload = {
+        name:       t.name.trim(),
+        role:       (t.role ?? "").trim(),
+        quote:      t.quote.trim(),
+        result:     (t.result ?? "").trim(),
+        sort_order: t.sort_order ?? 100,
+        is_active:  t.is_active ?? true,
+      };
+      const { data, error } = t.id
+        ? await supabase.from("testimonials").update(payload).eq("id", t.id).select().single()
+        : await supabase.from("testimonials").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["testimonials"] }),
+  });
+}
+
+export function useTestimonialDelete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("testimonials").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["testimonials"] }),
+  });
+}
+
 export function useGrantSubscription() {
   const qc = useQueryClient();
   return useMutation({
