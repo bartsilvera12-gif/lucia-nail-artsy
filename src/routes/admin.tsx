@@ -247,11 +247,26 @@ function CoursesTab() {
   const del = useCourseDelete();
   const [editing, setEditing] = useState<Partial<CourseRow> | null>(null);
 
+  // Cursos ordenados por sort_order (ascendente). Si la query ya los devuelve así
+  // este sort no cambia nada; si no, asegura consistencia con la UI de flechas.
+  const orderedCourses = [...courses].sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100));
+
+  // Mover curso ↑/↓ intercambiando sort_order con el vecino
+  const move = async (idx: number, direction: -1 | 1) => {
+    const a = orderedCourses[idx];
+    const b = orderedCourses[idx + direction];
+    if (!a || !b) return;
+    try {
+      await upsert.mutateAsync({ id: a.id, sort_order: b.sort_order ?? 100 });
+      await upsert.mutateAsync({ id: b.id, sort_order: a.sort_order ?? 100 });
+    } catch { /* silenciar — se reintenta al re-renderizar */ }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-serif text-3xl">Cursos</h1>
-        <Button variant="gold" onClick={() => setEditing({ status: "draft", level: "Principiante", category: "Principiante", sort_order: 100 })}>
+        <Button variant="gold" onClick={() => setEditing({ status: "draft", level: "Principiante", category: "Principiante", sort_order: (orderedCourses.at(-1)?.sort_order ?? 0) + 10 })}>
           <Plus className="h-4 w-4" /> Nuevo curso
         </Button>
       </div>
@@ -260,6 +275,7 @@ function CoursesTab() {
         <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-left">
             <tr>
+              <th className="px-4 py-3 w-20">Orden</th>
               <th className="px-4 py-3">Curso</th>
               <th className="px-4 py-3">Categoría</th>
               <th className="px-4 py-3">Precio</th>
@@ -268,9 +284,33 @@ function CoursesTab() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
-            {courses.map((c) => (
+            {isLoading && <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {orderedCourses.map((c, i) => (
               <tr key={c.id} className="border-t border-border">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === 0 || upsert.isPending}
+                      onClick={() => move(i, -1)}
+                      title="Subir"
+                      className="h-7 w-7 p-0"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={i === orderedCourses.length - 1 || upsert.isPending}
+                      onClick={() => move(i, 1)}
+                      title="Bajar"
+                      className="h-7 w-7 p-0"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     {resolveCourseImage(c.image_path) && <img src={resolveCourseImage(c.image_path)} alt="" className="h-10 w-14 rounded object-cover" />}
@@ -557,17 +597,6 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
               placeholder="https://ejemplo.com/imagen.jpg"
             />
             <ImagePreview url={c.image_path ?? ""} />
-          </Field>
-          <Field label="Orden">
-            <Input
-              type="number"
-              value={c.sort_order ? c.sort_order : ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                setC({ ...c, sort_order: v === "" ? 100 : Number(v) });
-              }}
-              placeholder="100"
-            />
           </Field>
           <Field label="Estado">
             <Select
