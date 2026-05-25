@@ -365,16 +365,42 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   );
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ñ/g, "n")
+    .normalize("NFD").replace(/\p{Diacritic}/gu, "")  // quitar acentos
+    .replace(/[^a-z0-9\s-]/g, "")                     // solo alfanum y espacios/guiones
+    .trim()
+    .replace(/\s+/g, "-")                             // espacios → guiones
+    .replace(/-+/g, "-");                             // colapsar guiones
+}
+
 function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<CourseRow>) => void }) {
+  // Slug se genera automáticamente del título solo para cursos nuevos
+  // (existentes conservan su slug para no romper URLs).
+  const isNew = !c.id;
+
+  const handleTitleChange = (title: string) => {
+    if (isNew) {
+      setC({ ...c, title, slug: slugify(title) });
+    } else {
+      setC({ ...c, title });
+    }
+  };
+
   return (
     <div>
       <div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Slug (url)">
-            <Input value={c.slug ?? ""} onChange={(e) => setC({ ...c, slug: e.target.value })} />
-          </Field>
           <Field label="Título">
-            <Input value={c.title ?? ""} onChange={(e) => setC({ ...c, title: e.target.value })} />
+            <Input value={c.title ?? ""} onChange={(e) => handleTitleChange(e.target.value)} />
+            {c.slug && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                URL: <span className="font-mono">/curso/{c.slug}</span>
+                {isNew && <span className="ml-1">(se genera automáticamente)</span>}
+              </p>
+            )}
           </Field>
           <Field label="Categoría">
             <Select value={c.category ?? "Principiante"} onChange={(v) => setC({ ...c, category: v as CourseRow["category"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"]} />
