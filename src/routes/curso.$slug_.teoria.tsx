@@ -7,7 +7,7 @@ import { RichTextView } from "@/components/RichTextEditor";
 import { useCourseBySlug, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/curso/$slug/teoria")({
+export const Route = createFileRoute("/curso/$slug_/teoria")({
   head: ({ params }) => ({ meta: [{ title: `Teoría — ${params.slug} — Lucía Rojas Studio` }] }),
   component: TeoriaPage,
 });
