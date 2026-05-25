@@ -418,9 +418,10 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         // Si el usuario solo cargó título y categoría, completamos vacíos
         // para que el INSERT no falle. Luego puede editar todo en la
         // pestaña Datos del curso.
+        const baseSlug = c.slug || slugify(c.title || "");
         const payload: Partial<CourseRow> = {
           ...c,
-          slug:              c.slug              ?? slugify(c.title || ""),
+          slug:              baseSlug,
           short_description: c.short_description ?? "",
           description:       c.description       ?? "",
           duration:          c.duration          ?? "",
@@ -433,8 +434,22 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
           audience:          c.audience          ?? [],
           bonuses:           c.bonuses           ?? [],
         };
-        const saved = await upsert.mutateAsync(payload);
-        if (saved) setC(saved);
+
+        // Si el slug ya existe (constraint 23505), reintentar con sufijo -2, -3, etc.
+        let saved: CourseRow | null = null;
+        for (let suffix = 0; suffix < 50 && !saved; suffix++) {
+          const trySlug = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
+          try {
+            saved = (await upsert.mutateAsync({ ...payload, slug: trySlug })) as CourseRow;
+          } catch (err: unknown) {
+            const msg = extractErrorMessage(err);
+            const isDup = msg.includes("23505") || msg.includes("duplicate key") || msg.includes("courses_slug_key");
+            if (!isDup) throw err;
+            // sigue probando con siguiente sufijo
+          }
+        }
+        if (!saved) throw new Error("No se pudo generar un slug único después de varios intentos.");
+        setC(saved);
         setTab("curriculum");
       } catch (err: unknown) {
         // Extraer el mensaje real de Supabase/Postgrest (no es siempre instance of Error)
