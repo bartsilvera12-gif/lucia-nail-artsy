@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Search, BookOpen } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -100,7 +100,12 @@ function CursosPage() {
               {filtered.length === 0 && (
                 <div className="rounded-xl border border-border bg-card p-12 text-center">
                   <p className="text-muted-foreground">No encontramos cursos con ese filtro.</p>
-                  <Link to="/cursos" className="mt-4 inline-block text-sm text-primary underline">Ver todos</Link>
+                  <button
+                    onClick={() => { setFilter("Todos"); setQ(""); }}
+                    className="mt-4 inline-block text-sm text-primary underline hover:text-primary/80"
+                  >
+                    Ver todos
+                  </button>
                 </div>
               )}
             </>

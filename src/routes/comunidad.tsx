@@ -588,6 +588,7 @@ function QuestionCard({
   const { mutateAsync: deleteOwn, isPending: deletingOwn } = useDeleteQuestion();
   const canOwnerDelete = isOwn && !isAdmin;
   const { confirm, dialog: confirmDialog } = useConfirm();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   return (
     <div className={`rounded-xl border bg-card shadow-soft transition-shadow hover:shadow-elegant ${
@@ -671,23 +672,33 @@ function QuestionCard({
 
         {/* Owner controls — alumna que cargó la consulta puede borrarla */}
         {canOwnerDelete && (
-          <div className="mt-4 flex justify-end border-t border-border pt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={deletingOwn}
-              className="text-destructive hover:text-destructive"
-              onClick={async () => {
-                if (await confirm("¿Eliminar tu consulta? Esta acción no se puede deshacer.", { title: "Eliminar consulta", confirmLabel: "Eliminar" })) {
-                  deleteOwn(question.id).catch((err: unknown) => {
-                    alert(err instanceof Error ? err.message : "No se pudo eliminar la consulta.");
-                  });
-                }
-              }}
-            >
-              {deletingOwn ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-              Eliminar mi consulta
-            </Button>
+          <div className="mt-4 border-t border-border pt-3">
+            {deleteError && (
+              <p className="mb-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {deleteError}
+              </p>
+            )}
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={deletingOwn}
+                className="text-destructive hover:text-destructive"
+                onClick={async () => {
+                  setDeleteError(null);
+                  if (await confirm("¿Eliminar tu consulta? Esta acción no se puede deshacer.", { title: "Eliminar consulta", confirmLabel: "Eliminar" })) {
+                    try {
+                      await deleteOwn(question.id);
+                    } catch (err: unknown) {
+                      setDeleteError(err instanceof Error ? err.message : "No se pudo eliminar la consulta.");
+                    }
+                  }
+                }}
+              >
+                {deletingOwn ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                Eliminar mi consulta
+              </Button>
+            </div>
           </div>
         )}
         {confirmDialog}
