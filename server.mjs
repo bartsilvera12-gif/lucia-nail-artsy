@@ -248,78 +248,107 @@ async function handlePagoparIniciar(req, res) {
   const token = sha1(PAGOPAR_PRIVATE + id_pedido_comercio + montoTotalStr);
   console.log(`[pagopar/iniciar]   token sha1              : ${token.slice(0, 8)}... (generado OK)`);
 
-  // Validación específica: Pagopar requiere ciudad
-  if (!comprador.ciudad || String(comprador.ciudad).trim().length < 2) {
-    console.error(`[pagopar/iniciar] ✗ comprador.ciudad faltante o inválida: ${JSON.stringify(comprador.ciudad)}`);
-    jsonError(res, 400, "La ciudad del comprador es obligatoria para pagar con Pagopar.");
+  // Guardar ciudad real del comprador solo para logs internos — NO se envía a Pagopar
+  // (Pagopar espera ciudad="1" para items/comprador sin envío físico)
+  const ciudadInterna = comprador.ciudad ? String(comprador.ciudad).trim() : "";
+  console.log(`[pagopar/iniciar]   ciudad (interna)        : "${ciudadInterna}" (no se envía a Pagopar, va "1")`);
+
+  // ── Normalización de teléfono al formato internacional paraguayo ─────────────
+  // Acepta: 0981123456, 981123456, +595981123456, 595 981 123 456 → +595981123456
+  function normalizePhonePy(raw) {
+    if (!raw) return null;
+    let s = String(raw).replace(/[\s\-().]/g, "");
+    if (s.startsWith("+595")) s = s.slice(4);
+    else if (s.startsWith("595")) s = s.slice(3);
+    else if (s.startsWith("0")) s = s.slice(1);
+    if (!/^\d{9}$/.test(s)) return null;
+    return "+595" + s;
+  }
+  const telefonoNormalizado = normalizePhonePy(comprador.celular || comprador.telefono);
+  if (!telefonoNormalizado) {
+    console.error(`[pagopar/iniciar] ✗ telefono inválido: ${JSON.stringify(comprador.celular)}`);
+    jsonError(res, 400, "El teléfono debe ser un número paraguayo válido.");
     return;
   }
+  console.log(`[pagopar/iniciar]   telefono normalizado    : ${telefonoNormalizado}`);
 
-  console.log(`[pagopar/iniciar]   ciudad recibida         : "${comprador.ciudad}"`);
-  console.log(`[pagopar/iniciar]   departamento recibido   : "${comprador.departamento || ""}"`);
+  // Nombre completo (Pagopar recibe solo "nombre", no "apellido")
+  const nombreCompleto = `${comprador.nombre || ""} ${comprador.apellido || ""}`.trim();
+  const documentoCi    = comprador.documento_identidad || comprador.documento || "";
 
-  // Mapear comprador interno → formato Pagopar
+  // ── Comprador para Pagopar — campos EXACTOS, sin spread del formulario ───────
   const compradorPagopar = {
-    nombre:         `${comprador.nombre} ${comprador.apellido}`.trim(),
-    email:          comprador.email,
-    telefono:       comprador.celular,
-    documento:      comprador.documento_identidad,
-    tipo_documento: "CI",
-    ruc:            comprador.documento_identidad,
-    razon_social:   `${comprador.nombre} ${comprador.apellido}`.trim(),
-    direccion:      comprador.direccion,
-    ciudad:         String(comprador.ciudad).trim(),
-    departamento:   comprador.departamento ? String(comprador.departamento).trim() : "",
+    ruc:                   "",
+    email:                 comprador.email,
+    ciudad:                "1",                  // literal Pagopar — sin envío físico
+    nombre:                nombreCompleto,
+    telefono:              telefonoNormalizado,
+    direccion:             "",
+    documento:             documentoCi,
+    coordenadas:           "",
+    razon_social:          nombreCompleto,
+    tipo_documento:        "CI",
+    direccion_referencia:  "",
   };
 
-  console.log(`[pagopar/iniciar]   comprador.ciudad enviado: "${compradorPagopar.ciudad}"`);
+  // Log seguro: email parcialmente oculto + campos del objeto
+  const emailOculto = compradorPagopar.email
+    ? compradorPagopar.email.replace(/^(.).+(@.+)$/, "$1***$2")
+    : "";
+  const compradorKeys = Object.keys(compradorPagopar);
+  console.log(`[pagopar/iniciar]   compradorPagopar email  : ${emailOculto}`);
+  console.log(`[pagopar/iniciar]   compradorPagopar campos : [${compradorKeys.join(", ")}] (${compradorKeys.length} campos)`);
 
-  // Dirección del vendedor (config opcional vía env — para productos digitales puede ir vacío)
-  const VENDOR_ADDRESS = process.env.PAGOPAR_VENDOR_ADDRESS || "";
-
-  // Mapear productos internos → compras_items de Pagopar
-  // precio_total = precio_unitario × cantidad (entero PYG)
-  // Para productos digitales (sin courier):
-  //   - ciudad = 1 (valor literal según docs Pagopar)
-  //   - categoria = 909 (categoría sin envío físico)
-  //   - vendedor_* en blanco (no se entrega nada)
+  // ── compras_items — formato exacto, sin campos internos ──────────────────────
   const compras_items = productos.map((p, i) => {
     const cantidad = Number(p.cantidad) || 1;
     const precioUnitario = Math.round(Number(p.precio_pyg || montoInt));
     const precioTotal = precioUnitario * cantidad;
     return {
+      ciudad:                          "1",
       nombre:                          p.nombre,
-      cantidad:                        String(cantidad),
-      precio_total:                    String(precioTotal),
-      descripcion:                     p.descripcion || p.nombre,
-      id_producto:                     curso_id || `item-${i + 1}`,
+      cantidad:                        cantidad,
+      categoria:                       "909",
       public_key:                      PAGOPAR_PUBLIC,
-      categoria:                       909,            // curso digital — sin courier
-      ciudad:                          1,              // valor literal Pagopar para items sin envío físico
-      vendedor_direccion:              VENDOR_ADDRESS,
+      url_imagen:                      p.url_imagen || "",
+      descripcion:                     p.descripcion || p.nombre || (descripcion || ""),
+      id_producto:                     String(p.id_producto || p.id || curso_id || `item-${i + 1}`),
+      precio_total:                    precioTotal,
+      vendedor_telefono:               "",
+      vendedor_direccion:              "",
       vendedor_direccion_referencia:   "",
       vendedor_direccion_coordenadas:  "",
-      vendedor_telefono:               "",
     };
   });
 
   compras_items.forEach((it, i) => {
-    console.log(`[pagopar/iniciar]   item[${i}] nombre="${it.nombre}" cantidad=${it.cantidad} precio_total=${it.precio_total} id_producto=${it.id_producto} categoria=${it.categoria} ciudad=${it.ciudad} vendedor_direccion="${it.vendedor_direccion}"`);
+    console.log(`[pagopar/iniciar]   item[${i}] nombre="${it.nombre}" cantidad=${it.cantidad} precio_total=${it.precio_total} id_producto=${it.id_producto} categoria=${it.categoria} ciudad=${it.ciudad}`);
   });
 
+  // ── Verificar que monto_total === suma de items ──────────────────────────────
+  const sumaItems = compras_items.reduce((acc, it) => acc + Number(it.precio_total), 0);
+  console.log(`[pagopar/iniciar]   monto_total             : ${montoInt}`);
+  console.log(`[pagopar/iniciar]   suma_items              : ${sumaItems}`);
+  if (sumaItems !== montoInt) {
+    console.error(`[pagopar/iniciar] ✗ monto_total (${montoInt}) ≠ suma_items (${sumaItems})`);
+    jsonError(res, 400, `El monto total (${montoInt}) no coincide con la suma de los items (${sumaItems}).`);
+    return;
+  }
+
+  // ── Payload final a Pagopar ──────────────────────────────────────────────────
   const pagoparPayload = {
-    public_key:          PAGOPAR_PUBLIC,
     token,
-    monto_total:         montoTotalStr,            // entero en guaraníes como string
+    comprador:           compradorPagopar,
+    public_key:          PAGOPAR_PUBLIC,
+    monto_total:         montoInt,                  // entero en guaraníes
     tipo_pedido:         "VENTA-COMERCIO",
+    compras_items,
+    fecha_maxima_pago:   fechaMaxima,
     id_pedido_comercio,
     descripcion_resumen: (descripcion || "Compra Lucía Rojas Studio").slice(0, 150),
-    fecha_maxima_pago:   fechaMaxima,
-    comprador:           compradorPagopar,
-    compras_items,
+    forma_pago:          9,
   };
 
-  // Log campos principales del payload enviado (sin token)
   const safePayloadKeys = Object.keys(pagoparPayload).filter((k) => k !== "token");
   console.log(`[pagopar/iniciar]   payload a Pagopar keys  : [${safePayloadKeys.join(", ")}]`);
 
