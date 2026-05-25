@@ -527,19 +527,21 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
           )}
         </div>
 
-        {tab === "data" && (
-          <div className="flex items-center justify-between border-t border-border px-6 py-4">
-            <p className="text-xs text-muted-foreground">
-              {c.id
+        <div className="flex items-center justify-between border-t border-border px-6 py-4">
+          <p className="text-xs text-muted-foreground">
+            {tab === "curriculum"
+              ? "Los módulos y lecciones se guardan automáticamente al crearlos."
+              : c.id
                 ? "Cambiá lo que necesites y guardá. La pestaña Lecciones queda lista para cargar contenido."
                 : "Escribí el título y abrí la pestaña Lecciones — el curso se guarda solo."}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-              <Button variant="gold" onClick={() => onSave(c)}>Guardar</Button>
-            </div>
+          </p>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button variant="gold" onClick={() => onSave(c)} disabled={!c.title || c.title.trim().length < 3}>
+              Guardar
+            </Button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
