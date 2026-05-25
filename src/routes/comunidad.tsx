@@ -450,12 +450,16 @@ function NewQuestionForm({
       await mutateAsync({ userId, title: t, body: b, courseId: courseId || undefined });
       onSuccess();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al enviar la consulta.";
-      // RLS rate limit error
-      if (msg.includes("row-level") || msg.includes("policy")) {
-        setError("Alcanzaste el límite de 3 consultas diarias.");
+      // Extraer mensaje real de Supabase/Postgrest (no siempre es instance of Error)
+      const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
+      const rawMsg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : "");
+      // Mensajes amigables para errores conocidos
+      if (rawMsg.includes("row-level") || rawMsg.includes("policy") || rawMsg.includes("violates")) {
+        setError("No se pudo enviar la consulta. Puede ser por el límite diario (3 por día) o un problema de permisos.");
+      } else if (rawMsg) {
+        setError(rawMsg);
       } else {
-        setError(msg);
+        setError("Error al enviar la consulta.");
       }
     }
   };
