@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, Lock } from "lucide-react";
+import { ArrowLeft, BookOpen, Lock, ChevronUp } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { RichTextView } from "@/components/RichTextEditor";
-import { useCourseBySlug } from "@/hooks/useCourses";
+import { useCourseBySlug, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/curso/$slug/teoria")({
@@ -13,9 +14,20 @@ export const Route = createFileRoute("/curso/$slug/teoria")({
 
 function TeoriaPage() {
   const { slug } = Route.useParams();
-  const { user, isAuthenticated, hasAccessTo, loading } = useAuth();
+  const { isAuthenticated, hasAccessTo, loading } = useAuth();
   const { data, isLoading } = useCourseBySlug(slug);
-  void user;
+  const { data: theories = [], isLoading: loadingTheories } = useCourseTheories(data?.course?.id);
+  const topRef = useRef<HTMLDivElement | null>(null);
+
+  // Si llega con hash en la URL, intentar scrollear al elemento
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const el = document.getElementById(hash);
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+    }
+  }, [theories]);
 
   if (loading || isLoading) {
     return (
@@ -42,14 +54,13 @@ function TeoriaPage() {
 
   const course = data.course;
   const hasAccess = hasAccessTo(course.id, course.included_in_membership);
-  const theory = (course.theory_content ?? "").trim();
 
   return (
     <PublicLayout>
-      <article className="bg-gradient-cream">
+      <article className="bg-gradient-cream" ref={topRef}>
         {/* Hero */}
         <header className="border-b border-border/60">
-          <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
             <Button asChild variant="ghost" size="sm" className="mb-6 -ml-2">
               <Link to="/curso/$slug" params={{ slug }}>
                 <ArrowLeft className="h-4 w-4" /> Volver al curso
@@ -68,14 +79,16 @@ function TeoriaPage() {
 
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               <BookOpen className="h-3.5 w-3.5" />
-              Contenido teórico
+              {theories.length > 0
+                ? `${theories.length} ${theories.length === 1 ? "teoría" : "teorías"}`
+                : "Contenido teórico"}
             </div>
           </div>
         </header>
 
         {/* Body */}
         <section className="py-10 sm:py-14">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             {!hasAccess ? (
               <div className="rounded-2xl border-2 border-primary/30 bg-card p-10 text-center shadow-soft">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-gold">
@@ -97,7 +110,9 @@ function TeoriaPage() {
                   </Button>
                 </div>
               </div>
-            ) : !theory ? (
+            ) : loadingTheories ? (
+              <p className="text-center text-sm text-muted-foreground">Cargando teorías…</p>
+            ) : theories.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
                 <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />
                 <p className="mt-4 font-serif text-lg">Material teórico en preparación</p>
@@ -109,10 +124,72 @@ function TeoriaPage() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-card px-6 py-8 shadow-soft sm:px-10 sm:py-12">
-                <RichTextView html={theory} className="text-base leading-relaxed text-foreground" />
+              <div className="space-y-8">
+                {/* Tabla de contenido — si hay 2+ teorías */}
+                {theories.length > 1 && (
+                  <nav className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      Contenido
+                    </p>
+                    <ol className="mt-3 space-y-1.5 text-sm">
+                      {theories.map((t, i) => (
+                        <li key={t.id}>
+                          <a
+                            href={`#teoria-${t.id}`}
+                            className="inline-flex items-center gap-2 text-foreground transition-colors hover:text-primary"
+                          >
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {String(i + 1).padStart(2, "0")}.
+                            </span>
+                            <span>{t.title}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  </nav>
+                )}
 
-                <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+                {/* Lista de teorías */}
+                {theories.map((t, i) => (
+                  <section
+                    key={t.id}
+                    id={`teoria-${t.id}`}
+                    className="scroll-mt-24 rounded-2xl border border-border bg-card px-6 py-8 shadow-soft sm:px-10 sm:py-10"
+                  >
+                    <header className="mb-5 border-b border-border pb-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
+                        Teoría {String(i + 1).padStart(2, "0")}
+                      </p>
+                      <h2 className="mt-2 font-serif text-2xl sm:text-3xl">{t.title}</h2>
+                    </header>
+
+                    {t.content ? (
+                      <RichTextView html={t.content} className="text-base leading-relaxed text-foreground" />
+                    ) : (
+                      <p className="italic text-muted-foreground">Sin contenido cargado todavía.</p>
+                    )}
+
+                    {/* Botón volver al tope si hay tabla de contenidos */}
+                    {theories.length > 1 && (
+                      <div className="mt-6 flex justify-end">
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                        >
+                          <ChevronUp className="h-3 w-3" />
+                          Volver arriba
+                        </a>
+                      </div>
+                    )}
+                  </section>
+                ))}
+
+                {/* Footer de la página */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
                   <Button asChild variant="outlineGold">
                     <Link to="/curso/$slug" params={{ slug }}>
                       <ArrowLeft className="h-4 w-4" /> Volver al curso

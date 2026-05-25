@@ -250,6 +250,67 @@ export function useCategoryDelete() {
   });
 }
 
+// ── Course theories / Teoría por curso ─────────────────────────────────
+export interface CourseTheory {
+  id: string;
+  course_id: string;
+  title: string;
+  content: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useCourseTheories(courseId: string | undefined | null) {
+  return useQuery({
+    queryKey: ["course_theories", courseId],
+    enabled: !!courseId,
+    queryFn: async () => {
+      if (!courseId) return [];
+      const { data, error } = await supabase
+        .from("course_theories")
+        .select("*")
+        .eq("course_id", courseId)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CourseTheory[];
+    },
+  });
+}
+
+export function useCourseTheoryUpsert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (t: Partial<CourseTheory> & { course_id: string; title: string }) => {
+      const payload = {
+        course_id:  t.course_id,
+        title:      t.title.trim(),
+        content:    (t.content ?? "").trim(),
+        sort_order: t.sort_order ?? 100,
+      };
+      const { data, error } = t.id
+        ? await supabase.from("course_theories").update(payload).eq("id", t.id).select().single()
+        : await supabase.from("course_theories").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["course_theories", vars.course_id] }),
+  });
+}
+
+export function useCourseTheoryDelete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string; courseId: string }) => {
+      const { error } = await supabase.from("course_theories").delete().eq("id", args.id);
+      if (error) throw error;
+      return args;
+    },
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["course_theories", vars.courseId] }),
+  });
+}
+
 // ── Testimonials / Reseñas ──────────────────────────────────────────────
 export interface Testimonial {
   id: string;

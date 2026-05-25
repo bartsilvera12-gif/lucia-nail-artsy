@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Paywall } from "@/components/Paywall";
 import { PagoparCheckout } from "@/components/PagoparCheckout";
-import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp } from "@/hooks/useCourses";
+import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
 
@@ -25,6 +25,8 @@ function CursoDetailPage() {
   const { slug } = Route.useParams();
   const search = Route.useSearch();
   const { data, isLoading } = useCourseBySlug(slug);
+  const { data: theories = [] } = useCourseTheories(data?.course?.id);
+  const hasTheories = theories.length > 0;
   const { user, isAuthenticated, hasAccessTo, purchaseCourse } = useAuth();
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
 
@@ -157,7 +159,7 @@ function CursoDetailPage() {
                         Ya tenés acceso
                       </div>
 
-                      {course.theory_content && course.theory_content.trim() && (
+                      {hasTheories && (
                         <Button variant="outlineGold" className="mt-3 w-full" asChild>
                           <Link to="/curso/$slug/teoria" params={{ slug: course.slug }}>
                             <FileText className="h-4 w-4" /> Ver teoría del curso
