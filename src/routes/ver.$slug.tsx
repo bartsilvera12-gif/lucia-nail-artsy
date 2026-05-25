@@ -1,9 +1,9 @@
 import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, BookOpen, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, FileText } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
-import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress } from "@/hooks/useCourses";
+import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
 interface VerSearch { l?: string }
@@ -19,6 +19,8 @@ function VerPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const { data, isLoading } = useCourseBySlug(slug);
+  const { data: theories = [] } = useCourseTheories(data?.course?.id);
+  const hasTheories = theories.length > 0;
   const { user, isAuthenticated, hasAccessTo, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -91,7 +93,7 @@ function VerPage() {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {data.course.theory_content && data.course.theory_content.trim() && (
+          {hasTheories && (
             <Button variant="ghost" size="sm" asChild className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50">
               <Link to="/curso/$slug/teoria" params={{ slug }}>
                 <FileText className="h-4 w-4" />
@@ -152,30 +154,6 @@ function VerPage() {
                 <p className="text-[11px] uppercase tracking-wider text-primary">{current.moduleTitle}</p>
                 <h1 className="mt-1 font-serif text-2xl sm:text-3xl">{current.title}</h1>
               </div>
-            )}
-
-            {/* ── Material teórico (sección aparte del video) ───────────────── */}
-            {current?.description && (
-              <section className="mt-10">
-                {/* Separador visual */}
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/40" />
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-zinc-900 px-4 py-1.5">
-                    <BookOpen className="h-4 w-4 text-primary" />
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                      Material teórico
-                    </span>
-                  </div>
-                  <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/40 to-primary/40" />
-                </div>
-
-                {/* Card destacado con fondo cream sobre el tema oscuro */}
-                <div className="rounded-2xl border-2 border-primary/30 bg-[var(--cream)] p-6 text-zinc-900 shadow-2xl sm:p-8">
-                  <p className="whitespace-pre-wrap text-base leading-relaxed">
-                    {current.description}
-                  </p>
-                </div>
-              </section>
             )}
 
             {/* Prev / Next */}

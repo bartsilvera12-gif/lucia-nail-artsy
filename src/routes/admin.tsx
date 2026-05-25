@@ -20,8 +20,9 @@ import {
   useLessonUpsert, useLessonDelete,
   useCourseCategories, useCategoryUpsert, useCategoryDelete,
   useTestimonials, useTestimonialUpsert, useTestimonialDelete,
+  useCourseTheories, useCourseTheoryUpsert, useCourseTheoryDelete,
   resolveCourseImage, type CourseRow, type ModuleRow, type LessonRow,
-  type CourseCategory, type Testimonial,
+  type CourseCategory, type Testimonial, type CourseTheory,
 } from "@/hooks/useCourses";
 import { Video, Film, GripVertical, FolderPlus, FilePlus } from "lucide-react";
 import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
@@ -537,7 +538,7 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
           {tab === "data" && <CourseDataForm c={c} setC={setC} />}
           {tab === "curriculum" && c.id && c.slug && <CurriculumEditor courseId={c.id} courseSlug={c.slug} />}
           {tab === "theory" && c.id && (
-            <CourseTheoryEditor course={c as CourseRow} onSaved={(html) => setC({ ...c, theory_content: html })} />
+            <CourseTheoryEditor course={c as CourseRow} />
           )}
         </div>
 
@@ -926,72 +927,6 @@ function LessonRowItem({
   const [title, setTitle] = useState(lesson.title);
   const [editing, setEditing] = useState(false);
   const [videoId, setVideoId] = useState(lesson.video_path ?? "");
-  const [showTheory, setShowTheory] = useState(false);
-  const [theory, setTheory] = useState(lesson.description ?? "");
-  const [theorySaving, setTheorySaving] = useState(false);
-  const [theoryFeedback, setTheoryFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-  const [importingDocx, setImportingDocx] = useState(false);
-  const docxInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Importar texto desde archivo Word (.docx) — usa mammoth.js para extraer
-  // el texto plano y poblar el textarea. La docente puede editar antes de guardar.
-  const importDocx = async (file: File) => {
-    setImportingDocx(true);
-    setTheoryFeedback(null);
-    try {
-      const buf = await file.arrayBuffer();
-      // Import dinámico — mammoth solo se carga si la docente usa este botón
-      const mammoth = await import("mammoth");
-      const result = await mammoth.extractRawText({ arrayBuffer: buf });
-      const text = result.value || "";
-      if (!text.trim()) {
-        setTheoryFeedback({ kind: "err", text: "El archivo no tiene texto legible." });
-      } else {
-        // Si ya había contenido, lo reemplaza (no concatena para no duplicar)
-        setTheory(text);
-        setTheoryFeedback({ kind: "ok", text: `Texto importado desde ${file.name}. Revisalo y guardá.` });
-      }
-    } catch (err: unknown) {
-      setTheoryFeedback({
-        kind: "err",
-        text: err instanceof Error ? err.message : "No se pudo leer el archivo Word.",
-      });
-    } finally {
-      setImportingDocx(false);
-      if (docxInputRef.current) docxInputRef.current.value = "";
-    }
-  };
-
-  // Mantener theory sincronizado con la lección cuando llega data nueva
-  // del servidor (ej: después de invalidar la query).
-  useEffect(() => { setTheory(lesson.description ?? ""); }, [lesson.description]);
-
-  // Guardar teoría directamente vía Supabase (con await para feedback real).
-  // No usa el wrapper onUpdate porque ese hace fire-and-forget y los errores
-  // de RLS se tragan silenciosamente — el usuario creía que se guardaba pero
-  // la mutación fallaba sin avisar.
-  const saveTheory = async () => {
-    setTheorySaving(true);
-    setTheoryFeedback(null);
-    try {
-      const { error } = await supabase
-        .from("lessons")
-        .update({ description: theory })
-        .eq("id", lesson.id);
-      if (error) throw error;
-      setTheoryFeedback({ kind: "ok", text: "Material teórico guardado." });
-      // Invalidar el listado de lecciones se hace via onUpdate "ligero"
-      // para que el padre refresque la UI con el valor nuevo
-      onUpdate({ description: theory });
-      setTimeout(() => setTheoryFeedback(null), 2500);
-    } catch (err: unknown) {
-      const e = err as { message?: string; details?: string; hint?: string };
-      const msg = e?.message || e?.details || e?.hint || "No se pudo guardar.";
-      setTheoryFeedback({ kind: "err", text: msg });
-    } finally {
-      setTheorySaving(false);
-    }
-  };
 
   const saveVideoId = () => {
     const v = videoId.trim();
@@ -1031,83 +966,8 @@ function LessonRowItem({
         <Button size="sm" variant={lesson.video_path ? "ghost" : "outlineGold"} onClick={() => setEditing((v) => !v)}>
           <Video className="h-3.5 w-3.5" /> {lesson.video_path ? "Cambiar ID" : "Asignar video"}
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowTheory((v) => !v)}
-          title={lesson.description ? "Editar material teórico" : "Agregar material teórico"}
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          {lesson.description ? "Teoría ✓" : "Teoría"}
-        </Button>
         <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
       </div>
-
-      {showTheory && (
-        <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-xs font-medium text-muted-foreground">
-              Material teórico (notas, instrucciones, links, lo que necesite la alumna además del video)
-            </label>
-            <div>
-              <input
-                ref={docxInputRef}
-                type="file"
-                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) importDocx(f);
-                }}
-                className="hidden"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => docxInputRef.current?.click()}
-                disabled={importingDocx}
-                title="Importar desde un archivo Word (.docx)"
-                type="button"
-              >
-                {importingDocx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                {importingDocx ? "Importando…" : "Importar Word"}
-              </Button>
-            </div>
-          </div>
-          <textarea
-            value={theory}
-            onChange={(e) => setTheory(e.target.value)}
-            rows={8}
-            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. O importá un archivo Word con el botón de arriba."
-            className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-          />
-
-          {theoryFeedback && (
-            <p className={"text-xs " + (theoryFeedback.kind === "ok" ? "text-emerald-700" : "text-destructive")}>
-              {theoryFeedback.kind === "ok" ? "✓ " : "✗ "}{theoryFeedback.text}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => { setTheory(lesson.description ?? ""); setShowTheory(false); setTheoryFeedback(null); }}
-              disabled={theorySaving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              size="sm"
-              variant="outlineGold"
-              onClick={saveTheory}
-              disabled={theorySaving}
-            >
-              {theorySaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              {theorySaving ? "Guardando…" : "Guardar"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {editing && (
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">
@@ -1255,75 +1115,223 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ============================================================
-// Editor de Teoría del curso (TipTap WYSIWYG)
+// Editor de Teorías del curso — lista CRUD con rich text
 // ============================================================
-function CourseTheoryEditor({
-  course,
-  onSaved,
-}: {
-  course: CourseRow;
-  onSaved: (html: string) => void;
-}) {
-  const [html, setHtml] = useState(course.theory_content ?? "");
-  const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-  const qc = useQueryClient();
+function CourseTheoryEditor({ course }: { course: CourseRow }) {
+  const { data: theories = [], isLoading } = useCourseTheories(course.id);
+  const upsert = useCourseTheoryUpsert();
+  const del = useCourseTheoryDelete();
+  const [editing, setEditing] = useState<Partial<CourseTheory> | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
-  // Re-sincronizar si el curso cambia externamente
-  useEffect(() => { setHtml(course.theory_content ?? ""); }, [course.id, course.theory_content]);
-
-  const save = async () => {
-    setSaving(true);
-    setFeedback(null);
+  // Reordenar intercambiando sort_order
+  const move = async (idx: number, direction: -1 | 1) => {
+    const a = theories[idx];
+    const b = theories[idx + direction];
+    if (!a || !b) return;
     try {
-      const { error } = await supabase
-        .from("courses")
-        .update({ theory_content: html })
-        .eq("id", course.id);
-      if (error) throw error;
-      onSaved(html);
-      qc.invalidateQueries({ queryKey: ["courses"] });
-      qc.invalidateQueries({ queryKey: ["course", course.slug] });
-      setFeedback({ kind: "ok", text: "Teoría guardada." });
-      setTimeout(() => setFeedback(null), 2500);
+      await upsert.mutateAsync({ id: a.id, course_id: course.id, title: a.title, content: a.content, sort_order: b.sort_order });
+      await upsert.mutateAsync({ id: b.id, course_id: course.id, title: b.title, content: b.content, sort_order: a.sort_order });
+    } catch { /* silenciar */ }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-serif text-lg">Teorías del curso</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Podés cargar múltiples teorías (módulos teóricos, apuntes, guías). Cada una tiene su título y contenido enriquecido.
+            Las alumnas las ven desde el botón "Teoría" en la página del curso.
+          </p>
+        </div>
+        <Button
+          variant="gold"
+          size="sm"
+          onClick={() => setEditing({
+            course_id: course.id,
+            title: "",
+            content: "",
+            sort_order: (theories.at(-1)?.sort_order ?? 0) + 10,
+          })}
+        >
+          <Plus className="h-4 w-4" /> Nueva teoría
+        </Button>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Cargando…</p>}
+
+      {!isLoading && theories.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-secondary/30 p-10 text-center">
+          <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
+          <p className="mt-4 font-serif text-base">Sin teorías cargadas todavía</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Hacé click en "Nueva teoría" para empezar. Aplicá la migración 013 si el botón guardar falla.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {theories.map((t, i) => (
+          <div key={t.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-soft">
+            <div className="flex flex-col gap-0.5 pt-1">
+              <button
+                onClick={() => move(i, -1)}
+                disabled={i === 0 || upsert.isPending}
+                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+                title="Subir"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => move(i, 1)}
+                disabled={i === theories.length - 1 || upsert.isPending}
+                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+                title="Bajar"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground">{t.title}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                {stripHtml(t.content) || <em>Sin contenido cargado todavía</em>}
+              </p>
+              <p className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                Actualizado {new Date(t.updated_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 gap-1">
+              <Button size="sm" variant="ghost" onClick={() => setEditing(t)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={async () => {
+                  if (await confirm(`¿Borrar la teoría "${t.title}"? Esta acción no se puede deshacer.`, { title: "Borrar teoría", confirmLabel: "Borrar" })) {
+                    del.mutate({ id: t.id, courseId: course.id });
+                  }
+                }}
+                title="Borrar"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {editing && (
+        <CourseTheoryFormModal
+          theory={editing}
+          courseSlug={course.slug}
+          onClose={() => setEditing(null)}
+          onSave={async (t) => {
+            await upsert.mutateAsync(t);
+            setEditing(null);
+          }}
+          saving={upsert.isPending}
+        />
+      )}
+
+      {confirmDialog}
+    </div>
+  );
+}
+
+// Helper: extrae texto plano de HTML para preview en lista
+function stripHtml(html: string): string {
+  if (!html) return "";
+  if (typeof document === "undefined") return html.replace(/<[^>]*>/g, " ");
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || "").trim();
+}
+
+// Modal de edición de una teoría individual
+function CourseTheoryFormModal({
+  theory,
+  courseSlug,
+  onClose,
+  onSave,
+  saving,
+}: {
+  theory: Partial<CourseTheory>;
+  courseSlug: string;
+  onClose: () => void;
+  onSave: (t: Partial<CourseTheory> & { course_id: string; title: string }) => void | Promise<void>;
+  saving: boolean;
+}) {
+  const [title, setTitle] = useState(theory.title ?? "");
+  const [content, setContent] = useState(theory.content ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const valid = title.trim().length >= 2;
+
+  const handleSave = async () => {
+    if (!valid) { setError("El título es obligatorio (mínimo 2 caracteres)."); return; }
+    setError(null);
+    try {
+      await onSave({
+        id:         theory.id,
+        course_id:  theory.course_id!,
+        title:      title.trim(),
+        content,
+        sort_order: theory.sort_order ?? 100,
+      });
     } catch (err: unknown) {
-      const e = err as { message?: string; details?: string; hint?: string };
-      setFeedback({ kind: "err", text: e?.message || e?.details || "No se pudo guardar la teoría." });
-    } finally {
-      setSaving(false);
+      const e = err as { message?: string; details?: string };
+      setError(e?.message || e?.details || "No se pudo guardar la teoría.");
     }
   };
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="font-serif text-lg">Contenido teórico del curso</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Acá podés cargar la teoría completa del curso. Las alumnas la van a ver desde un botón "Teoría" en la página del curso.
-          Soporta títulos, negritas, listas, enlaces y más. Solo se ve si la alumna tiene acceso al curso.
-        </p>
-      </div>
+    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-4">
+      <div className="flex max-h-[92vh] w-full max-w-3xl flex-col rounded-xl border border-border bg-card shadow-elegant">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="font-serif text-xl">{theory.id ? "Editar teoría" : "Nueva teoría"}</h2>
+          <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
+        </div>
 
-      <RichTextEditor
-        value={html}
-        onChange={setHtml}
-        placeholder="Escribí o pegá el contenido teórico (también podés importar desde Word a nivel de lección individual)."
-      />
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <Field label="Título">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ej: Anatomía de la uña"
+              autoFocus
+            />
+          </Field>
 
-      {feedback && (
-        <p className={"text-xs " + (feedback.kind === "ok" ? "text-emerald-700" : "text-destructive")}>
-          {feedback.kind === "ok" ? "✓ " : "✗ "}{feedback.text}
-        </p>
-      )}
+          <Field label="Contenido">
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="Escribí o pegá el contenido teórico. Soporta títulos, listas, negritas, enlaces, etc."
+            />
+          </Field>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-        <p className="text-[11px] text-muted-foreground">
-          Vista pública: <code className="font-mono">/curso/{course.slug}/teoria</code>
-        </p>
-        <Button variant="gold" onClick={save} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {saving ? "Guardando…" : "Guardar teoría"}
-        </Button>
+          {error && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </p>
+          )}
+
+          <p className="text-[11px] text-muted-foreground">
+            Vista pública: <code className="font-mono">/curso/{courseSlug}/teoria</code>
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border px-6 py-3">
+          <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <Button variant="gold" onClick={handleSave} disabled={saving || !valid}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
+        </div>
       </div>
     </div>
   );
