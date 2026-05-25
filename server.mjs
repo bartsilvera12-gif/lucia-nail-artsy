@@ -617,7 +617,7 @@ const server = createServer(async (req, res) => {
         "Content-Type": contentType,
         "Cache-Control": isHashed
           ? "public, max-age=31536000, immutable"
-          : "no-cache",
+          : "no-store, no-cache, must-revalidate, max-age=0",
       });
 
       const stream = createReadStream(filePath);
@@ -644,9 +644,14 @@ const server = createServer(async (req, res) => {
   }
 
   // ── SPA fallback — all app routes get index.html ──────────────────────────
+  // No cache agresivo: el index referencia chunks JS con hashes que cambian
+  // en cada deploy. Si el browser usa un index viejo, intenta fetchear chunks
+  // que ya no existen y rompe el render.
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
-    "Cache-Control": "no-cache",
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
   });
   res.end(INDEX_HTML);
 });
