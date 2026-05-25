@@ -78,8 +78,11 @@ export async function pagoparIniciar(
     if (!res.ok) {
       // Build a human-readable error that includes Pagopar's own message when available
       let msg = json.error || `Error ${res.status}`;
-      if (json.pagopar_mensaje && typeof json.pagopar_mensaje === "string") {
-        msg = `${msg} — Pagopar dice: "${json.pagopar_mensaje}"`;
+      const raw = json.pagopar_raw_message || json.pagopar_mensaje;
+      if (raw && typeof raw === "string") {
+        msg = `${msg} — Pagopar dice: "${raw}"`;
+      } else if (json.pagopar_respuesta !== undefined) {
+        msg = `${msg} — Pagopar respuesta=${JSON.stringify(json.pagopar_respuesta)}`;
       }
       return { data: null, error: msg };
     }

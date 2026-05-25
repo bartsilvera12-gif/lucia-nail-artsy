@@ -220,40 +220,82 @@ async function handlePagoparIniciar(req, res) {
     }
   }
 
-  const id_pedido_local = `lrs-${user_id.slice(0, 8)}-${Date.now()}`;
+  const id_pedido_comercio = `lrs-${user_id.slice(0, 8)}-${Date.now()}`;
 
-  // Log incoming request (no private token)
+  // monto_total: entero en guaraníes, sin decimales. PHP: strval(floatval(89000)) → "89000"
+  const montoTotalStr = String(montoInt);
+
+  // fecha_maxima_pago: 24h desde ahora en formato "YYYY-MM-DD HH:mm:ss"
+  const fechaMaxima = (() => {
+    const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  })();
+
+  // Log payload interno recibido (sin tokens)
   console.log(`[pagopar/iniciar] ── nuevo pedido ────────────────────────────`);
-  console.log(`[pagopar/iniciar]   id_pedido     : ${id_pedido_local}`);
-  console.log(`[pagopar/iniciar]   monto_total   : ${montoInt} PYG`);
-  console.log(`[pagopar/iniciar]   productos     : ${productos.length}`);
-  console.log(`[pagopar/iniciar]   ambiente      : ${PAGOPAR_ENV_VAR}`);
-  console.log(`[pagopar/iniciar]   api_url       : ${PAGOPAR_API_URL}`);
-  console.log(`[pagopar/iniciar]   token_publico : ${PAGOPAR_PUBLIC.slice(0, 6)}... (${PAGOPAR_PUBLIC.length} chars)`);
-  productos.forEach((p, i) => {
+  console.log(`[pagopar/iniciar]   payload interno         :`, JSON.stringify({ monto_pyg, curso_id, user_id, productos_count: productos.length }));
+  console.log(`[pagopar/iniciar]   monto_pyg recibido      : ${monto_pyg}`);
+  console.log(`[pagopar/iniciar]   id_pedido_comercio      : ${id_pedido_comercio}`);
+  console.log(`[pagopar/iniciar]   monto_total a Pagopar   : ${montoTotalStr} (entero PYG)`);
+  console.log(`[pagopar/iniciar]   fecha_maxima_pago       : ${fechaMaxima}`);
+  console.log(`[pagopar/iniciar]   ambiente                : ${PAGOPAR_ENV_VAR}`);
+  console.log(`[pagopar/iniciar]   api_url                 : ${PAGOPAR_API_URL}`);
+  console.log(`[pagopar/iniciar]   public_key length       : ${PAGOPAR_PUBLIC.length} chars`);
+
+  // Token según docs de Pagopar:
+  //   sha1(PRIVATE_TOKEN + id_pedido_comercio + strval(floatval(monto_total)))
+  const token = sha1(PAGOPAR_PRIVATE + id_pedido_comercio + montoTotalStr);
+  console.log(`[pagopar/iniciar]   token sha1              : ${token.slice(0, 8)}... (generado OK)`);
+
+  // Mapear comprador interno → formato Pagopar
+  const compradorPagopar = {
+    nombre:         `${comprador.nombre} ${comprador.apellido}`.trim(),
+    email:          comprador.email,
+    telefono:       comprador.celular,
+    documento:      comprador.documento_identidad,
+    tipo_documento: "CI",
+    ruc:            comprador.documento_identidad,
+    razon_social:   `${comprador.nombre} ${comprador.apellido}`.trim(),
+    direccion:      comprador.direccion,
+  };
+
+  // Mapear productos internos → compras_items de Pagopar
+  // precio_total = precio_unitario × cantidad (entero PYG)
+  const compras_items = productos.map((p, i) => {
+    const cantidad = Number(p.cantidad) || 1;
     const precioUnitario = Math.round(Number(p.precio_pyg || montoInt));
-    console.log(`[pagopar/iniciar]   producto[${i}]  nombre="${p.nombre}" precio_pyg=${precioUnitario} cantidad=${p.cantidad || 1}`);
+    const precioTotal = precioUnitario * cantidad;
+    return {
+      nombre:        p.nombre,
+      cantidad:      String(cantidad),
+      precio_total:  String(precioTotal),
+      descripcion:   p.descripcion || p.nombre,
+      id_producto:   curso_id || `item-${i + 1}`,
+      public_key:    PAGOPAR_PUBLIC,
+      categoria:     p.categoria_pagopar || "Cursos online",
+    };
   });
 
-  // Token: sha1(public + monto_en_guaranies + private) — sent as exact integer string
-  const token = sha1(PAGOPAR_PUBLIC + String(montoInt) + PAGOPAR_PRIVATE);
-  console.log(`[pagopar/iniciar]   token sha1    : ${token.slice(0, 8)}... (generado OK)`);
+  compras_items.forEach((it, i) => {
+    console.log(`[pagopar/iniciar]   item[${i}] nombre="${it.nombre}" cantidad=${it.cantidad} precio_total=${it.precio_total} id_producto=${it.id_producto}`);
+  });
 
   const pagoparPayload = {
+    public_key:          PAGOPAR_PUBLIC,
     token,
-    token_publico: PAGOPAR_PUBLIC,
-    id_pedido: id_pedido_local,
-    descripcion_pedido: descripcion || "Compra Lucía Rojas Studio",
-    monto_total: String(montoInt),   // exact PYG, no conversion
-    tipo_pedido: "1",
-    comprador,
-    productos: productos.map((p) => ({
-      ...p,
-      // precio_pyg already in Guaraníes — send as-is
-      precio_unitario: String(Math.round(Number(p.precio_pyg || montoInt))),
-      cantidad: String(p.cantidad || 1),
-    })),
+    monto_total:         montoTotalStr,            // entero en guaraníes como string
+    tipo_pedido:         "VENTA-COMERCIO",
+    id_pedido_comercio,
+    descripcion_resumen: (descripcion || "Compra Lucía Rojas Studio").slice(0, 150),
+    fecha_maxima_pago:   fechaMaxima,
+    comprador:           compradorPagopar,
+    compras_items,
   };
+
+  // Log campos principales del payload enviado (sin token)
+  const safePayloadKeys = Object.keys(pagoparPayload).filter((k) => k !== "token");
+  console.log(`[pagopar/iniciar]   payload a Pagopar keys  : [${safePayloadKeys.join(", ")}]`);
 
   let pagoparRes;
   let pagoparHttpStatus;
@@ -274,45 +316,50 @@ async function handlePagoparIniciar(req, res) {
     return;
   }
 
-  // Log full Pagopar response (no private tokens in output)
-  console.log(`[pagopar/iniciar] ← Pagopar resultado=${pagoparRes?.resultado} respuesta=${JSON.stringify(pagoparRes?.respuesta)}`);
-  if (pagoparRes && Object.keys(pagoparRes).length > 0) {
-    const safeRes = { ...pagoparRes };
-    delete safeRes.token;           // never log tokens
-    delete safeRes.token_privado;
-    console.log(`[pagopar/iniciar] ← respuesta completa:`, JSON.stringify(safeRes));
+  // Log respuesta completa de Pagopar, ocultando tokens si aparecen
+  console.log(`[pagopar/iniciar] ← HTTP status Pagopar    : ${pagoparHttpStatus}`);
+  console.log(`[pagopar/iniciar] ← respuesta              : ${JSON.stringify(pagoparRes?.respuesta)}`);
+  if (pagoparRes && typeof pagoparRes === "object") {
+    const safeRes = JSON.parse(JSON.stringify(pagoparRes));
+    if (safeRes.token) safeRes.token = "***";
+    if (safeRes.token_privado) safeRes.token_privado = "***";
+    if (safeRes.public_key) safeRes.public_key = "***";
+    console.log(`[pagopar/iniciar] ← respuesta completa     :`, JSON.stringify(safeRes));
   }
 
-  // Normalize resultado — Pagopar may return boolean or string "true"/"false"
-  const resultadoOk =
-    pagoparRes?.resultado === true ||
-    pagoparRes?.resultado === "true" ||
-    pagoparRes?.resultado === 1 ||
-    pagoparRes?.resultado === "1";
+  // Pagopar v2.0:
+  //   { respuesta: true, resultado: [ { data: "HASH", pedido: "..." } ] }
+  //   { respuesta: false, resultado: "mensaje de error" }
+  const respuestaOk =
+    pagoparRes?.respuesta === true ||
+    pagoparRes?.respuesta === "true" ||
+    pagoparRes?.respuesta === 1 ||
+    pagoparRes?.respuesta === "1";
 
-  if (!resultadoOk) {
-    console.error(`[pagopar/iniciar] ✗ Pagopar rechazó el pedido (HTTP ${pagoparHttpStatus}) resultado=${JSON.stringify(pagoparRes?.resultado)}`);
-    jsonErrorPagopar(res, 502,
-      "No se pudo crear el pedido en Pagopar.",
-      pagoparRes
-    );
-    return;
+  // Extraer hash de resultado[0].data (formato Pagopar v2.0)
+  let hash_pedido = null;
+  if (Array.isArray(pagoparRes?.resultado) && pagoparRes.resultado.length > 0) {
+    hash_pedido = pagoparRes.resultado[0]?.data || null;
+  }
+  // Fallbacks por compatibilidad con otras versiones de la API
+  if (!hash_pedido) {
+    if (typeof pagoparRes?.resultado === "string" && pagoparRes.resultado.length > 4) {
+      // Algunas versiones devuelven el hash directo en `resultado`
+      // pero solo si respuestaOk — caso contrario suele ser un mensaje de error
+      if (respuestaOk) hash_pedido = pagoparRes.resultado;
+    } else if (typeof pagoparRes?.respuesta === "string" && pagoparRes.respuesta.length > 10) {
+      hash_pedido = pagoparRes.respuesta;
+    }
   }
 
-  // ── Extract hash from Pagopar response ────────────────────────────────────────
-  // Pagopar v2.0 devuelve el hash en `respuesta` (string) cuando resultado=true.
-  // Intentamos múltiples ubicaciones posibles por compatibilidad entre versiones.
-  let hash_pedido =
-    (typeof pagoparRes.respuesta === "string" && pagoparRes.respuesta)
-      ? pagoparRes.respuesta
-      : pagoparRes.respuesta?.hash_pedido ||
-        pagoparRes.respuesta?.hash ||
-        pagoparRes.hash_pedido ||
-        pagoparRes.hash ||
-        null;
+  console.log(`[pagopar/iniciar]   hash extraído           : ${JSON.stringify(hash_pedido)}`);
 
-  console.log(`[pagopar/iniciar]   hash extraído : ${JSON.stringify(hash_pedido)}`);
-  console.log(`[pagopar/iniciar]   respuesta raw : ${JSON.stringify(pagoparRes.respuesta)}`);
+  // Mensaje crudo de error de Pagopar (cuando respuesta=false)
+  const pagoparRawMessage =
+    (typeof pagoparRes?.resultado === "string" ? pagoparRes.resultado : null) ||
+    (typeof pagoparRes?.mensaje === "string" ? pagoparRes.mensaje : null) ||
+    (Array.isArray(pagoparRes?.resultado) && typeof pagoparRes.resultado[0] === "string" ? pagoparRes.resultado[0] : null) ||
+    null;
 
   const BAD_VALUES = new Set(["false", "null", "undefined", "0", "", "true"]);
   const hashIsValid =
@@ -320,12 +367,16 @@ async function handlePagoparIniciar(req, res) {
     hash_pedido.length > 4 &&
     !BAD_VALUES.has(hash_pedido.toLowerCase());
 
-  if (!hashIsValid) {
-    console.error(`[pagopar/iniciar] ✗ hash inválido: ${JSON.stringify(hash_pedido)} — respuesta completa: ${JSON.stringify(pagoparRes)}`);
-    jsonErrorPagopar(res, 502,
-      "Pagopar no devolvió un hash válido.",
-      pagoparRes
-    );
+  if (!respuestaOk || !hashIsValid) {
+    console.error(`[pagopar/iniciar] ✗ Pagopar rechazó el pedido. respuesta=${JSON.stringify(pagoparRes?.respuesta)} hash=${JSON.stringify(hash_pedido)} mensaje="${pagoparRawMessage}"`);
+    // Devolver detalle seguro al frontend
+    res.writeHead(502, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      error:              "Pagopar no devolvió un hash válido",
+      pagopar_respuesta:  pagoparRes?.respuesta ?? false,
+      pagopar_raw_message: pagoparRawMessage,
+      pagopar_mensaje:    pagoparRawMessage,
+    }));
     return;
   }
 
