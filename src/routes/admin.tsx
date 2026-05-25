@@ -246,10 +246,22 @@ function CoursesTab() {
   const upsert = useCourseUpsert();
   const del = useCourseDelete();
   const [editing, setEditing] = useState<Partial<CourseRow> | null>(null);
+  const [q, setQ] = useState("");
 
   // Cursos ordenados por sort_order (ascendente). Si la query ya los devuelve así
   // este sort no cambia nada; si no, asegura consistencia con la UI de flechas.
-  const orderedCourses = [...courses].sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100));
+  const orderedCourses = [...courses]
+    .sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100))
+    .filter((c) => {
+      if (!q.trim()) return true;
+      const needle = q.trim().toLowerCase();
+      return (
+        (c.title ?? "").toLowerCase().includes(needle) ||
+        (c.slug ?? "").toLowerCase().includes(needle) ||
+        (c.category ?? "").toLowerCase().includes(needle) ||
+        (c.level ?? "").toLowerCase().includes(needle)
+      );
+    });
 
   // Mover curso ↑/↓ intercambiando sort_order con el vecino
   const move = async (idx: number, direction: -1 | 1) => {
@@ -264,11 +276,19 @@ function CoursesTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-serif text-3xl">Cursos</h1>
-        <Button variant="gold" onClick={() => setEditing({ status: "draft", level: "Principiante", category: "Principiante", sort_order: (orderedCourses.at(-1)?.sort_order ?? 0) + 10 })}>
-          <Plus className="h-4 w-4" /> Nuevo curso
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="Buscar por título, slug, categoría…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-72"
+          />
+          <Button variant="gold" onClick={() => setEditing({ status: "draft", level: "Principiante", category: "Principiante", sort_order: (courses.at(-1)?.sort_order ?? 0) + 10 })}>
+            <Plus className="h-4 w-4" /> Nuevo curso
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 overflow-x-auto rounded-xl border border-border bg-card shadow-soft">
@@ -285,6 +305,11 @@ function CoursesTab() {
           </thead>
           <tbody>
             {isLoading && <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {!isLoading && orderedCourses.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                {q.trim() ? `Ningún curso coincide con "${q}".` : "No hay cursos cargados todavía."}
+              </td></tr>
+            )}
             {orderedCourses.map((c, i) => (
               <tr key={c.id} className="border-t border-border">
                 <td className="px-4 py-3">
@@ -292,9 +317,9 @@ function CoursesTab() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      disabled={i === 0 || upsert.isPending}
+                      disabled={i === 0 || upsert.isPending || !!q.trim()}
                       onClick={() => move(i, -1)}
-                      title="Subir"
+                      title={q.trim() ? "Limpiá la búsqueda para reordenar" : "Subir"}
                       className="h-7 w-7 p-0"
                     >
                       <ChevronUp className="h-4 w-4" />
@@ -302,9 +327,9 @@ function CoursesTab() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      disabled={i === orderedCourses.length - 1 || upsert.isPending}
+                      disabled={i === orderedCourses.length - 1 || upsert.isPending || !!q.trim()}
                       onClick={() => move(i, 1)}
-                      title="Bajar"
+                      title={q.trim() ? "Limpiá la búsqueda para reordenar" : "Bajar"}
                       className="h-7 w-7 p-0"
                     >
                       <ChevronDown className="h-4 w-4" />
