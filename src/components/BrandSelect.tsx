@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 
 export type BrandSelectOption = string | { value: string; label: string };
 
@@ -23,14 +24,34 @@ export function BrandSelect({ value, onChange, options, placeholder = "Seleccion
     Math.max(0, items.findIndex((o) => o.value === value))
   );
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null);
 
+  // Calcular posición del listbox (renderizado vía portal a document.body)
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPos({ left: rect.left, top: rect.bottom + 4, width: rect.width });
+  }, [open]);
+
+  // Cerrar al hacer click afuera (incluyendo la list renderizada en portal)
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const inWrap = wrapRef.current?.contains(e.target as Node);
+      const inList = listRef.current?.contains(e.target as Node);
+      if (!inWrap && !inList) setOpen(false);
     };
+    const onScroll = () => setOpen(false);
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -65,6 +86,7 @@ export function BrandSelect({ value, onChange, options, placeholder = "Seleccion
   return (
     <div ref={wrapRef} className={"relative " + className}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onKey}
@@ -90,10 +112,12 @@ export function BrandSelect({ value, onChange, options, placeholder = "Seleccion
         </svg>
       </button>
 
-      {open && (
+      {open && pos && typeof document !== "undefined" && createPortal(
         <ul
+          ref={listRef}
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-auto rounded-lg border border-border bg-background p-1 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.35)] ring-1 ring-black/5"
+          style={{ position: "fixed", left: pos.left, top: pos.top, width: pos.width, zIndex: 9999 }}
+          className="max-h-56 overflow-auto rounded-lg border border-border bg-background p-1 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.35)] ring-1 ring-black/5"
         >
           {items.map((o, i) => {
             const isSel = o.value === value;
@@ -122,7 +146,8 @@ export function BrandSelect({ value, onChange, options, placeholder = "Seleccion
               </li>
             );
           })}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   );
