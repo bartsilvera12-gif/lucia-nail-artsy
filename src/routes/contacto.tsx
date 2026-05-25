@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Mail, MessageCircle, Instagram } from "lucide-react";
+import { MessageCircle, Instagram } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { site } from "@/data/site";
 import pinzaImg from "@/assets/pinza.png";
 import manoesmalteImg from "@/assets/manoesmalte.png";
 import { AnimateIn } from "@/components/AnimateIn";
@@ -56,9 +55,8 @@ function ContactoPage() {
       <section className="py-16">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
           <AnimateIn direction="right" className="space-y-4">
-            <ContactCard icon={Mail} title="Email" value={site.email} href={`mailto:${site.email}`} />
-            <ContactCard icon={MessageCircle} title="WhatsApp" value={site.phone} href={`https://wa.me/${site.whatsapp.replace(/\D/g, "")}`} />
-            <ContactCard icon={Instagram} title="Instagram" value="@luciarojasstudio" href={site.social.instagram} />
+            <ContactCard icon={MessageCircle} title="WhatsApp" value="0992 970 573" href="https://wa.me/595992970573" />
+            <ContactCard icon={Instagram} title="Instagram" value="@_luciarojasstudio_" href="https://instagram.com/_luciarojasstudio_" />
             <p className="text-xs text-muted-foreground">Respondemos de lunes a viernes en menos de 24 horas hábiles.</p>
           </AnimateIn>
 
@@ -80,7 +78,7 @@ function ContactoPage() {
   );
 }
 
-function ContactCard({ icon: Icon, title, value, href }: { icon: typeof Mail; title: string; value: string; href: string }) {
+function ContactCard({ icon: Icon, title, value, href }: { icon: typeof MessageCircle; title: string; value: string; href: string }) {
   return (
     <a href={href} target="_blank" rel="noreferrer" className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-soft transition-all hover:shadow-elegant">
       <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-gold">
