@@ -310,15 +310,18 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   const [c, setC] = useState<Partial<CourseRow>>(course);
   const [tab, setTab] = useState<"data" | "curriculum">("data");
   const [autoSaving, setAutoSaving] = useState(false);
+  const [inlineMsg, setInlineMsg] = useState<{ kind: "warn" | "error"; text: string } | null>(null);
   const upsert = useCourseUpsert();
 
   // Si el usuario quiere ir a "Lecciones y videos" y el curso aún no fue
   // guardado, lo guardamos automáticamente en background y conservamos
   // el editor abierto con el id+slug actualizados.
   const handleTabClick = async (id: "data" | "curriculum") => {
+    setInlineMsg(null);
     if (id === "curriculum" && !c.id) {
       if (!c.title || c.title.trim().length < 3) {
-        alert("Necesitás escribir un título antes de cargar módulos.");
+        setInlineMsg({ kind: "warn", text: "Escribí un título (al menos 3 caracteres) antes de cargar módulos." });
+        setTab("data");
         return;
       }
       setAutoSaving(true);
@@ -327,7 +330,11 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         if (saved) setC(saved);
         setTab("curriculum");
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "No se pudo guardar el curso.");
+        setInlineMsg({
+          kind: "error",
+          text: err instanceof Error ? err.message : "No se pudo guardar el curso.",
+        });
+        setTab("data");
       } finally {
         setAutoSaving(false);
       }
@@ -370,6 +377,28 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
+          {inlineMsg && (
+            <div
+              role="alert"
+              className={
+                "mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm " +
+                (inlineMsg.kind === "warn"
+                  ? "border-primary/30 bg-primary/5 text-foreground"
+                  : "border-destructive/30 bg-destructive/10 text-destructive")
+              }
+            >
+              <Sparkles className={"mt-0.5 h-4 w-4 shrink-0 " + (inlineMsg.kind === "warn" ? "text-primary" : "text-destructive")} />
+              <p className="flex-1 leading-relaxed">{inlineMsg.text}</p>
+              <button
+                onClick={() => setInlineMsg(null)}
+                className="rounded-md p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Cerrar mensaje"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {tab === "data" ? (
             <CourseDataForm c={c} setC={setC} />
           ) : (
