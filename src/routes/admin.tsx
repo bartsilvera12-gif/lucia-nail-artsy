@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -924,6 +924,37 @@ function LessonRowItem({
   const [theory, setTheory] = useState(lesson.description ?? "");
   const [theorySaving, setTheorySaving] = useState(false);
   const [theoryFeedback, setTheoryFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [importingDocx, setImportingDocx] = useState(false);
+  const docxInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Importar texto desde archivo Word (.docx) — usa mammoth.js para extraer
+  // el texto plano y poblar el textarea. La docente puede editar antes de guardar.
+  const importDocx = async (file: File) => {
+    setImportingDocx(true);
+    setTheoryFeedback(null);
+    try {
+      const buf = await file.arrayBuffer();
+      // Import dinámico — mammoth solo se carga si la docente usa este botón
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      const text = result.value || "";
+      if (!text.trim()) {
+        setTheoryFeedback({ kind: "err", text: "El archivo no tiene texto legible." });
+      } else {
+        // Si ya había contenido, lo reemplaza (no concatena para no duplicar)
+        setTheory(text);
+        setTheoryFeedback({ kind: "ok", text: `Texto importado desde ${file.name}. Revisalo y guardá.` });
+      }
+    } catch (err: unknown) {
+      setTheoryFeedback({
+        kind: "err",
+        text: err instanceof Error ? err.message : "No se pudo leer el archivo Word.",
+      });
+    } finally {
+      setImportingDocx(false);
+      if (docxInputRef.current) docxInputRef.current.value = "";
+    }
+  };
 
   // Mantener theory sincronizado con la lección cuando llega data nueva
   // del servidor (ej: después de invalidar la query).
@@ -1008,14 +1039,39 @@ function LessonRowItem({
 
       {showTheory && (
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-3">
-          <label className="text-xs font-medium text-muted-foreground">
-            Material teórico (notas, instrucciones, links, lo que necesite la alumna además del video)
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-xs font-medium text-muted-foreground">
+              Material teórico (notas, instrucciones, links, lo que necesite la alumna además del video)
+            </label>
+            <div>
+              <input
+                ref={docxInputRef}
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importDocx(f);
+                }}
+                className="hidden"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => docxInputRef.current?.click()}
+                disabled={importingDocx}
+                title="Importar desde un archivo Word (.docx)"
+                type="button"
+              >
+                {importingDocx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                {importingDocx ? "Importando…" : "Importar Word"}
+              </Button>
+            </div>
+          </div>
           <textarea
             value={theory}
             onChange={(e) => setTheory(e.target.value)}
             rows={8}
-            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. La alumna lo va a ver al lado del video al cursar esta lección."
+            placeholder="Escribí acá las notas teóricas, pasos, consejos, links, etc. O importá un archivo Word con el botón de arriba."
             className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
 
