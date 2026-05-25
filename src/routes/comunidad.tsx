@@ -12,7 +12,7 @@ import { BrandSelect } from "@/components/BrandSelect";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { AnimateIn } from "@/components/AnimateIn";
 import { useAuth } from "@/lib/auth";
-import { useCourses } from "@/hooks/useCourses";
+import { useCourses, useStudentCount } from "@/hooks/useCourses";
 import {
   useStudentQuestions,
   useMyQuestionsToday,
@@ -47,6 +47,18 @@ export const Route = createFileRoute("/comunidad")({
 function EspacioAlumnasPage() {
   const { user, isAuthenticated, isAdmin, loading } = useAuth();
   const { data: courses = [] } = useCourses();
+  const { data: studentCount } = useStudentCount();
+
+  // Formato compacto para el badge: "1.234" o "2.4k" según tamaño
+  const formatStudents = (n: number | null | undefined): string => {
+    if (n === null || n === undefined) return "—";
+    if (n < 1000) return n.toLocaleString("es-AR");
+    return (n / 1000).toFixed(1).replace(".0", "") + "k";
+  };
+  const formatStudentsLong = (n: number | null | undefined): string => {
+    if (n === null || n === undefined) return "alumnas registradas";
+    return `${n.toLocaleString("es-AR")} ${n === 1 ? "alumna" : "alumnas"}`;
+  };
 
   const [statusFilter, setStatusFilter] = useState<QuestionStatus | "all">("all");
   const [courseFilter, setCourseFilter] = useState("");
@@ -98,7 +110,7 @@ function EspacioAlumnasPage() {
                   </p>
                   <h1 className="font-serif text-2xl sm:text-3xl">Espacio de Alumnas</h1>
                 </div>
-                <StatChip label="Alumnas" value="2.4k" />
+                <StatChip label="Alumnas" value={formatStudents(studentCount)} />
               </div>
             </div>
 
@@ -106,7 +118,7 @@ function EspacioAlumnasPage() {
             <div className="grid gap-6 p-6 sm:grid-cols-[1fr_300px] sm:p-8">
               <div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> 2,431 alumnas</span>
+                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {formatStudentsLong(studentCount)}</span>
                   <span>•</span>
                   <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-primary text-primary" /> 4.9 / 5</span>
                   <span>•</span>
