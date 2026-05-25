@@ -29,7 +29,7 @@ export function Footer() {
 
           {/* Plataforma */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground/70">Plataforma</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">Plataforma</h4>
             <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
               <li><Link to="/cursos" className="hover:text-primary transition-colors">Cursos</Link></li>
               <li><Link to="/planes" className="hover:text-primary transition-colors">Planes</Link></li>
@@ -40,7 +40,7 @@ export function Footer() {
 
           {/* Contacto */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground/70">Contacto</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">Contacto</h4>
             <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0" /> {site.email}</li>
               <li>
