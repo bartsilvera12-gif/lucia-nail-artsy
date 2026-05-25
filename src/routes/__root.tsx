@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import iconUrl from "@/assets/logo/lucia_rojas_icono_LR_transparente_512px.png";
+import iconUrl from "@/assets/logo/logosinletras.png";
 import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
