@@ -450,8 +450,8 @@ function CourseEditor({ course, onClose, onSave }: { course: Partial<CourseRow>;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-elegant">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-elegant">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h2 className="font-serif text-xl">{course.id ? "Editar curso" : "Nuevo curso"}</h2>
@@ -1217,8 +1217,8 @@ function CategoryEditor({
   const [c, setC] = useState<Partial<CourseCategory>>(category);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-elegant">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-elegant">
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-xl">{category.id ? "Editar categoría" : "Nueva categoría"}</h2>
           <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
@@ -1432,8 +1432,8 @@ function CommunityTab() {
       </div>
 
       {editing && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditing(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-elegant">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-elegant">
             <h2 className="font-serif text-xl">{editing.id ? "Editar" : "Nueva"} publicación</h2>
             <div className="mt-6 space-y-4">
               <Field label="Título">
