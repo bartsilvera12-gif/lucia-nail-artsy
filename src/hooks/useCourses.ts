@@ -108,6 +108,28 @@ export function useCourseBySlug(slug: string) {
   });
 }
 
+/**
+ * Conteo público de alumnas registradas (role = 'student').
+ * Llama a la RPC public_student_count() en Supabase, que usa SECURITY DEFINER
+ * para bypassear la RLS de profiles. Si la migración 014 no fue aplicada,
+ * devuelve null y el frontend muestra fallback.
+ */
+export function useStudentCount() {
+  return useQuery({
+    queryKey: ["public_student_count"],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("public_student_count");
+      if (error) {
+        console.warn("[student_count] RPC error:", error.message);
+        return null;
+      }
+      return typeof data === "number" ? data : null;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+
 export function useAllStudents() {
   return useQuery({
     queryKey: ["admin", "students"],
