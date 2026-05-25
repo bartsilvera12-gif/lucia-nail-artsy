@@ -209,6 +209,7 @@ export interface CourseCategory {
 export function useCourseCategories() {
   return useQuery({
     queryKey: ["course_categories"],
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_categories")
@@ -265,6 +266,7 @@ export function useCourseTheories(courseId: string | undefined | null) {
   return useQuery({
     queryKey: ["course_theories", courseId],
     enabled: !!courseId,
+    retry: false,
     queryFn: async () => {
       if (!courseId) return [];
       const { data, error } = await supabase
@@ -327,6 +329,9 @@ export interface Testimonial {
 export function useTestimonials({ onlyActive = false }: { onlyActive?: boolean } = {}) {
   return useQuery({
     queryKey: ["testimonials", onlyActive],
+    // Si la tabla no existe (migración 011 no aplicada), Supabase devuelve
+    // error inmediato. No queremos reintentar 3 veces — surface el error rápido.
+    retry: false,
     queryFn: async () => {
       let q = supabase
         .from("testimonials")
