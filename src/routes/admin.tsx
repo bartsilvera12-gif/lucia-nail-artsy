@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
   Plus, Pencil, Trash2, Pin, X,
@@ -448,10 +448,43 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
     }
   };
 
+  const CATEGORIES = ["Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"] as const;
+
   return (
-    <div>
-      <div>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <div className="space-y-8">
+      {/* ── Sección: Categoría ─────────────────────────────────── */}
+      <section className="rounded-xl border border-border bg-gradient-cream/40 p-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-serif text-sm uppercase tracking-wider text-foreground">Categoría</h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Elegí la categoría principal con la que se va a mostrar el curso.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => {
+            const active = (c.category ?? "Principiante") === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setC({ ...c, category: cat as CourseRow["category"] })}
+                className={
+                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-all " +
+                  (active
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5")
+                }
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Sección: Datos básicos ─────────────────────────────── */}
+      <section>
+        <h3 className="font-serif text-sm uppercase tracking-wider text-muted-foreground">Datos básicos</h3>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Field label="Título">
             <Input value={c.title ?? ""} onChange={(e) => handleTitleChange(e.target.value)} />
             {c.slug && (
@@ -460,9 +493,6 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
                 {isNew && <span className="ml-1">(se genera automáticamente)</span>}
               </p>
             )}
-          </Field>
-          <Field label="Categoría">
-            <Select value={c.category ?? "Principiante"} onChange={(v) => setC({ ...c, category: v as CourseRow["category"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio", "Nail Art"]} />
           </Field>
           <Field label="Nivel">
             <Select value={c.level ?? "Principiante"} onChange={(v) => setC({ ...c, level: v as CourseRow["level"] })} options={["Principiante", "Intermedio", "Avanzado", "Negocio"]} />
@@ -480,11 +510,23 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
             <Input type="number" value={c.sort_order ?? 100} onChange={(e) => setC({ ...c, sort_order: Number(e.target.value) })} />
           </Field>
           <Field label="Estado">
-            <Select value={c.status ?? "available"} onChange={(v) => setC({ ...c, status: v as CourseRow["status"] })} options={["draft", "available", "coming_soon"]} />
+            <Select
+              value={c.status ?? "available"}
+              onChange={(v) => setC({ ...c, status: v as CourseRow["status"] })}
+              options={[
+                { value: "draft",       label: "Borrador" },
+                { value: "available",   label: "Publicado" },
+                { value: "coming_soon", label: "Próximamente" },
+              ]}
+            />
           </Field>
         </div>
+      </section>
 
-        <div className="mt-4 grid gap-4">
+      {/* ── Sección: Contenido textual ─────────────────────────── */}
+      <section>
+        <h3 className="font-serif text-sm uppercase tracking-wider text-muted-foreground">Contenido</h3>
+        <div className="mt-3 grid gap-4">
           <Field label="Descripción corta">
             <textarea value={c.short_description ?? ""} onChange={(e) => setC({ ...c, short_description: e.target.value })} rows={2} className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm" />
           </Field>
@@ -501,7 +543,7 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
             <textarea value={(c.bonuses ?? []).join("\n")} onChange={(e) => setC({ ...c, bonuses: e.target.value.split("\n").filter(Boolean) })} rows={3} className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm" />
           </Field>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
@@ -733,27 +775,114 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 type SelectOption = string | { value: string; label: string };
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: SelectOption[] }) {
   const items = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
+  const current = items.find((o) => o.value === value);
+
+  const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState<number>(() => Math.max(0, items.findIndex((o) => o.value === value)));
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  // Cerrar al hacer click afuera
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  // Sincronizar activeIdx cuando se abre
+  useEffect(() => {
+    if (open) {
+      const i = items.findIndex((o) => o.value === value);
+      setActiveIdx(i >= 0 ? i : 0);
+    }
+  }, [open, value, items]);
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setOpen(false); return; }
+    if (e.key === "Enter" || e.key === " ") {
+      if (!open) { setOpen(true); e.preventDefault(); return; }
+      const opt = items[activeIdx];
+      if (opt) { onChange(opt.value); setOpen(false); e.preventDefault(); }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!open) setOpen(true);
+      else setActiveIdx((i) => (i + 1) % items.length);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!open) setOpen(true);
+      else setActiveIdx((i) => (i - 1 + items.length) % items.length);
+      return;
+    }
+  };
+
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full cursor-pointer appearance-none rounded-lg border border-input bg-background px-3 py-2 pr-9 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={onKey}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={
+          "flex w-full items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition-all " +
+          (open
+            ? "border-primary ring-2 ring-primary/30"
+            : "border-input hover:border-primary/40")
+        }
       >
-        {items.map((o) => (
-          <option key={o.value} value={o.value} className="bg-background text-foreground">
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-      </svg>
+        <span className={current ? "" : "text-muted-foreground"}>
+          {current ? current.label : "Seleccionar…"}
+        </span>
+        <svg
+          aria-hidden="true"
+          className={"h-4 w-4 text-muted-foreground transition-transform " + (open ? "rotate-180" : "")}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-auto rounded-lg border border-border bg-card p-1 shadow-elegant"
+        >
+          {items.map((o, i) => {
+            const isSel = o.value === value;
+            const isActive = i === activeIdx;
+            return (
+              <li
+                key={o.value}
+                role="option"
+                aria-selected={isSel}
+                onMouseEnter={() => setActiveIdx(i)}
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                className={
+                  "flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors " +
+                  (isActive
+                    ? "bg-primary/15 text-foreground"
+                    : "text-foreground hover:bg-primary/10") +
+                  (isSel ? " font-semibold" : "")
+                }
+              >
+                <span>{o.label}</span>
+                {isSel && (
+                  <svg className="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4L8 11.6l6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
