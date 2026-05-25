@@ -331,7 +331,9 @@ function FeaturedCourses() {
 
 function FeaturedCoursesCarousel() {
   const { data: courses = [] } = useCourses();
-  const featured = courses.slice(0, 6);
+  // Si hay cursos marcados como destacados, usar esos; si no, fallback a los primeros 6.
+  const flagged = courses.filter((c) => c.is_featured);
+  const featured = (flagged.length > 0 ? flagged : courses).slice(0, 6);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
 

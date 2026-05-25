@@ -36,6 +36,7 @@ export interface CourseRow {
   audience: string[];
   bonuses: string[];
   sort_order: number;
+  is_featured?: boolean;
 }
 
 export interface ModuleRow {

@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -340,7 +340,14 @@ function CoursesTab() {
                   <div className="flex items-center gap-3">
                     {resolveCourseImage(c.image_path) && <img src={resolveCourseImage(c.image_path)} alt="" className="h-10 w-14 rounded object-cover" />}
                     <div>
-                      <p className="font-medium">{c.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{c.title}</p>
+                        {c.is_featured && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            <Star className="h-2.5 w-2.5 fill-primary" /> Destacado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-muted-foreground">{c.slug}</p>
                     </div>
                   </div>
@@ -354,6 +361,15 @@ function CoursesTab() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => upsert.mutate({ id: c.id, is_featured: !c.is_featured })}
+                      title={c.is_featured ? "Quitar de destacados" : "Marcar como destacado"}
+                      disabled={upsert.isPending}
+                    >
+                      <Star className={"h-4 w-4 " + (c.is_featured ? "fill-primary text-primary" : "text-muted-foreground")} />
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(c)}><Pencil className="h-4 w-4" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => { if (confirm(`¿Borrar "${c.title}"?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
@@ -675,6 +691,21 @@ function CourseDataForm({ c, setC }: { c: Partial<CourseRow>; setC: (c: Partial<
             </p>
           </Field>
         </div>
+
+        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-gradient-cream/30 p-3 transition-colors hover:bg-gradient-cream/60">
+          <input
+            type="checkbox"
+            checked={!!c.is_featured}
+            onChange={(e) => setC({ ...c, is_featured: e.target.checked })}
+            className="mt-1 h-4 w-4 cursor-pointer accent-primary"
+          />
+          <div>
+            <p className="text-sm font-medium">⭐ Curso destacado</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Aparece en el carrusel "Cursos destacados" del home.
+            </p>
+          </div>
+        </label>
       </section>
 
       {/* ── Sección: Contenido textual ─────────────────────────── */}
