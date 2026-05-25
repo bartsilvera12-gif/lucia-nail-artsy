@@ -141,20 +141,31 @@ function VerPage() {
               <div className="mt-5">
                 <p className="text-[11px] uppercase tracking-wider text-primary">{current.moduleTitle}</p>
                 <h1 className="mt-1 font-serif text-2xl sm:text-3xl">{current.title}</h1>
-
-                {/* Material teórico de la lección */}
-                {current.description && (
-                  <div className="mt-5 rounded-xl border border-zinc-700/60 bg-zinc-900/60 p-5 shadow-inner">
-                    <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      Material teórico
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
-                      {current.description}
-                    </p>
-                  </div>
-                )}
               </div>
+            )}
+
+            {/* ── Material teórico (sección aparte del video) ───────────────── */}
+            {current?.description && (
+              <section className="mt-10">
+                {/* Separador visual */}
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/40" />
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-zinc-900 px-4 py-1.5">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      Material teórico
+                    </span>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/40 to-primary/40" />
+                </div>
+
+                {/* Card destacado con fondo cream sobre el tema oscuro */}
+                <div className="rounded-2xl border-2 border-primary/30 bg-[var(--cream)] p-6 text-zinc-900 shadow-2xl sm:p-8">
+                  <p className="whitespace-pre-wrap text-base leading-relaxed">
+                    {current.description}
+                  </p>
+                </div>
+              </section>
             )}
 
             {/* Prev / Next */}
