@@ -109,18 +109,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (!hasAccess) return new Response("Sin acceso a esta lección", { status: 403 });
 
-  // 4. Pedir OTP a VdoCipher forzando Widevine L1 (hardware DRM).
-  //    Si el browser solo soporta L3 (software), la reproducción va a fallar
-  //    — preferimos eso a que se pueda grabar la pantalla.
-  const licenseRules = JSON.stringify({
-    rules: {
-      // Forzar nivel de seguridad hardware en Widevine
-      widevineSecurityLevel: "HW_SECURE_DECODE",
-      // PlayReady (Edge/Windows) — equivalente hardware
-      playreadyMinSecurityLevel: 3000,
-    },
-  });
-
+  // 4. Pedir OTP a VdoCipher. Dejamos que el player negocie el nivel de DRM
+  //    que soporte el dispositivo (Widevine L1/L3, PlayReady, FairPlay).
   const vdoResp = await fetch(`https://dev.vdocipher.com/api/videos/${lesson.video_path}/otp`, {
     method: "POST",
     headers: {
@@ -128,7 +118,7 @@ export default async function handler(req: Request): Promise<Response> {
       Accept: "application/json",
       Authorization: `Apisecret ${VDOCIPHER_API_SECRET}`,
     },
-    body: JSON.stringify({ ttl: 300, licenseRules }),
+    body: JSON.stringify({ ttl: 300 }),
   });
   if (!vdoResp.ok) {
     const errText = await vdoResp.text();
