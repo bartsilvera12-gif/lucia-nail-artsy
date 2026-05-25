@@ -2,10 +2,21 @@ import { Link } from "@tanstack/react-router";
 import { Instagram, Mail } from "lucide-react";
 import { site } from "@/data/site";
 import logoUrl from "@/assets/logo/logo.png";
+import esmalteUrl from "@/assets/esmalte.png";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-[var(--beige)]">
+    <footer className="relative overflow-hidden border-t border-border bg-[var(--beige)]">
+      {/* Esmalte decorativo abajo a la derecha — posicionado absoluto para no
+          afectar la altura del footer. pointer-events-none para no estorbar
+          el botón scroll-to-top que vive en la misma esquina. */}
+      <img
+        src={esmalteUrl}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-2 right-2 h-28 w-auto opacity-90 sm:h-32"
+      />
+
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid gap-6 sm:grid-cols-3">
           {/* Logo + tagline */}
