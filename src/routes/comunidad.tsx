@@ -645,9 +645,13 @@ function QuestionCard({
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{answer.body}</p>
           </div>
         ) : question.status === "answered" ? (
-          <div className="mt-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-            La consulta fue marcada como respondida, pero el contenido todavía no está cargado.
-            Recargá la página en unos segundos.
+          <div className="mt-4 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-900">
+            <p className="font-medium">⚠ Esta consulta está marcada como "Respondida" pero no tiene texto guardado.</p>
+            {isAdmin ? (
+              <p className="mt-1">Como admin: hacé click en <strong>Responder</strong> abajo, escribí la respuesta y guardá. Eso la hará visible para todas las alumnas.</p>
+            ) : (
+              <p className="mt-1">La docente todavía no escribió la respuesta oficial. Recargá la página en unos segundos.</p>
+            )}
           </div>
         ) : null}
 
