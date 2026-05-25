@@ -93,7 +93,7 @@ export function BrandSelect({ value, onChange, options, placeholder = "Seleccion
       {open && (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-auto rounded-lg border border-border bg-card p-1 shadow-elegant"
+          className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-auto rounded-lg border border-border bg-background p-1 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.35)] ring-1 ring-black/5"
         >
           {items.map((o, i) => {
             const isSel = o.value === value;
