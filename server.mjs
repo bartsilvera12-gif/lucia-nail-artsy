@@ -651,13 +651,26 @@ async function handlePagoparIniciar(req, res) {
 }
 
 // ── Pagopar: POST /api/pagopar/respuesta ─────────────────────────────────────
-// Called by Pagopar webhook — validates token before doing anything
+// Called by Pagopar webhook — validates token before doing anything.
+//
+// Pagopar envía el payload como ARRAY con un solo objeto:
+//   [{"hash_pedido":"...", "token":"...", "pagado":false, ...}]
+// Necesitamos extraer el primer elemento. Si llega como objeto (testing /
+// reintentos manuales), también lo aceptamos.
 async function handlePagoparRespuesta(req, res) {
   const body = await readJsonBody(req);
   if (!body) { jsonError(res, 400, "JSON inválido"); return; }
 
-  const { hash_pedido, token: tokenRecibido, pagado } = body;
+  // Pagopar webhook envía Array con 1 elemento; aceptamos también objeto plano
+  const payload = Array.isArray(body) ? (body[0] || {}) : body;
+
+  // Log seguro: mostrar claves recibidas para diagnosticar formatos nuevos
+  const recvKeys = Object.keys(payload || {});
+  console.log(`[pagopar/respuesta] payload recibido — keys=[${recvKeys.join(", ")}] (isArray=${Array.isArray(body)})`);
+
+  const { hash_pedido, token: tokenRecibido, pagado } = payload;
   if (!hash_pedido || !tokenRecibido) {
+    console.warn(`[pagopar/respuesta] payload incompleto — hash=${!!hash_pedido} token=${!!tokenRecibido} pagado=${pagado}`);
     res.writeHead(400, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Payload incompleto" }));
     return;
