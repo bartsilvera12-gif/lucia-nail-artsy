@@ -653,20 +653,76 @@ async function handlePagoparIniciar(req, res) {
 // ── Pagopar: POST /api/pagopar/respuesta ─────────────────────────────────────
 // Called by Pagopar webhook — validates token before doing anything.
 //
-// Pagopar envía el payload como ARRAY con un solo objeto:
-//   [{"hash_pedido":"...", "token":"...", "pagado":false, ...}]
-// Necesitamos extraer el primer elemento. Si llega como objeto (testing /
-// reintentos manuales), también lo aceptamos.
+// Pagopar puede enviar el webhook en varios formatos distintos según la
+// integración. Soportamos TODOS los que están documentados:
+//   1) application/json con Array:  [{"hash_pedido":"...", "token":"...", ...}]
+//   2) application/json con objeto plano: {"hash_pedido":"...", "token":"...", ...}
+//   3) application/x-www-form-urlencoded con campo `datos` que contiene JSON:
+//        datos=%5B%7B%22hash_pedido%22%3A...%7D%5D
+//      Este es el formato más común — coincide con los ejemplos PHP de
+//      Pagopar que hacen json_decode($_POST['datos'], true).
+//   4) form-urlencoded con campos sueltos: hash_pedido=...&token=...&pagado=...
+
+// Lee el body crudo + content-type para parsearlo con tolerancia
+async function readRawBody(req) {
+  return new Promise((resolve) => {
+    let raw = "";
+    req.on("data", (c) => { raw += c.toString(); });
+    req.on("end", () => resolve(raw));
+    req.on("error", () => resolve(""));
+  });
+}
+
+// Parser flexible para webhook de Pagopar: maneja todos los formatos conocidos.
+function parsePagoparWebhook(rawBody, contentType) {
+  if (!rawBody) return null;
+  const ct = (contentType || "").toLowerCase();
+
+  // Caso 3 + 4: form-urlencoded
+  if (ct.includes("application/x-www-form-urlencoded") || /^[a-z_]+=/i.test(rawBody.split("&")[0] || "")) {
+    try {
+      const params = new URLSearchParams(rawBody);
+      // Caso 3: campo `datos` con JSON adentro
+      if (params.has("datos")) {
+        const datos = params.get("datos");
+        try {
+          const parsed = JSON.parse(datos);
+          return Array.isArray(parsed) ? (parsed[0] || {}) : parsed;
+        } catch { /* fallthrough */ }
+      }
+      // Caso 4: campos sueltos
+      const flat = Object.fromEntries(params.entries());
+      if (flat.hash_pedido || flat.token) return flat;
+    } catch { /* fallthrough */ }
+  }
+
+  // Casos 1 y 2: JSON puro
+  try {
+    const parsed = JSON.parse(rawBody);
+    return Array.isArray(parsed) ? (parsed[0] || {}) : parsed;
+  } catch { /* fallthrough */ }
+
+  return null;
+}
+
 async function handlePagoparRespuesta(req, res) {
-  const body = await readJsonBody(req);
-  if (!body) { jsonError(res, 400, "JSON inválido"); return; }
+  const contentType = req.headers["content-type"] || "";
+  const rawBody = await readRawBody(req);
 
-  // Pagopar webhook envía Array con 1 elemento; aceptamos también objeto plano
-  const payload = Array.isArray(body) ? (body[0] || {}) : body;
+  // Log diagnóstico (sin imprimir tokens completos; raw truncado a 300 chars)
+  console.log(`[pagopar/respuesta] content-type: "${contentType}"`);
+  console.log(`[pagopar/respuesta] raw body (300 chars): ${rawBody.slice(0, 300)}`);
 
-  // Log seguro: mostrar claves recibidas para diagnosticar formatos nuevos
+  const payload = parsePagoparWebhook(rawBody, contentType);
+  if (!payload) {
+    console.warn(`[pagopar/respuesta] no se pudo parsear el body en ningún formato conocido`);
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Body no parseable (esperado JSON, Array, o form-urlencoded)" }));
+    return;
+  }
+
   const recvKeys = Object.keys(payload || {});
-  console.log(`[pagopar/respuesta] payload recibido — keys=[${recvKeys.join(", ")}] (isArray=${Array.isArray(body)})`);
+  console.log(`[pagopar/respuesta] payload parseado — keys=[${recvKeys.join(", ")}]`);
 
   const { hash_pedido, token: tokenRecibido, pagado } = payload;
   if (!hash_pedido || !tokenRecibido) {
@@ -709,9 +765,9 @@ async function handlePagoparRespuesta(req, res) {
     console.warn("[pagopar/respuesta] pagado=true pero SUPABASE_SERVICE_KEY no configurado — acceso será otorgado desde resultado page");
   }
 
-  // Pagopar requiere 200 + el payload recibido
+  // Pagopar requiere 200 + el payload recibido (formato Array según docs)
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(body));
+  res.end(JSON.stringify([payload]));
 }
 
 // ── Pagopar: POST /api/pagopar/estado ────────────────────────────────────────
