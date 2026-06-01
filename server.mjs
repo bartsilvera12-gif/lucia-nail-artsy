@@ -846,6 +846,24 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // ── Server IP (diagnostic — para whitelist de Pagopar en producción) ──────
+  // Devuelve la IP saliente del servidor consultando api.ipify.org.
+  // Útil para configurar "IP's habilitadas" en el panel de Pagopar.
+  if (pathname === "/api/server-ip") {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json");
+      const data = await r.json();
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        outgoing_ip: data.ip,
+        note: "Esta IP es la que Pagopar (u otros servicios externos) ven cuando este servidor les hace requests. Usala en 'IP's habilitadas' del panel de Pagopar.",
+      }));
+    } catch (err) {
+      jsonError(res, 502, "No se pudo consultar IP saliente: " + err.message);
+    }
+    return;
+  }
+
   // ── VdoCipher API route ───────────────────────────────────────────────────
   if (method === "POST" && pathname === "/api/vdocipher-otp") {
     await handleVdoCipherOtp(req, res);
