@@ -30,6 +30,47 @@ import logoUrl from "@/assets/logo/lucia_rojas_logo_transparente_web.webp";
 
 type Tab = "dashboard" | "cursos" | "categorias" | "alumnas" | "pagos" | "comunidad" | "resenas";
 
+// Input numérico para reordenar rápido. Edita un sort_order: confirmás
+// con Enter o blur y dispara onCommit(nuevoValor). Si no cambió, no llama.
+function OrderInput({
+  value,
+  onCommit,
+  disabled,
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+  disabled?: boolean;
+}) {
+  const [local, setLocal] = useState(String(value));
+  // Sincronizar cuando el valor del padre cambia (después de guardar)
+  useEffect(() => { setLocal(String(value)); }, [value]);
+
+  const commit = () => {
+    const n = Number(local);
+    if (!Number.isFinite(n) || n === value) {
+      setLocal(String(value));
+      return;
+    }
+    onCommit(n);
+  };
+
+  return (
+    <input
+      type="number"
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.currentTarget.blur(); }
+        if (e.key === "Escape") { setLocal(String(value)); e.currentTarget.blur(); }
+      }}
+      disabled={disabled}
+      title="Tipeá un número para reordenar. Enter o tab para guardar."
+      className="h-8 w-16 rounded-md border border-border bg-background px-2 text-center text-sm font-medium tabular-nums focus:border-primary focus:outline-none disabled:opacity-50"
+    />
+  );
+}
+
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Lucía Rojas Studio" }] }),
   component: AdminPage,
@@ -323,28 +364,11 @@ function CoursesTab() {
             {orderedCourses.map((c, i) => (
               <tr key={c.id} className="border-t border-border">
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === 0 || upsert.isPending || !!q.trim()}
-                      onClick={() => move(i, -1)}
-                      title={q.trim() ? "Limpiá la búsqueda para reordenar" : "Subir"}
-                      className="h-7 w-7 p-0"
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === orderedCourses.length - 1 || upsert.isPending || !!q.trim()}
-                      onClick={() => move(i, 1)}
-                      title={q.trim() ? "Limpiá la búsqueda para reordenar" : "Bajar"}
-                      className="h-7 w-7 p-0"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <OrderInput
+                    value={c.sort_order ?? 100}
+                    disabled={upsert.isPending || !!q.trim()}
+                    onCommit={(n) => upsert.mutate({ id: c.id, sort_order: n })}
+                  />
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -1175,23 +1199,21 @@ function CourseTheoryEditor({ course }: { course: CourseRow }) {
       <div className="space-y-2">
         {theories.map((t, i) => (
           <div key={t.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-soft">
-            <div className="flex flex-col gap-0.5 pt-1">
-              <button
-                onClick={() => move(i, -1)}
-                disabled={i === 0 || upsert.isPending}
-                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-                title="Subir"
-              >
-                <ChevronUp className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => move(i, 1)}
-                disabled={i === theories.length - 1 || upsert.isPending}
-                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-                title="Bajar"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </button>
+            <div className="pt-1">
+              <OrderInput
+                value={t.sort_order ?? 100}
+                disabled={upsert.isPending}
+                onCommit={(n) => upsert.mutate({
+                  id: t.id,
+                  course_id: course.id,
+                  title: t.title,
+                  content: t.content,
+                  pdf_url: t.pdf_url,
+                  pdf_path: t.pdf_path,
+                  pdf_name: t.pdf_name,
+                  sort_order: n,
+                })}
+              />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -1575,28 +1597,11 @@ function CategoriesTab() {
             {cats.map((cat, i) => (
               <tr key={cat.id} className="border-t border-border">
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === 0 || upsert.isPending}
-                      onClick={() => move(i, -1)}
-                      title="Subir"
-                      className="h-7 w-7 p-0"
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === cats.length - 1 || upsert.isPending}
-                      onClick={() => move(i, 1)}
-                      title="Bajar"
-                      className="h-7 w-7 p-0"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <OrderInput
+                    value={cat.sort_order ?? 100}
+                    disabled={upsert.isPending}
+                    onCommit={(n) => upsert.mutate({ id: cat.id, name: cat.name, sort_order: n })}
+                  />
                 </td>
                 <td className="px-4 py-3 font-medium">{cat.name}</td>
                 <td className="px-4 py-3">
