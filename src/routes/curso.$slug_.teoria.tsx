@@ -230,7 +230,16 @@ function TeoriaPage() {
                         onContextMenu={(e) => e.preventDefault()}
                       >
                         <iframe
-                          src={`${current.pdf_url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                          // Pasamos por /api/teoria-pdf?path=... en vez de
+                          // hitear Supabase directo — ad blockers (Opera, Brave,
+                          // uBlock) bloquean el subdominio "api.neura.com.py".
+                          // Si pdf_path existe lo usamos; fallback al pdf_url
+                          // directo para teorías legacy.
+                          src={
+                            current.pdf_path
+                              ? `/api/teoria-pdf?path=${encodeURIComponent(current.pdf_path)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
+                              : `${current.pdf_url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
+                          }
                           title={current.pdf_name || current.title}
                           className="h-[80vh] w-full"
                           // sandbox sin "allow-downloads" — bloquea descargas iniciadas dentro del iframe

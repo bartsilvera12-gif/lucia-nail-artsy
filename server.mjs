@@ -880,6 +880,75 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // ── Proxy de PDFs de teoría ──────────────────────────────────────────────
+  // Sirve los PDFs desde nuestro dominio para evitar que ad blockers bloqueen
+  // el subdominio "api.neura.com.py" de Supabase. Recibe el path dentro del
+  // bucket course-theory-pdfs como query string (?path=...) y streamea el
+  // archivo desde Supabase Storage hacia el cliente.
+  //
+  // Las URLs que guardamos en course_theories.pdf_url van a apuntar a este
+  // endpoint en vez de a Supabase directo. El bucket sigue siendo público,
+  // así que no necesitamos firma — solo cambiamos el host visible.
+  if (pathname === "/api/teoria-pdf" && method === "GET") {
+    try {
+      const u = new URL(req.url || "/", "http://localhost");
+      const path = u.searchParams.get("path");
+      if (!path) { jsonError(res, 400, "Falta path"); return; }
+
+      // Seguridad: el path no puede salir del bucket (sin .., sin slashes raros)
+      if (path.includes("..") || path.startsWith("/")) {
+        jsonError(res, 400, "Path inválido");
+        return;
+      }
+
+      const supaPdfUrl = `${SUPA_URL}/storage/v1/object/public/course-theory-pdfs/${path}`;
+      const upstream = await fetch(supaPdfUrl);
+      if (!upstream.ok) {
+        jsonError(res, upstream.status, `PDF no encontrado (${upstream.status})`);
+        return;
+      }
+
+      // Reenviar el binario al cliente con headers que desalientan descarga
+      const ct = upstream.headers.get("content-type") || "application/pdf";
+      const cl = upstream.headers.get("content-length");
+      const headers = {
+        "Content-Type": ct,
+        // inline (no attachment) → se renderiza en el browser viewer
+        "Content-Disposition": "inline",
+        // No cache largo: si el admin reemplaza el PDF, los alumnos ven el nuevo
+        "Cache-Control": "private, max-age=60",
+      };
+      if (cl) headers["Content-Length"] = cl;
+      res.writeHead(200, headers);
+
+      // Stream el body en chunks (no cargar todo en memoria)
+      const reader = upstream.body?.getReader();
+      if (!reader) {
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.end(buf);
+        return;
+      }
+      const pump = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(Buffer.from(value));
+          }
+          res.end();
+        } catch (err) {
+          console.error("[teoria-pdf] stream error:", err.message);
+          if (!res.writableEnded) res.end();
+        }
+      };
+      void pump();
+    } catch (err) {
+      console.error("[teoria-pdf] error:", err.message);
+      jsonError(res, 502, "No se pudo proxiar el PDF");
+    }
+    return;
+  }
+
   // ── Server IP (diagnostic — para whitelist de Pagopar en producción) ──────
   // Devuelve la IP saliente del servidor consultando api.ipify.org.
   // Útil para configurar "IP's habilitadas" en el panel de Pagopar.
