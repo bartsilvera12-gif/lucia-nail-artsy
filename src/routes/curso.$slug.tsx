@@ -348,7 +348,16 @@ function CursoDetailPage() {
             nombre:      course.title,
             descripcion: course.short_description || course.title,
             precio_pyg:  Number(course.price), // ya en guaraníes, sin conversión
-            imagen_url:  heroImg ?? undefined,
+            // Pagopar necesita URL absoluta — el path relativo (/assets/...) no
+            // se resuelve desde su dominio. Si heroImg es relativo, le prefijamos
+            // el origin actual; si ya es http(s), lo pasamos tal cual.
+            imagen_url: heroImg
+              ? (/^https?:\/\//i.test(heroImg)
+                  ? heroImg
+                  : (typeof window !== "undefined"
+                      ? `${window.location.origin}${heroImg.startsWith("/") ? "" : "/"}${heroImg}`
+                      : undefined))
+              : undefined,
           }}
           defaultEmail={user?.email}
           defaultNombre={user?.name}

@@ -638,6 +638,7 @@ async function handlePagoparIniciar(req, res) {
       status: "pending",
       reference_id: hash_pedido,
       method: "pagopar",
+      course_id: curso_id || null,  // requiere migración 017
     },
   }).then((dbRes) => {
     if (dbRes?._error) {
@@ -755,18 +756,51 @@ async function handlePagoparRespuesta(req, res) {
 
   if (pagado === true && SUPA_SERVICE) {
     try {
-      // Update the pending payment record to succeeded
+      // 1) Actualizar payments → status='succeeded' y traer user_id + course_id
       const updated = await supaRest({
         table: "payments",
         method: "PATCH",
         match: { reference_id: hash_pedido, method: "pagopar" },
         body: { status: "succeeded" },
-        select: "id,user_id,type,amount",
+        select: "id,user_id,type,amount,course_id",
       });
 
       if (Array.isArray(updated) && updated[0]) {
         const pmt = updated[0];
-        console.log(`[pagopar/respuesta] payment updated — id=${pmt.id} user=${pmt.user_id}`);
+        console.log(`[pagopar/respuesta] payment updated — id=${pmt.id} user=${pmt.user_id} course=${pmt.course_id}`);
+
+        // 2) Si era una compra de curso, crear course_purchases (idempotente)
+        if (pmt.type === "course_purchase" && pmt.course_id && pmt.user_id) {
+          // Verificar si ya existe (evitar duplicados si el frontend lo creó primero)
+          const existing = await supaRest({
+            table: "course_purchases",
+            method: "GET",
+            match: { user_id: pmt.user_id, course_id: pmt.course_id },
+            select: "id",
+          });
+
+          if (!Array.isArray(existing) || existing.length === 0) {
+            const purchase = await supaRest({
+              table: "course_purchases",
+              method: "POST",
+              body: {
+                user_id:        pmt.user_id,
+                course_id:      pmt.course_id,
+                price_paid:     pmt.amount,
+                payment_method: "pagopar",
+              },
+            });
+            if (purchase?._error) {
+              console.error(`[pagopar/respuesta] course_purchases insert error:`, purchase._error);
+            } else {
+              console.log(`[pagopar/respuesta] course_purchases creado — user=${pmt.user_id} course=${pmt.course_id}`);
+            }
+          } else {
+            console.log(`[pagopar/respuesta] course_purchases ya existía — user=${pmt.user_id} course=${pmt.course_id}`);
+          }
+        }
+      } else {
+        console.warn(`[pagopar/respuesta] PATCH no encontró payment con reference_id=${hash_pedido}`);
       }
     } catch (e) {
       console.error("[pagopar/respuesta] DB update error:", e.message);
