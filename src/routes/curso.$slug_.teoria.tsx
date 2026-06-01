@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, Lock, ChevronLeft, ChevronRight, List, FileText, Download } from "lucide-react";
+import { ArrowLeft, BookOpen, Lock, ChevronLeft, ChevronRight, List, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
@@ -216,29 +216,25 @@ function TeoriaPage() {
 
                   {current.pdf_url && (
                     <div className={current.content ? "mt-8" : ""}>
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <FileText className="h-4 w-4 text-primary" />
-                          <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button asChild size="sm" variant="outlineGold">
-                            <a href={current.pdf_url} target="_blank" rel="noreferrer">
-                              Abrir en pestaña nueva
-                            </a>
-                          </Button>
-                          <Button asChild size="sm" variant="ghost">
-                            <a href={current.pdf_url} download={current.pdf_name || undefined}>
-                              <Download className="h-4 w-4" /> Descargar
-                            </a>
-                          </Button>
-                        </div>
+                      <div className="mb-3 flex items-center gap-2 text-sm">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
                       </div>
-                      <div className="overflow-hidden rounded-xl border border-border bg-secondary/30">
+                      {/* Visor sin descarga: ocultamos la toolbar nativa del navegador
+                          con #toolbar=0&navpanes=0 (sirve para Chrome/Edge). También
+                          bloqueamos el menú contextual sobre el contenedor para
+                          desalentar el "Guardar como…". No es DRM — alguien con
+                          DevTools puede ver la URL del PDF — pero quita el camino fácil. */}
+                      <div
+                        className="overflow-hidden rounded-xl border border-border bg-secondary/30"
+                        onContextMenu={(e) => e.preventDefault()}
+                      >
                         <iframe
-                          src={`${current.pdf_url}#view=FitH`}
+                          src={`${current.pdf_url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                           title={current.pdf_name || current.title}
-                          className="h-[75vh] w-full"
+                          className="h-[80vh] w-full"
+                          // sandbox sin "allow-downloads" — bloquea descargas iniciadas dentro del iframe
+                          sandbox="allow-same-origin allow-scripts allow-forms"
                         />
                       </div>
                     </div>
