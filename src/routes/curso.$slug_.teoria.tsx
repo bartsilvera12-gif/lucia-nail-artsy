@@ -214,40 +214,69 @@ function TeoriaPage() {
                     <p className="italic text-muted-foreground">Sin contenido cargado todavía.</p>
                   ) : null}
 
-                  {current.pdf_url && (
-                    <div className={current.content ? "mt-8" : ""}>
-                      <div className="mb-3 flex items-center gap-2 text-sm">
-                        <FileText className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
+                  {current.pdf_url && (() => {
+                    // URL del visor: pasamos por proxy /material-teoria si tenemos
+                    // pdf_path (evita ad blockers sobre el subdominio api.* de Supabase).
+                    // Fallback al pdf_url directo para teorías legacy sin pdf_path.
+                    const viewerUrl = current.pdf_path
+                      ? `/material-teoria?ref=${encodeURIComponent(current.pdf_path)}`
+                      : current.pdf_url;
+                    const viewerUrlWithHash = `${viewerUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+
+                    return (
+                      <div className={current.content ? "mt-8" : ""}>
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
+                          </div>
+                          {/* Fallback explícito: si el visor embebido lo bloquea el
+                              navegador (Opera GX adblock, Edge SmartScreen, etc.),
+                              la alumna igual puede abrirlo en pestaña aparte. */}
+                          <a
+                            href={viewerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-primary underline hover:opacity-80"
+                          >
+                            ¿No se ve? Abrir en pestaña nueva
+                          </a>
+                        </div>
+
+                        {/* Usamos <object> en vez de <iframe>: tiene mejor compatibilidad
+                            con visores nativos de PDF y los browsers lo tratan distinto
+                            que a un iframe genérico (menos probable que SmartScreen o
+                            tracking prevention lo bloqueen). Si falla, el child <p>
+                            queda visible con el link de fallback. */}
+                        <div
+                          className="overflow-hidden rounded-xl border border-border bg-secondary/30"
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          <object
+                            data={viewerUrlWithHash}
+                            type="application/pdf"
+                            className="block h-[80vh] w-full"
+                            aria-label={current.pdf_name || current.title}
+                          >
+                            <div className="flex h-[80vh] flex-col items-center justify-center gap-3 p-8 text-center">
+                              <FileText className="h-10 w-10 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">
+                                Tu navegador no puede mostrar el PDF acá.
+                              </p>
+                              <a
+                                href={viewerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/20"
+                              >
+                                Abrir PDF en pestaña nueva
+                              </a>
+                            </div>
+                          </object>
+                        </div>
                       </div>
-                      {/* Visor sin descarga: ocultamos la toolbar nativa del navegador
-                          con #toolbar=0&navpanes=0 (sirve para Chrome/Edge). También
-                          bloqueamos el menú contextual sobre el contenedor para
-                          desalentar el "Guardar como…". No es DRM — alguien con
-                          DevTools puede ver la URL del PDF — pero quita el camino fácil. */}
-                      <div
-                        className="overflow-hidden rounded-xl border border-border bg-secondary/30"
-                        onContextMenu={(e) => e.preventDefault()}
-                      >
-                        <iframe
-                          // Pasamos por /api/teoria-pdf?path=... en vez de
-                          // hitear Supabase directo — ad blockers (Opera, Brave,
-                          // uBlock) bloquean el subdominio "api.neura.com.py".
-                          // Si pdf_path existe lo usamos; fallback al pdf_url
-                          // directo para teorías legacy.
-                          src={
-                            current.pdf_path
-                              ? `/material-teoria?ref=${encodeURIComponent(current.pdf_path)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
-                              : `${current.pdf_url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
-                          }
-                          title={current.pdf_name || current.title}
-                          className="h-[80vh] w-full"
-                          // sandbox sin "allow-downloads" — bloquea descargas iniciadas dentro del iframe
-                          sandbox="allow-same-origin allow-scripts allow-forms"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </article>
 
                 {/* Navegación inferior — Anterior / Siguiente */}
