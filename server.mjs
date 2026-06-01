@@ -604,9 +604,25 @@ async function handlePagoparIniciar(req, res) {
   const url_pago = `https://www.pagopar.com/pagos/${hash_pedido}`;
   console.log(`[pagopar/iniciar] ✓ hash=${hash_pedido} url=${url_pago}`);
 
-  // Record pending payment in Supabase using the user's JWT (respects RLS)
+  // ── Respondemos al cliente PRIMERO ──────────────────────────────────────────
+  // Antes el insert a `payments` se hacía con await ANTES de jsonOk. Si la DB
+  // rechazaba el insert (ej: reference_id uuid recibía un hash hex de 64 chars
+  // tipo "ad11...e3e"), generaba un unhandled rejection que mataba al worker
+  // de Phusion Passenger antes de que el cliente recibiera el JSON. Resultado:
+  // el frontend caía al catch "No se pudo conectar con el servidor de pagos"
+  // mientras Pagopar ya tenía el pedido creado. El usuario reintentaba y se
+  // generaban pedidos huérfanos.
+  //
+  // Ahora: response al cliente PRIMERO, insert en background con error truly
+  // non-fatal (sin await, sin throw, Promise siempre encadena .catch).
+  jsonOk(res, { hash_pedido, url_pago, id_pedido: id_pedido_local });
+
+  // Record pending payment in Supabase usando el JWT del usuario (respeta RLS).
+  // Fire-and-forget: cualquier error queda solo en logs, NO afecta al cliente
+  // ni al proceso. Patrón void + .then + .catch garantiza que ninguna Promise
+  // pendiente quede sin handler.
   const jwt = (req.headers.authorization || "").replace("Bearer ", "") || undefined;
-  const dbRes = await supaRest({
+  void supaRest({
     table: "payments",
     method: "POST",
     jwt,
@@ -618,13 +634,15 @@ async function handlePagoparIniciar(req, res) {
       reference_id: hash_pedido,
       method: "pagopar",
     },
+  }).then((dbRes) => {
+    if (dbRes?._error) {
+      console.warn("[pagopar/iniciar] DB insert warning post-response:", dbRes._error);
+    } else {
+      console.log(`[pagopar/iniciar] DB insert OK post-response — payment recorded`);
+    }
+  }).catch((err) => {
+    console.warn("[pagopar/iniciar] DB insert exception post-response:", err?.message || err);
   });
-  if (dbRes?._error) {
-    // Non-fatal — transaction still proceeds
-    console.warn("[pagopar/iniciar] DB insert warning:", dbRes._error);
-  }
-
-  jsonOk(res, { hash_pedido, url_pago, id_pedido: id_pedido_local });
 }
 
 // ── Pagopar: POST /api/pagopar/respuesta ─────────────────────────────────────
