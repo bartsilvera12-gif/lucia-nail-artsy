@@ -308,7 +308,6 @@ export async function uploadTheoryPdf(courseId: string, file: File): Promise<{ p
         Authorization: `Bearer ${session.access_token}`,
         apikey: anonKey,
         "Content-Type": file.type || "application/pdf",
-        "Cache-Control": "3600",
       },
       body: file,
     }
