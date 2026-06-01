@@ -237,7 +237,7 @@ function TeoriaPage() {
                           // directo para teorías legacy.
                           src={
                             current.pdf_path
-                              ? `/api/teoria-pdf?path=${encodeURIComponent(current.pdf_path)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
+                              ? `/material-teoria?ref=${encodeURIComponent(current.pdf_path)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
                               : `${current.pdf_url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
                           }
                           title={current.pdf_name || current.title}

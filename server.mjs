@@ -883,17 +883,20 @@ const server = createServer(async (req, res) => {
   // ── Proxy de PDFs de teoría ──────────────────────────────────────────────
   // Sirve los PDFs desde nuestro dominio para evitar que ad blockers bloqueen
   // el subdominio "api.neura.com.py" de Supabase. Recibe el path dentro del
-  // bucket course-theory-pdfs como query string (?path=...) y streamea el
+  // bucket course-theory-pdfs como query string (?ref=...) y streamea el
   // archivo desde Supabase Storage hacia el cliente.
+  //
+  // El path/query están deliberadamente diseñados para no disparar filtros
+  // comunes de ad blockers: sin "/api/", sin "pdf" literal en la URL final.
   //
   // Las URLs que guardamos en course_theories.pdf_url van a apuntar a este
   // endpoint en vez de a Supabase directo. El bucket sigue siendo público,
   // así que no necesitamos firma — solo cambiamos el host visible.
-  if (pathname === "/api/teoria-pdf" && method === "GET") {
+  if (pathname.startsWith("/material-teoria") && method === "GET") {
     try {
       const u = new URL(req.url || "/", "http://localhost");
-      const path = u.searchParams.get("path");
-      if (!path) { jsonError(res, 400, "Falta path"); return; }
+      const path = u.searchParams.get("ref");
+      if (!path) { jsonError(res, 400, "Falta ref"); return; }
 
       // Seguridad: el path no puede salir del bucket (sin .., sin slashes raros)
       if (path.includes("..") || path.startsWith("/")) {
