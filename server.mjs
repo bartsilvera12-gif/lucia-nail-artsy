@@ -615,7 +615,12 @@ async function handlePagoparIniciar(req, res) {
   //
   // Ahora: response al cliente PRIMERO, insert en background con error truly
   // non-fatal (sin await, sin throw, Promise siempre encadena .catch).
-  jsonOk(res, { hash_pedido, url_pago, id_pedido: id_pedido_local });
+  // NOTE: usamos id_pedido_comercio (la única variable definida en este scope).
+  // Antes decía id_pedido_local — variable inexistente que tiraba ReferenceError
+  // sincrónico cuando se llegaba acá, matando al worker antes del flush de la
+  // response. El bug estaba latente porque el await supaRest ANTERIOR fallaba
+  // primero (UUID), y nunca se ejecutaba esta línea.
+  jsonOk(res, { hash_pedido, url_pago, id_pedido: id_pedido_comercio });
 
   // Record pending payment in Supabase usando el JWT del usuario (respeta RLS).
   // Fire-and-forget: cualquier error queda solo en logs, NO afecta al cliente
