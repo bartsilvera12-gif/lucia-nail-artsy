@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText, Eye, EyeOff, Quote,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText, Eye, EyeOff, Quote, FileUp, ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -21,6 +21,7 @@ import {
   useCourseCategories, useCategoryUpsert, useCategoryDelete,
   useTestimonials, useTestimonialUpsert, useTestimonialDelete,
   useCourseTheories, useCourseTheoryUpsert, useCourseTheoryDelete,
+  uploadTheoryPdf, deleteTheoryPdf,
   resolveCourseImage, type CourseRow, type ModuleRow, type LessonRow,
   type CourseCategory, type Testimonial, type CourseTheory,
 } from "@/hooks/useCourses";
@@ -1267,10 +1268,15 @@ function CourseTheoryFormModal({
 }) {
   const [title, setTitle] = useState(theory.title ?? "");
   const [content, setContent] = useState(theory.content ?? "");
+  const [pdfUrl, setPdfUrl] = useState<string | null>(theory.pdf_url ?? null);
+  const [pdfPath, setPdfPath] = useState<string | null>(theory.pdf_path ?? null);
+  const [pdfName, setPdfName] = useState<string | null>(theory.pdf_name ?? null);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importInfo, setImportInfo] = useState<string | null>(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const docxInputRef = useRef<HTMLInputElement | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   const valid = title.trim().length >= 2;
 
@@ -1304,6 +1310,47 @@ function CourseTheoryFormModal({
     }
   };
 
+  const handlePdf = async (file: File) => {
+    if (!theory.course_id) {
+      setError("Guardá el curso antes de subir un PDF.");
+      return;
+    }
+    if (file.type && file.type !== "application/pdf") {
+      setError("El archivo debe ser un PDF.");
+      return;
+    }
+    setUploadingPdf(true);
+    setError(null);
+    try {
+      // Borrar el PDF previo si existía
+      if (pdfPath) {
+        await deleteTheoryPdf(pdfPath);
+      }
+      const res = await uploadTheoryPdf(theory.course_id, file);
+      setPdfUrl(res.url);
+      setPdfPath(res.path);
+      setPdfName(res.name);
+      if (!title.trim()) {
+        const baseName = file.name.replace(/\.pdf$/i, "").trim();
+        if (baseName) setTitle(baseName);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo subir el PDF.");
+    } finally {
+      setUploadingPdf(false);
+      if (pdfInputRef.current) pdfInputRef.current.value = "";
+    }
+  };
+
+  const handleRemovePdf = async () => {
+    if (pdfPath) {
+      await deleteTheoryPdf(pdfPath);
+    }
+    setPdfUrl(null);
+    setPdfPath(null);
+    setPdfName(null);
+  };
+
   const handleSave = async () => {
     if (!valid) { setError("El título es obligatorio (mínimo 2 caracteres)."); return; }
     setError(null);
@@ -1313,6 +1360,9 @@ function CourseTheoryFormModal({
         course_id:  theory.course_id!,
         title:      title.trim(),
         content,
+        pdf_url:    pdfUrl,
+        pdf_path:   pdfPath,
+        pdf_name:   pdfName,
         sort_order: theory.sort_order ?? 100,
       });
     } catch (err: unknown) {
@@ -1342,7 +1392,7 @@ function CourseTheoryFormModal({
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <label className="text-xs font-medium text-muted-foreground">Contenido</label>
-              <div>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={docxInputRef}
                   type="file"
@@ -1353,19 +1403,68 @@ function CourseTheoryFormModal({
                   }}
                   className="hidden"
                 />
+                <input
+                  ref={pdfInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handlePdf(f);
+                  }}
+                  className="hidden"
+                />
                 <Button
                   size="sm"
                   variant="outline"
                   type="button"
                   onClick={() => docxInputRef.current?.click()}
-                  disabled={importing || saving}
+                  disabled={importing || saving || uploadingPdf}
                   title="Importar contenido desde un archivo Word (.docx)"
                 >
                   {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
                   {importing ? "Importando…" : "Importar Word"}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  disabled={uploadingPdf || saving || importing}
+                  title="Subir un PDF (con imágenes, varias páginas, etc.)"
+                >
+                  {uploadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+                  {uploadingPdf ? "Subiendo…" : pdfUrl ? "Reemplazar PDF" : "Subir PDF"}
+                </Button>
               </div>
             </div>
+
+            {pdfUrl && (
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 px-3 py-2 text-xs">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate">PDF adjunto: {pdfName || "documento.pdf"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Ver
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleRemovePdf}
+                    className="inline-flex items-center gap-1 text-destructive hover:underline"
+                    disabled={uploadingPdf || saving}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Quitar
+                  </button>
+                </div>
+              </div>
+            )}
+
             <RichTextEditor
               value={content}
               onChange={setContent}

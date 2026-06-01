@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, Lock, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { ArrowLeft, BookOpen, Lock, ChevronLeft, ChevronRight, List, FileText, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
@@ -210,8 +210,38 @@ function TeoriaPage() {
 
                   {current.content ? (
                     <RichTextView html={current.content} className="text-base leading-relaxed text-foreground" />
-                  ) : (
+                  ) : !current.pdf_url ? (
                     <p className="italic text-muted-foreground">Sin contenido cargado todavía.</p>
+                  ) : null}
+
+                  {current.pdf_url && (
+                    <div className={current.content ? "mt-8" : ""}>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button asChild size="sm" variant="outlineGold">
+                            <a href={current.pdf_url} target="_blank" rel="noreferrer">
+                              Abrir en pestaña nueva
+                            </a>
+                          </Button>
+                          <Button asChild size="sm" variant="ghost">
+                            <a href={current.pdf_url} download={current.pdf_name || undefined}>
+                              <Download className="h-4 w-4" /> Descargar
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="overflow-hidden rounded-xl border border-border bg-secondary/30">
+                        <iframe
+                          src={`${current.pdf_url}#view=FitH`}
+                          title={current.pdf_name || current.title}
+                          className="h-[75vh] w-full"
+                        />
+                      </div>
+                    </div>
                   )}
                 </article>
 

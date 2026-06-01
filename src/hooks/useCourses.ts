@@ -279,9 +279,30 @@ export interface CourseTheory {
   course_id: string;
   title: string;
   content: string;
+  pdf_url: string | null;
+  pdf_path: string | null;
+  pdf_name: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
+}
+
+/** Sube un PDF de teoría y devuelve { path, url, name }. */
+export async function uploadTheoryPdf(courseId: string, file: File): Promise<{ path: string; url: string; name: string }> {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+  const path = `${courseId}/${Date.now()}-${safeName}`;
+  const { error } = await supabase.storage.from("course-theory-pdfs").upload(path, file, {
+    upsert: false,
+    contentType: file.type || "application/pdf",
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from("course-theory-pdfs").getPublicUrl(path);
+  return { path, url: data.publicUrl, name: file.name };
+}
+
+/** Elimina un PDF previamente subido a Storage. No falla si no existe. */
+export async function deleteTheoryPdf(path: string): Promise<void> {
+  await supabase.storage.from("course-theory-pdfs").remove([path]).catch(() => undefined);
 }
 
 export function useCourseTheories(courseId: string | undefined | null) {
@@ -311,6 +332,9 @@ export function useCourseTheoryUpsert() {
         course_id:  t.course_id,
         title:      t.title.trim(),
         content:    (t.content ?? "").trim(),
+        pdf_url:    t.pdf_url  ?? null,
+        pdf_path:   t.pdf_path ?? null,
+        pdf_name:   t.pdf_name ?? null,
         sort_order: t.sort_order ?? 100,
       };
       const { data, error } = t.id
