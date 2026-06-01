@@ -287,15 +287,37 @@ export interface CourseTheory {
   updated_at: string;
 }
 
-/** Sube un PDF de teoría y devuelve { path, url, name }. */
+/** Sube un PDF de teoría y devuelve { path, url, name }.
+ *  Usa fetch directo (no el SDK) para evitar enviar el header `x-upsert`,
+ *  que en algunos Supabase self-hosted no está habilitado en CORS. */
 export async function uploadTheoryPdf(courseId: string, file: File): Promise<{ path: string; url: string; name: string }> {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
   const path = `${courseId}/${Date.now()}-${safeName}`;
-  const { error } = await supabase.storage.from("course-theory-pdfs").upload(path, file, {
-    upsert: false,
-    contentType: file.type || "application/pdf",
-  });
-  if (error) throw error;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Tenés que iniciar sesión para subir el PDF.");
+
+  const baseUrl = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/+$/, "");
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+  const res = await fetch(
+    `${baseUrl}/storage/v1/object/course-theory-pdfs/${path}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: anonKey,
+        "Content-Type": file.type || "application/pdf",
+        "Cache-Control": "3600",
+      },
+      body: file,
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Upload falló (${res.status}): ${text || res.statusText}`);
+  }
+
   const { data } = supabase.storage.from("course-theory-pdfs").getPublicUrl(path);
   return { path, url: data.publicUrl, name: file.name };
 }
