@@ -51,11 +51,11 @@ function ResultadoPagoPage() {
         return;
       }
 
-      const respuesta = data.respuesta;
-      const pagado =
-        typeof respuesta === "object" && respuesta !== null
-          ? respuesta.pagado === true
-          : false;
+      // Pagopar /traer devuelve { respuesta: true, resultado: [{pagado, ...}] }.
+      // Los datos reales del pago viven en resultado[0], NO en respuesta.
+      const detalle = Array.isArray(data.resultado) ? data.resultado[0] : null;
+      const pagado = detalle?.pagado === true;
+      const cancelado = detalle?.cancelado === true;
 
       // 2. Recover purchase context stored before redirect
       const ctx = loadPagoparContext();
@@ -104,14 +104,8 @@ function ResultadoPagoPage() {
           clearPagoparContext();
         }
       } else {
-        // Determine if pending or actually failed
-        const isPending =
-          typeof respuesta === "object" && respuesta !== null
-            ? (respuesta as Record<string, unknown>).estado === "pendiente" ||
-              (respuesta as Record<string, unknown>).pagado === false
-            : true; // default to pending if we can't determine
-
-        setStatus(isPending ? "pending" : "failed");
+        // Si Pagopar marca cancelado=true → failed. Si pagado=false sin cancelado → pending.
+        setStatus(cancelado ? "failed" : "pending");
       }
     }
 

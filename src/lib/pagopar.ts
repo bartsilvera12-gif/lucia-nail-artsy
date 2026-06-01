@@ -43,15 +43,23 @@ export interface IniciarResult {
   id_pedido: string;
 }
 
+/**
+ * Formato real de la API /pedidos/1.1/traer de Pagopar:
+ *   { respuesta: true, resultado: [{ pagado: true, hash_pedido: "...", ... }] }
+ * `respuesta` es boolean; los datos del pago están en `resultado[0]`.
+ */
 export interface EstadoResult {
-  resultado: boolean;
-  respuesta: {
+  respuesta: boolean;
+  resultado: Array<{
     pagado: boolean;
-    id_pedido?: string;
     hash_pedido?: string;
-    monto_total?: string;
+    numero_pedido?: string;
+    monto?: string;
+    fecha_pago?: string | null;
+    forma_pago?: string;
+    cancelado?: boolean;
     [key: string]: unknown;
-  } | string;
+  }> | string;
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
