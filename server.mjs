@@ -674,33 +674,43 @@ async function readRawBody(req) {
 }
 
 // Parser flexible para webhook de Pagopar: maneja todos los formatos conocidos.
+// Formatos observados en producción:
+//   ENVELOPE: {"respuesta":true, "resultado":[{hash_pedido, token, pagado, ...}]}
+//     ↑ este es el formato real que Pagopar envía (Junio 2026, content-type: application/json)
+//   Array:    [{hash_pedido, token, pagado, ...}]
+//   Objeto:   {hash_pedido, token, pagado, ...}
+//   Form:     application/x-www-form-urlencoded con `datos` (formato PHP) o campos sueltos
 function parsePagoparWebhook(rawBody, contentType) {
   if (!rawBody) return null;
   const ct = (contentType || "").toLowerCase();
 
-  // Caso 3 + 4: form-urlencoded
+  // Helper para extraer el objeto real del payload, sea como sea que llegue envuelto
+  const unwrap = (parsed) => {
+    if (!parsed || typeof parsed !== "object") return null;
+    // Envelope Pagopar: {respuesta:true, resultado:[{...}]}
+    if (Array.isArray(parsed.resultado) && parsed.resultado[0]) return parsed.resultado[0];
+    // Array directo: [{...}]
+    if (Array.isArray(parsed)) return parsed[0] || null;
+    // Objeto plano: {hash_pedido, token, ...}
+    return parsed;
+  };
+
+  // form-urlencoded
   if (ct.includes("application/x-www-form-urlencoded") || /^[a-z_]+=/i.test(rawBody.split("&")[0] || "")) {
     try {
       const params = new URLSearchParams(rawBody);
-      // Caso 3: campo `datos` con JSON adentro
+      // Campo `datos` con JSON adentro (formato PHP de Pagopar)
       if (params.has("datos")) {
-        const datos = params.get("datos");
-        try {
-          const parsed = JSON.parse(datos);
-          return Array.isArray(parsed) ? (parsed[0] || {}) : parsed;
-        } catch { /* fallthrough */ }
+        try { return unwrap(JSON.parse(params.get("datos"))); } catch { /* fallthrough */ }
       }
-      // Caso 4: campos sueltos
+      // Campos sueltos
       const flat = Object.fromEntries(params.entries());
       if (flat.hash_pedido || flat.token) return flat;
     } catch { /* fallthrough */ }
   }
 
-  // Casos 1 y 2: JSON puro
-  try {
-    const parsed = JSON.parse(rawBody);
-    return Array.isArray(parsed) ? (parsed[0] || {}) : parsed;
-  } catch { /* fallthrough */ }
+  // JSON puro (envelope, array u objeto)
+  try { return unwrap(JSON.parse(rawBody)); } catch { /* fallthrough */ }
 
   return null;
 }
