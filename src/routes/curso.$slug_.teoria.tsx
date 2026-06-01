@@ -225,22 +225,9 @@ function TeoriaPage() {
 
                     return (
                       <div className={current.content ? "mt-8" : ""}>
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
-                          </div>
-                          {/* Fallback explícito: si el visor embebido lo bloquea el
-                              navegador (Opera GX adblock, Edge SmartScreen, etc.),
-                              la alumna igual puede abrirlo en pestaña aparte. */}
-                          <a
-                            href={viewerUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-primary underline hover:opacity-80"
-                          >
-                            ¿No se ve? Abrir en pestaña nueva
-                          </a>
+                        <div className="mb-3 flex items-center gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{current.pdf_name || "Material en PDF"}</span>
                         </div>
 
                         {/* Usamos <object> en vez de <iframe>: tiene mejor compatibilidad
@@ -260,17 +247,13 @@ function TeoriaPage() {
                           >
                             <div className="flex h-[80vh] flex-col items-center justify-center gap-3 p-8 text-center">
                               <FileText className="h-10 w-10 text-muted-foreground" />
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm font-medium text-foreground">
                                 Tu navegador no puede mostrar el PDF acá.
                               </p>
-                              <a
-                                href={viewerUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/20"
-                              >
-                                Abrir PDF en pestaña nueva
-                              </a>
+                              <p className="max-w-sm text-xs text-muted-foreground">
+                                Probá desactivar el bloqueador de anuncios para este sitio,
+                                o abrir desde Google Chrome o Firefox.
+                              </p>
                             </div>
                           </object>
                         </div>
