@@ -27,6 +27,7 @@ import { testimonials as fallbackTestimonials, faqs } from "@/data/site";
 import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
 import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
+import luciaHero from "@/assets/lucia-hero.png";
 import esmalteImg from "@/assets/esmalte.png";
 import manoesmalteImg from "@/assets/manoesmalte.png";
 
@@ -68,7 +69,7 @@ function Hero() {
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-12">
         <AnimateIn direction="up" duration={700} className="flex flex-col justify-center">
           <h1 className="font-serif text-3xl leading-[1.05] text-balance sm:text-4xl lg:text-5xl">
-            Aprendé uñas profesionales y construí tu camino en la belleza
+            Formate en uñas, cejas y pestañas con técnicas profesionales
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             Accedé a cursos exclusivos, comunidad privada, recursos descargables, certificados y acompañamiento real para elevar tu técnica y tu negocio.
@@ -91,21 +92,29 @@ function Hero() {
           </div>
         </AnimateIn>
 
-        <div className="relative flex items-center justify-center -translate-y-8">
+        <div className="relative flex items-end justify-center">
           {/* halo dorado de fondo */}
           <div
             aria-hidden
-            className="absolute inset-0 -z-0 mx-auto my-auto h-[78%] w-[78%] rounded-full bg-gradient-gold opacity-30 blur-3xl animate-glow"
+            className="absolute inset-x-0 top-4 -z-0 mx-auto h-[78%] w-[78%] rounded-full bg-gradient-gold opacity-30 blur-3xl animate-glow"
           />
           {/* anillo decorativo girando */}
           <div
             aria-hidden
-            className="absolute inset-6 -z-0 hidden rounded-full border border-primary/30 animate-spin-slow sm:block"
+            className="absolute inset-x-8 top-4 -z-0 hidden aspect-square rounded-full border border-primary/30 animate-spin-slow sm:block"
           />
+          {/* Foto de la instructora */}
+          <img
+            src={luciaHero}
+            alt="Lucía Rojas, instructora"
+            className="relative z-10 mx-auto w-full max-w-[18rem] animate-fade-up object-contain object-bottom drop-shadow-2xl lg:max-w-sm"
+          />
+
+          {/* Logo como insignia flotante */}
           <img
             src={heroLogo}
             alt="Lucía Rojas Studio"
-            className="relative z-10 mx-auto w-full max-w-xs animate-float drop-shadow-2xl lg:max-w-sm"
+            className="absolute right-0 top-2 z-20 hidden w-24 animate-float drop-shadow-xl sm:block lg:w-32"
           />
 
           <div className="absolute -bottom-4 left-4 hidden w-44 rounded-xl border border-border bg-card/95 p-3 shadow-elegant backdrop-blur animate-fade-up sm:block lg:-bottom-6 lg:-left-6" style={{ animationDelay: "400ms" }}>
