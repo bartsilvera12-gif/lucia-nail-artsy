@@ -26,7 +26,6 @@ import { useCourses, useTestimonials } from "@/hooks/useCourses";
 import { testimonials as fallbackTestimonials, faqs } from "@/data/site";
 import { AnimateIn } from "@/components/AnimateIn";
 import aboutImg from "@/assets/about-studio.jpg";
-import heroLogo from "@/assets/logo/lucia_rojas_studio_logo.webp";
 import luciaHero from "@/assets/lucia-hero.png";
 import esmalteImg from "@/assets/esmalte.png";
 import manoesmalteImg from "@/assets/manoesmalte.png";
@@ -108,13 +107,6 @@ function Hero() {
             src={luciaHero}
             alt="Lucía Rojas, instructora"
             className="relative z-10 mx-auto w-full max-w-[18rem] animate-fade-up object-contain object-bottom drop-shadow-2xl lg:max-w-sm"
-          />
-
-          {/* Logo como insignia flotante */}
-          <img
-            src={heroLogo}
-            alt="Lucía Rojas Studio"
-            className="absolute right-0 top-2 z-20 hidden w-24 animate-float drop-shadow-xl sm:block lg:w-32"
           />
 
           <div className="absolute -bottom-4 left-4 hidden w-44 rounded-xl border border-border bg-card/95 p-3 shadow-elegant backdrop-blur animate-fade-up sm:block lg:-bottom-6 lg:-left-6" style={{ animationDelay: "400ms" }}>
