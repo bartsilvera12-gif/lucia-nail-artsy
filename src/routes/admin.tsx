@@ -998,16 +998,22 @@ function LessonRowItem({
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="DynTube Video ID (ej: t5jKHsw7LEOzl0P2twKnpA)"
+              placeholder="DynTube Video ID o iframe code completo"
               value={videoId}
-              onChange={(e) => setVideoId(e.target.value)}
+              onChange={(e) => {
+                // Si pegan el iframe completo, extraemos solo el ID
+                // (lo que viene después de /iframes/ y antes del ?, " o ').
+                const v = e.target.value;
+                const match = v.match(/\/iframes\/([A-Za-z0-9_-]+)/);
+                setVideoId(match ? match[1] : v);
+              }}
               className="flex-1 min-w-[260px] bg-white font-mono text-xs"
             />
             <Button size="sm" variant="outlineGold" onClick={saveVideoId}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setVideoId(lesson.video_path ?? ""); }}>Cancelar</Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            En el panel de <a href="https://www.dyntube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">DynTube</a> → tu video → menú <strong>⋮</strong> → <strong>"Copy Video ID"</strong>. Pegá acá ese ID (es el string corto que aparece en la URL del iframe). NO copies el código de embed entero ni el "Video Key" largo del div.
+            En <a href="https://www.dyntube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">DynTube</a> → tu video → botón <strong>"Embed"</strong> (NO uses "Copy Video ID", da otro ID que no anda). Copiá <strong>todo el código del iframe</strong> y pegá acá — extraemos el ID solo. Ejemplo del ID correcto: <code className="rounded bg-secondary px-1">t5jKHsw7LEOzl0P2twKnpA</code>
           </p>
         </div>
       )}
