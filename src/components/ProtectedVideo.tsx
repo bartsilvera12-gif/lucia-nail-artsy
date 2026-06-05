@@ -22,7 +22,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       style={{ aspectRatio: "9 / 16", maxWidth: "min(100%, calc((100vh - 200px) * 9 / 16))" }}
     >
       <iframe
-        src={`https://player.dyntube.com/iframes/${videoKey}`}
+        src={`https://videos.dyntube.com/iframes/${videoKey}`}
         title={title ?? "Lección"}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
         allowFullScreen
