@@ -217,7 +217,10 @@ function CursoDetailPage() {
                   title={current.title}
                 />
               ) : (
-                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 text-center text-sm text-muted-foreground">
+                <div
+                  className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 text-center text-sm text-muted-foreground"
+                  style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}
+                >
                   <p className="font-serif text-base text-foreground">Video todavía no disponible</p>
                   <p>La profe está cargando esta clase. Volvé pronto.</p>
                 </div>

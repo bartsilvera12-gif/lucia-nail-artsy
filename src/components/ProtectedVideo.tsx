@@ -16,22 +16,20 @@ interface DynTubeVideoProps {
 
 /**
  * Reproductor DynTube embebido vía iframe directo (no requiere script
- * loader). El control de acceso se hace en dos capas:
+ * loader). Aspect ratio 16:9 fijado por estilo inline (compat con
+ * cualquier versión de Tailwind), con max-height para que no se haga
+ * gigante en pantallas grandes.
  *
- *   1. La ruta padre verifica acceso al curso (hasAccessTo /
- *      is_free_preview) ANTES de renderizar este componente. Si la
- *      alumna no tiene acceso, este componente nunca se monta y el
- *      videoKey nunca sale al DOM.
- *
+ * Control de acceso en 2 capas:
+ *   1. La ruta padre verifica acceso (hasAccessTo / is_free_preview)
+ *      ANTES de renderizar — si no hay acceso, este componente nunca
+ *      se monta y la videoKey nunca sale al DOM.
  *   2. DynTube valida "domain lock" en su servidor — el iframe solo
- *      reproduce el video si el padre que lo embebe es uno de los
- *      dominios autorizados en el panel de DynTube (en nuestro caso,
- *      luciarojasstudio.com.py).
+ *      reproduce si el host es uno de los dominios autorizados.
  *
- * El video viene encriptado con AES-128 desde DynTube. Manejo de
- * PrintScreen: limpia clipboard para desalentar captura (no es DRM
- * real, solo fricción adicional — el DRM real lo hace DynTube con
- * Screen Shield y watermarks visibles).
+ * Encriptación AES-128 sobre los chunks. Manejo de PrintScreen: limpia
+ * clipboard como fricción anti-captura (no es DRM real — el DRM lo
+ * hace DynTube con Screen Shield + watermarks).
  */
 export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   // PrintScreen → clipboard vacío (fricción anti-captura)
@@ -47,7 +45,14 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
 
   return (
     <div
-      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-black select-none"
+      // mx-auto + max-w → centra y limita el ancho en pantallas amplias
+      // aspectRatio + maxHeight → respeta proporción 16:9 sin volverse gigante
+      className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-black select-none"
+      style={{
+        aspectRatio: "16 / 9",
+        maxHeight: "min(70vh, 720px)",
+        maxWidth: "min(100%, 1280px)",
+      }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <iframe

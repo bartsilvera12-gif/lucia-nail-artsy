@@ -101,8 +101,10 @@ function VerPage() {
         {/* Player area */}
         <main className="flex flex-1 flex-col overflow-y-auto">
           <div className={"mx-auto w-full px-4 py-6 sm:px-6 " + (sidebarOpen ? "max-w-6xl" : "max-w-5xl")}>
-            {/* Sticky para que el DRM mantenga el video en viewport siempre */}
-            <div className="sticky top-0 z-10 mx-auto w-full overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
+            {/* Sticky para que el video quede visible al scrollear.
+                El sizing del player (aspect-ratio 16:9 + max-height) lo
+                maneja el componente ProtectedVideo. */}
+            <div className="sticky top-0 z-10 mx-auto w-full overflow-hidden rounded-xl shadow-2xl">
               {canPlay && current ? (
                 current.video_path ? (
                   <ProtectedVideo
@@ -111,14 +113,14 @@ function VerPage() {
                     title={current.title}
                   />
                 ) : (
-                  <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 text-center">
+                  <div className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-black p-12 text-center" style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}>
                     <Sparkles className="h-8 w-8 text-primary" />
                     <p className="font-serif text-base">Video todavía no disponible</p>
                     <p className="text-xs text-zinc-400">La profe está cargando esta clase. Volvé pronto.</p>
                   </div>
                 )
               ) : (
-                <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 p-6 text-center">
+                <div className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-black p-6 text-center" style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}>
                   <Lock className="h-10 w-10 text-primary" />
                   <p className="font-serif text-xl">Esta clase es exclusiva</p>
                   <p className="max-w-md text-sm text-zinc-400">Activá tu membresía o comprá el curso para acceder a todas las clases.</p>
