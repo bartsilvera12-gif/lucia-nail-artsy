@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 interface DynTubeVideoProps {
   /**
@@ -13,25 +14,24 @@ interface DynTubeVideoProps {
 /**
  * Reproductor DynTube con disuasión anti-captura.
  *
- * Estructura del embed: idéntica a la que recomienda DynTube — wrapper
- * con padding-top: 56.25% (forzar 16:9) + iframe absoluto. Es lo más
- * compatible cross-browser y evita scrollbars internos.
- *
- * El tamaño máximo del player lo decide el contenedor PADRE (limitar
- * con max-w-3xl, max-w-4xl, etc.). Acá solo nos aseguramos la proporción.
+ * Fullscreen custom: en vez de dejar que el iframe maneje su propio
+ * fullscreen (que tapa nuestro overlay), envolvemos TODO el bloque
+ * (iframe + overlay) en un único elemento fullscreen-able. Así nuestro
+ * overlay sigue siendo visible incluso en pantalla completa.
  *
  * Capas de protección:
- *   1. Acceso: la ruta padre verifica hasAccessTo / is_free_preview
- *      ANTES de renderizar.
- *   2. Domain lock: DynTube valida que el host esté autorizado.
- *   3. AES-128: chunks del video encriptados.
+ *   1. Acceso: la ruta padre verifica acceso ANTES de renderizar.
+ *   2. Domain lock: DynTube valida en su servidor.
+ *   3. AES-128: chunks encriptados.
  *   4. Anti-captura (este componente):
- *      - PrintScreen / Win+Shift+S / Cmd+Shift+3-4-5 → overlay
- *      - Window blur (Snipping Tool, OBS, etc.) → overlay
- *      - Click derecho bloqueado
+ *      - PrintScreen / Snipping Tool / Cmd+Shift+3-5 → overlay
+ *      - Window blur (capturas externas) → overlay
+ *      - Fullscreen custom para que el overlay se vea siempre
  */
 export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const blurTimerRef = useRef<number | null>(null);
 
   const showWarning = (message: string) => {
@@ -55,10 +55,14 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       }
     };
     window.addEventListener("keydown", onKey, { capture: true });
-    return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+    document.addEventListener("keydown", onKey, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+      document.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+    };
   }, []);
 
-  // Window blur (Snipping Tool, herramientas externas, screen recorders)
+  // Window blur (herramientas externas de captura)
   useEffect(() => {
     const onBlur = () => {
       if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
@@ -83,34 +87,78 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     };
   }, []);
 
+  // Sync de estado fullscreen con el browser. Importante: el wrapper es
+  // el elemento que entra en fullscreen, así que nuestro overlay
+  // (que vive dentro del wrapper) sigue visible.
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(document.fullscreenElement === wrapperRef.current);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (wrapperRef.current) {
+        await wrapperRef.current.requestFullscreen();
+      }
+    } catch (err) {
+      console.warn("[video] fullscreen toggle failed:", err);
+    }
+  };
+
   return (
-    // Wrapper exactamente como recomienda DynTube: padding-top 56.25%
-    // fuerza el aspect ratio 16:9. El iframe va absoluto adentro.
+    // Wrapper hace de "elemento fullscreen". Adentro están iframe + overlay
+    // + botón de fullscreen, así todo queda visible en pantalla completa.
     <div
-      className="relative w-full overflow-hidden rounded-xl border border-border bg-black select-none"
-      style={{ paddingTop: "56.25%" }}
+      ref={wrapperRef}
+      className={
+        "group relative w-full overflow-hidden rounded-xl border border-border bg-black select-none " +
+        (isFullscreen ? "flex items-center justify-center" : "")
+      }
+      style={isFullscreen ? undefined : { paddingTop: "56.25%" }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <iframe
         src={`https://videos.dyntube.com/iframes/${videoKey}`}
         title={title ?? "Lección"}
-        allow="autoplay; fullscreen; encrypted-media"
-        allowFullScreen
+        // Importante: SIN `allow=fullscreen` y SIN `allowFullScreen` —
+        // así el botón nativo del player de DynTube no maneja fullscreen
+        // y nos aseguramos que el fullscreen lo controle nuestro wrapper.
+        allow="autoplay; encrypted-media"
         scrolling="no"
-        className="absolute inset-0 h-full w-full border-0"
-        style={{ border: "none" }}
+        className={
+          isFullscreen
+            ? "h-full w-full border-0"
+            : "absolute inset-0 h-full w-full border-0"
+        }
+        style={isFullscreen ? { aspectRatio: "16 / 9", maxHeight: "100vh", maxWidth: "100vw" } : { border: "none" }}
       />
 
-      {/* Overlay anti-captura */}
+      {/* Botón fullscreen propio. Aparece arriba a la derecha del video. */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        className="absolute right-3 top-3 z-40 rounded-md bg-black/50 p-2 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100 focus:opacity-100"
+      >
+        {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      </button>
+
+      {/* Overlay anti-captura — DENTRO del wrapper, así también se ve en fullscreen */}
       {warning && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/90 px-6 text-center text-white backdrop-blur-sm"
           role="alert"
           aria-live="assertive"
         >
-          <div className="text-5xl">🚫</div>
-          <p className="font-serif text-xl sm:text-2xl">{warning}</p>
-          <p className="max-w-md text-xs text-zinc-300 sm:text-sm">
+          <div className="text-5xl sm:text-6xl">🚫</div>
+          <p className="font-serif text-xl sm:text-3xl">{warning}</p>
+          <p className="max-w-md text-xs text-zinc-300 sm:text-base">
             El contenido del curso es propiedad de Lucía Rojas Studio.
             Compartirlo o reproducirlo fuera de la plataforma puede generar
             la baja inmediata de tu acceso.
