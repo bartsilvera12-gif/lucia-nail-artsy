@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Play, ShieldAlert } from "lucide-react";
 
 interface DynTubeVideoProps {
   /**
@@ -32,6 +32,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [started, setStarted] = useState(false);
   const blurTimerRef = useRef<number | null>(null);
 
   const showWarning = (message: string) => {
@@ -110,6 +111,20 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     }
   };
 
+  // Inicia la lección: monta el iframe y entra en fullscreen de una.
+  // Hacemos request de fullscreen dentro del mismo handler de click para
+  // que el browser lo autorice (gesto del usuario).
+  const startLesson = async () => {
+    setStarted(true);
+    try {
+      if (wrapperRef.current && !document.fullscreenElement) {
+        await wrapperRef.current.requestFullscreen();
+      }
+    } catch (err) {
+      console.warn("[video] no se pudo entrar en fullscreen:", err);
+    }
+  };
+
   return (
     // Wrapper hace de "elemento fullscreen". Adentro están iframe + overlay
     // + botón de fullscreen, así todo queda visible en pantalla completa.
@@ -122,32 +137,55 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       style={isFullscreen ? undefined : { paddingTop: "56.25%" }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <iframe
-        src={`https://videos.dyntube.com/iframes/${videoKey}`}
-        title={title ?? "Lección"}
-        // Importante: SIN `allow=fullscreen` y SIN `allowFullScreen` —
-        // así el botón nativo del player de DynTube no maneja fullscreen
-        // y nos aseguramos que el fullscreen lo controle nuestro wrapper.
-        allow="autoplay; encrypted-media"
-        scrolling="no"
-        className={
-          isFullscreen
-            ? "h-full w-full border-0"
-            : "absolute inset-0 h-full w-full border-0"
-        }
-        style={isFullscreen ? { aspectRatio: "16 / 9", maxHeight: "100vh", maxWidth: "100vw" } : { border: "none" }}
-      />
+      {started ? (
+        <iframe
+          src={`https://videos.dyntube.com/iframes/${videoKey}`}
+          title={title ?? "Lección"}
+          // Importante: SIN `allow=fullscreen` y SIN `allowFullScreen` —
+          // así el botón nativo del player de DynTube no maneja fullscreen
+          // y nos aseguramos que el fullscreen lo controle nuestro wrapper.
+          allow="autoplay; encrypted-media"
+          scrolling="no"
+          className={
+            isFullscreen
+              ? "h-full w-full border-0"
+              : "absolute inset-0 h-full w-full border-0"
+          }
+          style={isFullscreen ? { aspectRatio: "16 / 9", maxHeight: "100vh", maxWidth: "100vw" } : { border: "none" }}
+        />
+      ) : (
+        // Cover negro previo a iniciar. Click → monta iframe + entra fullscreen.
+        <button
+          type="button"
+          onClick={startLesson}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black px-6 text-center text-white transition-colors hover:bg-zinc-900"
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm sm:h-20 sm:w-20">
+            <Play className="h-8 w-8 fill-white sm:h-10 sm:w-10" />
+          </div>
+          <p className="font-serif text-xl sm:text-2xl">Iniciar lección</p>
+          <div className="flex max-w-md items-start gap-2 text-xs text-zinc-300 sm:text-sm">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <span>
+              Al iniciar, la clase se abre en pantalla completa. Las capturas de
+              pantalla están bloqueadas — si lo intentás, el video se pausa.
+            </span>
+          </div>
+        </button>
+      )}
 
       {/* Botón fullscreen propio. Aparece arriba a la derecha del video. */}
-      <button
-        type="button"
-        onClick={toggleFullscreen}
-        title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        className="absolute right-3 top-3 z-40 rounded-md bg-black/50 p-2 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100 focus:opacity-100"
-      >
-        {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-      </button>
+      {started && (
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          className="absolute right-3 top-3 z-40 rounded-md bg-black/50 p-2 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100 focus:opacity-100"
+        >
+          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
+      )}
 
       {/* Overlay anti-captura — DENTRO del wrapper, así también se ve en fullscreen */}
       {warning && (
