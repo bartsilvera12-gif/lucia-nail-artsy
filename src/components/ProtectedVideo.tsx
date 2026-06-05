@@ -18,8 +18,8 @@ interface DynTubeVideoProps {
 export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl border border-border bg-black"
-      style={{ paddingTop: "56.25%" }}
+      className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-black"
+      style={{ aspectRatio: "9 / 16", maxWidth: "min(100%, calc((100vh - 200px) * 9 / 16))" }}
     >
       <iframe
         src={`https://player.dyntube.com/iframes/${videoKey}`}
