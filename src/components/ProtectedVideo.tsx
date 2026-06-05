@@ -56,35 +56,19 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
 
   return (
     <div
-      className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-zinc-950 select-none"
-      style={{ aspectRatio: "16 / 9", maxHeight: "calc(100vh - 180px)" }}
+      className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-black select-none"
+      style={{ aspectRatio: "9 / 16", maxWidth: "min(100%, calc((100vh - 200px) * 9 / 16))" }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Fondo decorativo borroso (gradiente cálido en la paleta de la marca) */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-br from-primary/30 via-zinc-900 to-primary/20 blur-2xl"
+      <iframe
+        src={`https://videos.dyntube.com/iframes/${videoKey}`}
+        title={title ?? "Lección"}
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        allowFullScreen
+        scrolling="no"
+        className="absolute inset-0 h-full w-full border-0"
+        style={{ border: "none" }}
       />
-      <div
-        aria-hidden
-        className="absolute -inset-10 bg-[radial-gradient(circle_at_30%_20%,_rgba(217,164,98,0.25),_transparent_50%),radial-gradient(circle_at_70%_80%,_rgba(217,164,98,0.18),_transparent_55%)] blur-3xl"
-      />
-
-      {/* Iframe portrait centrado */}
-      <div
-        className="absolute inset-y-0 left-1/2 -translate-x-1/2 overflow-hidden rounded-lg bg-black shadow-2xl"
-        style={{ aspectRatio: "9 / 16", height: "100%" }}
-      >
-        <iframe
-          src={`https://videos.dyntube.com/iframes/${videoKey}`}
-          title={title ?? "Lección"}
-          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-          allowFullScreen
-          scrolling="no"
-          className="absolute inset-0 h-full w-full border-0"
-          style={{ border: "none" }}
-        />
-      </div>
 
       {warning && (
         <div
@@ -94,7 +78,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         >
           <div className="text-5xl sm:text-6xl">🚫</div>
           <p className="font-serif text-xl sm:text-2xl">{warning}</p>
-          <p className="max-w-md text-xs text-zinc-300">
+          <p className="max-w-xs text-xs text-zinc-300">
             El contenido del curso es propiedad de Lucía Rojas Studio.
             Compartirlo o reproducirlo fuera de la plataforma puede generar
             la baja inmediata de tu acceso.
