@@ -83,7 +83,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       }}
     >
       <iframe
-        src={`https://videos.dyntube.com/iframes/${videoKey}`}
+        src={`https://play.dyntube.io/videos/${videoKey}`}
         title={title ?? "Lección"}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
         allowFullScreen
