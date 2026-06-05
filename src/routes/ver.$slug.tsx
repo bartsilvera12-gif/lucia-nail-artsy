@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, FileText } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
-import { useCourseBySlug, getVdoCipherOtp, saveLessonProgress, useCourseTheories } from "@/hooks/useCourses";
+import { useCourseBySlug, saveLessonProgress, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
 interface VerSearch { l?: string }
@@ -48,20 +48,9 @@ function VerPage() {
     saveLessonProgress(user.id, current.id, { positionSeconds: 0 });
   }, [current?.id, user?.id]);
 
-  // OTP de VdoCipher
-  const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
-  const [vdoError, setVdoError] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    setVdo(null); setVdoError(null);
-    if (!current?.id || !current?.video_path) return;
-    getVdoCipherOtp(current.id).then((res) => {
-      if (cancelled) return;
-      if (res) setVdo(res);
-      else setVdoError("No pudimos cargar el video. Verificá tu acceso o probá de nuevo.");
-    });
-    return () => { cancelled = true; };
-  }, [current?.id, current?.video_path]);
+  // DynTube no necesita token del backend — el "domain lock" lo valida el
+  // propio player de DynTube en su servidor. El control de acceso se hace
+  // ANTES de renderizar el video (canPlay abajo).
 
   if (loading || isLoading) {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-300">Cargando…</div>;
@@ -115,17 +104,12 @@ function VerPage() {
             {/* Sticky para que el DRM mantenga el video en viewport siempre */}
             <div className="sticky top-0 z-10 mx-auto w-full overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-2xl">
               {canPlay && current ? (
-                vdo ? (
+                current.video_path ? (
                   <ProtectedVideo
-                    otp={vdo.otp}
-                    playbackInfo={vdo.playbackInfo}
-                    userEmail={user?.email ?? "preview@invitado"}
+                    key={current.id}
+                    videoKey={current.video_path}
                     title={current.title}
                   />
-                ) : current.video_path ? (
-                  <div className="flex aspect-video w-full items-center justify-center text-sm text-zinc-400">
-                    {vdoError ?? "Cargando video…"}
-                  </div>
                 ) : (
                   <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 text-center">
                     <Sparkles className="h-8 w-8 text-primary" />

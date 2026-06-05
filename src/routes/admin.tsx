@@ -865,7 +865,7 @@ function CurriculumEditor({ courseId, courseSlug }: { courseId: string; courseSl
           })}
           onUpdateLesson={(l) => upsertLes.mutate({ ...l, courseId })}
           onDeleteLesson={async (l) => {
-            if (await confirm(`¿Borrar la lección "${l.title}"? El video también se borra de VdoCipher.`, { title: "Borrar lección", confirmLabel: "Borrar" })) {
+            if (await confirm(`¿Borrar la lección "${l.title}"? El video en DynTube NO se borra automáticamente — borralo desde el panel de DynTube si querés liberar storage.`, { title: "Borrar lección", confirmLabel: "Borrar" })) {
               delLes.mutate({ id: l.id, courseId, videoPath: l.video_path });
             }
           }}
@@ -980,7 +980,7 @@ function LessonRowItem({
 
         {lesson.video_path ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700" title={lesson.video_path}>
-            <Film className="h-3 w-3" /> VdoCipher · {lesson.video_path.slice(0, 16)}…
+            <Film className="h-3 w-3" /> DynTube · {lesson.video_path.slice(0, 16)}…
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">
@@ -989,7 +989,7 @@ function LessonRowItem({
         )}
 
         <Button size="sm" variant={lesson.video_path ? "ghost" : "outlineGold"} onClick={() => setEditing((v) => !v)}>
-          <Video className="h-3.5 w-3.5" /> {lesson.video_path ? "Cambiar ID" : "Asignar video"}
+          <Video className="h-3.5 w-3.5" /> {lesson.video_path ? "Cambiar Key" : "Asignar video"}
         </Button>
         <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
       </div>
@@ -998,7 +998,7 @@ function LessonRowItem({
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="VdoCipher Video ID (32 hex)"
+              placeholder="DynTube Video Key"
               value={videoId}
               onChange={(e) => setVideoId(e.target.value)}
               className="flex-1 min-w-[260px] bg-white font-mono text-xs"
@@ -1006,9 +1006,9 @@ function LessonRowItem({
             <Button size="sm" variant="outlineGold" onClick={saveVideoId}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setVideoId(lesson.video_path ?? ""); }}>Cancelar</Button>
           </div>
-          <a href="https://www.vdocipher.com/admin/videos" target="_blank" rel="noreferrer" className="text-[11px] text-primary hover:underline">
-            Subir a VdoCipher ↗
-          </a>
+          <p className="text-[11px] text-muted-foreground">
+            Subí el video desde el panel de <a href="https://www.dyntube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">DynTube</a> y pegá acá el <code className="font-mono">videoKey</code> que te asigne.
+          </p>
         </div>
       )}
     </div>

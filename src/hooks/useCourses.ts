@@ -597,10 +597,12 @@ export function useLessonUpsert() {
 export function useLessonDelete() {
   const qc = useQueryClient();
   return useMutation({
+    // El video en DynTube NO se borra desde acá — solo se borra la fila de la
+    // lección en la DB. Si querés liberar storage en DynTube, borralo desde
+    // el panel de DynTube. videoPath sigue en los args por compatibilidad con
+    // el caller existente pero ya no dispara ninguna acción de storage.
     mutationFn: async (args: { id: string; courseId: string; videoPath?: string | null }) => {
-      if (args.videoPath) {
-        await supabase.storage.from("course-videos").remove([args.videoPath]).catch(() => undefined);
-      }
+      void args.videoPath;
       const { error } = await supabase.from("lessons").delete().eq("id", args.id);
       if (error) throw error;
       return args;
@@ -701,20 +703,7 @@ export function useLastLesson(courseId: string | undefined, allLessons: { id: st
   });
 }
 
-/** Pide al backend un OTP de VdoCipher para reproducir una lección. */
-export async function getVdoCipherOtp(lessonId: string): Promise<{ otp: string; playbackInfo: string } | null> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
-  if (!token) return null;
-
-  const res = await fetch("/api/vdocipher-otp", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ lessonId }),
-  });
-  if (!res.ok) {
-    console.error("vdocipher otp error", res.status, await res.text());
-    return null;
-  }
-  return (await res.json()) as { otp: string; playbackInfo: string };
-}
+// Nota: getVdoCipherOtp() removido. DynTube no requiere token del backend
+// para reproducir — el "domain lock" lo valida el propio player de DynTube.
+// El control de acceso al video lo hace la ruta padre (hasAccessTo) ANTES
+// de renderizar el componente <ProtectedVideo videoKey={...} />.

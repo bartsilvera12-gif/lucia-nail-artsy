@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Paywall } from "@/components/Paywall";
 import { PagoparCheckout } from "@/components/PagoparCheckout";
-import { useCourseBySlug, resolveCourseImage, getVdoCipherOtp, useCourseTheories } from "@/hooks/useCourses";
+import { useCourseBySlug, resolveCourseImage, useCourseTheories } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
 
@@ -54,24 +54,11 @@ function CursoDetailPage() {
   // Pagopar checkout dialog state (isolated — does not affect existing purchase flow)
   const [pagoparOpen, setPagoparOpen] = useState(false);
 
-  // Pedir OTP de VdoCipher para la lección actual
-  const [vdo, setVdo] = useState<{ otp: string; playbackInfo: string } | null>(null);
-  const [vdoError, setVdoError] = useState<string | null>(null);
+  // DynTube no requiere token del backend — el control de acceso se hace
+  // ANTES de renderizar el video (canPlay abajo), y DynTube valida domain
+  // lock en su servidor cuando el player carga.
   const currentForVideo = allLessons.find((l) => l.id === currentLessonId);
   const currentVideoPath = currentForVideo?.video_path ?? null;
-
-  useEffect(() => {
-    let cancelled = false;
-    setVdo(null);
-    setVdoError(null);
-    if (!currentLessonId || !currentVideoPath) return;
-    getVdoCipherOtp(currentLessonId).then((res) => {
-      if (cancelled) return;
-      if (res) setVdo(res);
-      else setVdoError("No pudimos cargar este video. Verificá tu acceso o intentá de nuevo.");
-    });
-    return () => { cancelled = true; };
-  }, [currentLessonId, currentVideoPath]);
 
   if (isLoading) {
     return (
@@ -223,17 +210,12 @@ function CursoDetailPage() {
           <div>
             <div>
             {canPlay && current ? (
-              vdo ? (
+              currentVideoPath ? (
                 <ProtectedVideo
-                  otp={vdo.otp}
-                  playbackInfo={vdo.playbackInfo}
-                  userEmail={user?.email ?? "preview@invitado"}
+                  key={current.id}
+                  videoKey={currentVideoPath}
                   title={current.title}
                 />
-              ) : currentVideoPath ? (
-                <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-black text-center text-sm text-white/70">
-                  {vdoError ?? "Cargando video…"}
-                </div>
               ) : (
                 <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 text-center text-sm text-muted-foreground">
                   <p className="font-serif text-base text-foreground">Video todavía no disponible</p>
