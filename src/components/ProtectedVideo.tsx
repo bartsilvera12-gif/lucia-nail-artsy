@@ -22,9 +22,9 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       style={{ paddingTop: "56.25%" }}
     >
       <iframe
-        src={`https://videos.dyntube.com/iframes/${videoKey}`}
+        src={`https://player.dyntube.com/iframes/${videoKey}`}
         title={title ?? "Lección"}
-        allow="autoplay; encrypted-media; fullscreen"
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
         allowFullScreen
         scrolling="no"
         className="absolute inset-0 h-full w-full border-0"
