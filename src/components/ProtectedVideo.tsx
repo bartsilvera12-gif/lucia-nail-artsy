@@ -28,24 +28,41 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   };
 
   useEffect(() => {
+    const triggerScreenshotWarning = () => {
+      navigator.clipboard?.writeText("").catch(() => undefined);
+      showWarning("📸 Las capturas de pantalla no están permitidas.");
+    };
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen") {
-        navigator.clipboard?.writeText("").catch(() => undefined);
-        showWarning("📸 Las capturas de pantalla no están permitidas.");
+      // Windows manda PrintScreen al keyup, no al keydown — capturamos ambos.
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        triggerScreenshotWarning();
         return;
       }
+      // Snipping Tool (Win+Shift+S en Windows, Cmd+Shift+S en mac).
+      // En Windows el Win es `metaKey` en el browser.
       if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
-        showWarning("📸 Las capturas de pantalla no están permitidas.");
+        triggerScreenshotWarning();
+        return;
       }
+      // Atajos macOS: Cmd+Shift+3 / 4 / 5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
-        showWarning("📸 Las capturas de pantalla no están permitidas.");
+        triggerScreenshotWarning();
+        return;
       }
     };
+
+    // Algunos navegadores en Windows solo disparan PrintScreen en keyup.
     window.addEventListener("keydown", onKey, { capture: true });
+    window.addEventListener("keyup", onKey, { capture: true });
     document.addEventListener("keydown", onKey, { capture: true });
+    document.addEventListener("keyup", onKey, { capture: true });
+
     return () => {
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+      window.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
       document.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+      document.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
     };
   }, []);
 
