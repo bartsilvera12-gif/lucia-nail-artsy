@@ -218,11 +218,13 @@ function CursoDetailPage() {
                 />
               ) : (
                 <div
-                  className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 text-center text-sm text-muted-foreground"
-                  style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}
+                  className="relative w-full overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40"
+                  style={{ paddingTop: "56.25%" }}
                 >
-                  <p className="font-serif text-base text-foreground">Video todavía no disponible</p>
-                  <p>La profe está cargando esta clase. Volvé pronto.</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                    <p className="font-serif text-base text-foreground">Video todavía no disponible</p>
+                    <p>La profe está cargando esta clase. Volvé pronto.</p>
+                  </div>
                 </div>
               )
             ) : (

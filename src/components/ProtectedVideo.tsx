@@ -13,33 +13,33 @@ interface DynTubeVideoProps {
 /**
  * Reproductor DynTube con disuasión anti-captura.
  *
- * Capas de protección:
- *   1. Acceso: la ruta padre verifica hasAccessTo / is_free_preview ANTES
- *      de renderizar — la videoKey nunca sale al DOM si no hay acceso.
- *   2. Domain lock: DynTube valida en su servidor que el iframe esté
- *      embebido en un dominio autorizado.
- *   3. AES-128: los chunks del video vienen encriptados.
- *   4. Anti-captura (este componente):
- *      - PrintScreen → clipboard vacío + overlay de advertencia
- *      - window blur (Snipping Tool, grabador de pantalla, alt-tab) →
- *        overlay de advertencia para desalentar capturas
- *      - Click derecho bloqueado sobre el player
+ * Estructura del embed: idéntica a la que recomienda DynTube — wrapper
+ * con padding-top: 56.25% (forzar 16:9) + iframe absoluto. Es lo más
+ * compatible cross-browser y evita scrollbars internos.
  *
- * Nota honesta: ningún sitio web puede prevenir 100% screenshots a nivel
- * de SO. Esto es fricción + identificación visible (idealmente combinado
- * con Screen Shield de DynTube que pone watermark con el email).
+ * El tamaño máximo del player lo decide el contenedor PADRE (limitar
+ * con max-w-3xl, max-w-4xl, etc.). Acá solo nos aseguramos la proporción.
+ *
+ * Capas de protección:
+ *   1. Acceso: la ruta padre verifica hasAccessTo / is_free_preview
+ *      ANTES de renderizar.
+ *   2. Domain lock: DynTube valida que el host esté autorizado.
+ *   3. AES-128: chunks del video encriptados.
+ *   4. Anti-captura (este componente):
+ *      - PrintScreen / Win+Shift+S / Cmd+Shift+3-4-5 → overlay
+ *      - Window blur (Snipping Tool, OBS, etc.) → overlay
+ *      - Click derecho bloqueado
  */
 export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   const [warning, setWarning] = useState<string | null>(null);
   const blurTimerRef = useRef<number | null>(null);
 
-  // Mostrar overlay de advertencia por N segundos
   const showWarning = (message: string) => {
     setWarning(message);
     window.setTimeout(() => setWarning(null), 4500);
   };
 
-  // PrintScreen → limpiar clipboard + mostrar advertencia
+  // Atajos de captura
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen") {
@@ -47,11 +47,9 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         showWarning("📸 Las capturas de pantalla no están permitidas.");
         return;
       }
-      // Snipping Tool de Windows: Win+Shift+S
-      if (e.shiftKey && (e.metaKey || e.key === "Meta") && e.key.toLowerCase() === "s") {
+      if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
         showWarning("📸 Las capturas de pantalla no están permitidas.");
       }
-      // macOS: Cmd+Shift+3, Cmd+Shift+4, Cmd+Shift+5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
         showWarning("📸 Las capturas de pantalla no están permitidas.");
       }
@@ -60,13 +58,9 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
   }, []);
 
-  // Window blur → puede ser captura externa, alt-tab, o snipping tool.
-  // Aplicamos un pequeño debounce para evitar falsos positivos (clicks
-  // legítimos en otras tabs no debería disparar el aviso constantemente).
+  // Window blur (Snipping Tool, herramientas externas, screen recorders)
   useEffect(() => {
     const onBlur = () => {
-      // Si el blur dura más de 200ms y la página sigue visible, probable
-      // herramienta de captura activa
       if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
       blurTimerRef.current = window.setTimeout(() => {
         if (document.visibilityState === "visible") {
@@ -90,13 +84,11 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   }, []);
 
   return (
+    // Wrapper exactamente como recomienda DynTube: padding-top 56.25%
+    // fuerza el aspect ratio 16:9. El iframe va absoluto adentro.
     <div
-      className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-black select-none"
-      style={{
-        aspectRatio: "16 / 9",
-        maxHeight: "min(70vh, 720px)",
-        maxWidth: "min(100%, 1280px)",
-      }}
+      className="relative w-full overflow-hidden rounded-xl border border-border bg-black select-none"
+      style={{ paddingTop: "56.25%" }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <iframe
@@ -104,11 +96,12 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         title={title ?? "Lección"}
         allow="autoplay; fullscreen; encrypted-media"
         allowFullScreen
+        scrolling="no"
         className="absolute inset-0 h-full w-full border-0"
+        style={{ border: "none" }}
       />
 
-      {/* Overlay de advertencia anti-captura. Tapa el player completo y
-          se autodismissea después de 4.5s. */}
+      {/* Overlay anti-captura */}
       {warning && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/90 px-6 text-center text-white backdrop-blur-sm"

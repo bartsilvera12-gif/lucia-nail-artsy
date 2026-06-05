@@ -102,9 +102,9 @@ function VerPage() {
         <main className="flex flex-1 flex-col overflow-y-auto">
           <div className={"mx-auto w-full px-4 py-6 sm:px-6 " + (sidebarOpen ? "max-w-6xl" : "max-w-5xl")}>
             {/* Sticky para que el video quede visible al scrollear.
-                El sizing del player (aspect-ratio 16:9 + max-height) lo
-                maneja el componente ProtectedVideo. */}
-            <div className="sticky top-0 z-10 mx-auto w-full overflow-hidden rounded-xl shadow-2xl">
+                max-w-4xl limita el ancho del player en pantallas grandes
+                para que no se vea exageradamente grande. */}
+            <div className="sticky top-0 z-10 mx-auto w-full max-w-4xl overflow-hidden rounded-xl shadow-2xl">
               {canPlay && current ? (
                 current.video_path ? (
                   <ProtectedVideo
@@ -113,22 +113,26 @@ function VerPage() {
                     title={current.title}
                   />
                 ) : (
-                  <div className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-black p-12 text-center" style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}>
-                    <Sparkles className="h-8 w-8 text-primary" />
-                    <p className="font-serif text-base">Video todavía no disponible</p>
-                    <p className="text-xs text-zinc-400">La profe está cargando esta clase. Volvé pronto.</p>
+                  <div className="relative w-full overflow-hidden rounded-xl border border-zinc-800 bg-black" style={{ paddingTop: "56.25%" }}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
+                      <Sparkles className="h-8 w-8 text-primary" />
+                      <p className="font-serif text-base">Video todavía no disponible</p>
+                      <p className="text-xs text-zinc-400">La profe está cargando esta clase. Volvé pronto.</p>
+                    </div>
                   </div>
                 )
               ) : (
-                <div className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-black p-6 text-center" style={{ aspectRatio: "16 / 9", maxHeight: "min(70vh, 720px)" }}>
-                  <Lock className="h-10 w-10 text-primary" />
-                  <p className="font-serif text-xl">Esta clase es exclusiva</p>
-                  <p className="max-w-md text-sm text-zinc-400">Activá tu membresía o comprá el curso para acceder a todas las clases.</p>
-                  <div className="flex flex-wrap justify-center gap-2 pt-2">
-                    <Button variant="hero" asChild><Link to="/planes">Ver planes</Link></Button>
-                    <Button variant="outline" asChild className="border-zinc-700 bg-transparent text-zinc-100 hover:bg-zinc-800 hover:text-zinc-50">
-                      <Link to="/curso/$slug" params={{ slug }}>Volver al curso</Link>
-                    </Button>
+                <div className="relative w-full overflow-hidden rounded-xl border border-zinc-800 bg-black" style={{ paddingTop: "56.25%" }}>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                    <Lock className="h-10 w-10 text-primary" />
+                    <p className="font-serif text-xl">Esta clase es exclusiva</p>
+                    <p className="max-w-md text-sm text-zinc-400">Activá tu membresía o comprá el curso para acceder a todas las clases.</p>
+                    <div className="flex flex-wrap justify-center gap-2 pt-2">
+                      <Button variant="hero" asChild><Link to="/planes">Ver planes</Link></Button>
+                      <Button variant="outline" asChild className="border-zinc-700 bg-transparent text-zinc-100 hover:bg-zinc-800 hover:text-zinc-50">
+                        <Link to="/curso/$slug" params={{ slug }}>Volver al curso</Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
