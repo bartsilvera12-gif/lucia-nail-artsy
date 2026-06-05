@@ -3,9 +3,10 @@ import { ShieldAlert } from "lucide-react";
 
 interface DynTubeVideoProps {
   /**
-   * Video ID de DynTube — string corto tipo "OL1hV7nr9kOoNcqshMbrVw"
-   * que va en https://play.dyntube.io/videos/<videoId>.
-   * Se obtiene en el panel de DynTube → menú ⋮ del video → "Copy Video ID".
+   * Video ID de DynTube — string corto tipo "t5jKHsw7LEOzl0P2twKnpA"
+   * que va en https://videos.dyntube.com/iframes/<videoId>.
+   * Es el mismo ID que aparece en el embed code oficial de DynTube.
+   * Se obtiene en el panel de DynTube → menú del video → "Copy Video ID".
    */
   videoKey: string;
   title?: string;
@@ -83,7 +84,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       }}
     >
       <iframe
-        src={`https://play.dyntube.io/videos/${videoKey}`}
+        src={`https://videos.dyntube.com/iframes/${videoKey}`}
         title={title ?? "Lección"}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
         allowFullScreen
