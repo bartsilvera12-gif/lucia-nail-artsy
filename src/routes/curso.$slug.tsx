@@ -1,10 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, CreditCard, FileText } from "lucide-react";
+import { Clock, BookOpen, Lock, PlayCircle, Check, ArrowRight, Sparkles, CreditCard, FileText, Play } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { GoldBadge } from "@/components/Badge";
 import { Button } from "@/components/ui/button";
-import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Paywall } from "@/components/Paywall";
 import { PagoparCheckout } from "@/components/PagoparCheckout";
 import { useCourseBySlug, resolveCourseImage, useCourseTheories } from "@/hooks/useCourses";
@@ -211,11 +210,26 @@ function CursoDetailPage() {
             <div>
             {canPlay && current ? (
               currentVideoPath ? (
-                <ProtectedVideo
-                  key={current.id}
-                  videoKey={currentVideoPath}
-                  title={current.title}
-                />
+                <Link
+                  to="/ver/$slug"
+                  params={{ slug }}
+                  search={{ l: current.id }}
+                  className="group relative block w-full overflow-hidden rounded-xl border border-border bg-black"
+                  style={{ paddingTop: "56.25%" }}
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-zinc-900 via-black to-zinc-900 px-6 text-center text-white transition-colors group-hover:from-zinc-800 group-hover:to-zinc-800">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 ring-2 ring-primary/40 backdrop-blur-sm transition-transform group-hover:scale-110 sm:h-20 sm:w-20">
+                      <Play className="h-7 w-7 fill-white sm:h-9 sm:w-9" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-primary">{current.moduleTitle}</p>
+                      <p className="mt-1 font-serif text-xl sm:text-2xl">{current.title}</p>
+                    </div>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs backdrop-blur-sm sm:text-sm">
+                      Abrir reproductor <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </Link>
               ) : (
                 <div
                   className="relative w-full overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40"
