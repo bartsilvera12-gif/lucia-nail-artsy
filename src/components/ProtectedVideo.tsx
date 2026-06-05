@@ -116,8 +116,9 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     <div
       ref={wrapperRef}
       className={
-        "group relative w-full overflow-hidden rounded-xl border border-border bg-black select-none " +
-        (isFullscreen ? "flex items-center justify-center" : "")
+        isFullscreen
+          ? "group relative h-screen w-screen bg-black select-none flex items-center justify-center"
+          : "group relative w-full overflow-hidden rounded-xl border border-border bg-black select-none"
       }
       style={isFullscreen ? undefined : { paddingTop: "56.25%" }}
       onContextMenu={(e) => e.preventDefault()}
@@ -130,12 +131,8 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         // y nos aseguramos que el fullscreen lo controle nuestro wrapper.
         allow="autoplay; encrypted-media"
         scrolling="no"
-        className={
-          isFullscreen
-            ? "h-full w-full border-0"
-            : "absolute inset-0 h-full w-full border-0"
-        }
-        style={isFullscreen ? { aspectRatio: "16 / 9", maxHeight: "100vh", maxWidth: "100vw" } : { border: "none" }}
+        className="absolute inset-0 h-full w-full border-0"
+        style={{ border: "none" }}
       />
 
       {/* Botón fullscreen propio. Aparece arriba a la derecha del video. */}
@@ -149,20 +146,14 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
 
-      {/* Overlay anti-captura — DENTRO del wrapper, así también se ve en fullscreen */}
+      {/* Toast anti-captura — sutil, arriba del video, no tapa el contenido */}
       {warning && (
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/90 px-6 text-center text-white backdrop-blur-sm"
+          className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-lg bg-black/80 px-4 py-2 text-center text-sm text-white shadow-lg backdrop-blur-sm sm:text-base"
           role="alert"
-          aria-live="assertive"
+          aria-live="polite"
         >
-          <div className="text-5xl sm:text-6xl">🚫</div>
-          <p className="font-serif text-xl sm:text-3xl">{warning}</p>
-          <p className="max-w-md text-xs text-zinc-300 sm:text-base">
-            El contenido del curso es propiedad de Lucía Rojas Studio.
-            Compartirlo o reproducirlo fuera de la plataforma puede generar
-            la baja inmediata de tu acceso.
-          </p>
+          {warning}
         </div>
       )}
     </div>
