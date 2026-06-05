@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ShieldAlert } from "lucide-react";
 
 interface DynTubeVideoProps {
   /**
@@ -75,7 +76,10 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     <div
       className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-black select-none"
       style={{ aspectRatio: "9 / 16", maxWidth: "min(100%, calc((100vh - 200px) * 9 / 16))" }}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        showWarning("Las capturas de pantalla no están permitidas.");
+      }}
     >
       <iframe
         src={`https://videos.dyntube.com/iframes/${videoKey}`}
@@ -89,17 +93,30 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
 
       {warning && (
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/90 px-6 text-center text-white backdrop-blur-sm"
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md"
           role="alert"
           aria-live="assertive"
         >
-          <div className="text-5xl sm:text-6xl">🚫</div>
-          <p className="font-serif text-xl sm:text-2xl">{warning}</p>
-          <p className="max-w-xs text-xs text-zinc-300">
-            El contenido del curso es propiedad de Lucía Rojas Studio.
-            Compartirlo o reproducirlo fuera de la plataforma puede generar
-            la baja inmediata de tu acceso.
-          </p>
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6 text-center shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/40">
+              <ShieldAlert className="h-7 w-7 text-primary" strokeWidth={1.75} />
+            </div>
+
+            <p className="mt-4 font-serif text-lg leading-snug text-white sm:text-xl">
+              {warning}
+            </p>
+
+            <div aria-hidden className="my-4 mx-auto h-px w-12 bg-primary/40" />
+
+            <p className="text-[11px] leading-relaxed text-zinc-400 sm:text-xs">
+              El contenido del curso es propiedad de
+              <span className="text-zinc-200"> Lucía Rojas Studio</span>.
+              Compartirlo o reproducirlo fuera de la plataforma puede generar
+              la baja inmediata de tu acceso.
+            </p>
+          </div>
         </div>
       )}
     </div>
