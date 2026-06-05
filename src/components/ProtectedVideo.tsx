@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface DynTubeVideoProps {
   /**
@@ -21,7 +21,6 @@ interface DynTubeVideoProps {
  */
 export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   const [warning, setWarning] = useState<string | null>(null);
-  const blurTimerRef = useRef<number | null>(null);
 
   const showWarning = (message: string) => {
     setWarning(message);
@@ -50,29 +49,10 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     };
   }, []);
 
-  useEffect(() => {
-    const onBlur = () => {
-      if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
-      blurTimerRef.current = window.setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          showWarning("⚠️ Detectamos pérdida de foco. Las capturas no están permitidas.");
-        }
-      }, 200);
-    };
-    const onFocus = () => {
-      if (blurTimerRef.current) {
-        window.clearTimeout(blurTimerRef.current);
-        blurTimerRef.current = null;
-      }
-    };
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("focus", onFocus);
-      if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
-    };
-  }, []);
+  // OJO: NO escuchamos `window.blur`. Cada vez que la alumna clickea
+  // el iframe de DynTube para reproducir, el window pierde foco a favor
+  // del iframe — eso generaba el aviso anti-captura todo el tiempo.
+  // La captura por PrintScreen y atajos sí sigue cubierta arriba.
 
   return (
     <div
