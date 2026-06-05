@@ -998,7 +998,7 @@ function LessonRowItem({
         <div className="mt-2 space-y-2 rounded-md border border-border bg-secondary/40 p-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="DynTube Video Key"
+              placeholder="DynTube Video ID (ej: t5jKHsw7LEOzl0P2twKnpA)"
               value={videoId}
               onChange={(e) => setVideoId(e.target.value)}
               className="flex-1 min-w-[260px] bg-white font-mono text-xs"
@@ -1007,7 +1007,7 @@ function LessonRowItem({
             <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setVideoId(lesson.video_path ?? ""); }}>Cancelar</Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Subí el video desde el panel de <a href="https://www.dyntube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">DynTube</a> y pegá acá el <code className="font-mono">videoKey</code> que te asigne.
+            En el panel de <a href="https://www.dyntube.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">DynTube</a> → tu video → menú <strong>⋮</strong> → <strong>"Copy Video ID"</strong>. Pegá acá ese ID (es el string corto que aparece en la URL del iframe). NO copies el código de embed entero ni el "Video Key" largo del div.
           </p>
         </div>
       )}
