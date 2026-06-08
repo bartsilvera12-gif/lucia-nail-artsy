@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "postbuild": "node scripts/copy-server.mjs",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && node scripts/copy-server.mjs",
+    "build:dev": "vite build --mode development && node scripts/copy-server.mjs",
     "preview": "vite preview",
     "start": "node server.mjs",
     "start:dist": "node dist/server.mjs",
