@@ -125,7 +125,15 @@ function CertificadoPage() {
             className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
           />
 
-          <div className="relative flex flex-col items-center text-center">
+          <div
+            className="relative flex flex-col items-center text-center"
+            style={{
+              // Halo blanco alrededor de cada glifo para que el texto se lea
+              // bien sobre la foto de Lucía, sin perder el aire del cert.
+              textShadow:
+                "0 0 6px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.9), 0 1px 0 rgba(255,255,255,0.8)",
+            }}
+          >
             <img src={logoLR} alt="Lucía Rojas Studio" className="h-14 w-14 object-contain sm:h-20 sm:w-20" />
 
             <p className="mt-3 text-[10px] uppercase tracking-[4px] text-primary sm:mt-4 sm:text-xs sm:tracking-[6px]">
