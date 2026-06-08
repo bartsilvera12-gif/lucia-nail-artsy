@@ -34,14 +34,14 @@ import manoesmalteImg from "@/assets/manoesmalte.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Lucía Rojas Studio — Academia online premium de uñas" },
+      { title: "Lucía Rojas Studio — Academia online premium de uñas, cejas y pestañas" },
       {
         name: "description",
         content:
-          "Aprendé uñas profesionales con cursos exclusivos, comunidad privada y certificados. Academia administrada por HorizontesWebIA.",
+          "Formate en uñas, cejas y pestañas con técnicas profesionales: cursos exclusivos, comunidad privada, recursos descargables y certificados. Academia administrada por HorizontesWebIA.",
       },
-      { property: "og:title", content: "Lucía Rojas Studio — Academia online de uñas" },
-      { property: "og:description", content: "Cursos premium, comunidad privada y certificados para futuras profesionales." },
+      { property: "og:title", content: "Lucía Rojas Studio — Academia online de uñas, cejas y pestañas" },
+      { property: "og:description", content: "Formate en uñas, cejas y pestañas con técnicas profesionales. Cursos premium, comunidad privada y certificados para futuras profesionales." },
     ],
   }),
   component: HomePage,
