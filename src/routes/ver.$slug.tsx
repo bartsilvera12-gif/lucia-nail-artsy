@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Navigate, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Menu, X, Sparkles, FileText } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, ArrowLeft, Lock, PlayCircle, CheckCircle2, Circle, Menu, X, Sparkles, FileText, Award } from "lucide-react";
 import { ProtectedVideo } from "@/components/ProtectedVideo";
 import { Button } from "@/components/ui/button";
-import { useCourseBySlug, saveLessonProgress, useCourseTheories } from "@/hooks/useCourses";
+import { useCourseBySlug, saveLessonProgress, useCourseTheories, useMyProgress } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 
 interface VerSearch { l?: string }
@@ -22,7 +23,15 @@ function VerPage() {
   const { data: theories = [] } = useCourseTheories(data?.course?.id);
   const hasTheories = theories.length > 0;
   const { user, isAuthenticated, hasAccessTo, loading } = useAuth();
+  const { data: progress = [] } = useMyProgress();
+  const qc = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Set de lesson_ids que la alumna ya completó.
+  const completedSet = useMemo(
+    () => new Set(progress.filter((p) => p.completed_at).map((p) => p.lesson_id)),
+    [progress],
+  );
 
   const allLessons = useMemo(() => {
     if (!data) return [];
@@ -61,11 +70,27 @@ function VerPage() {
   const hasAccess = hasAccessTo(data.course.id, data.course.included_in_membership);
   const canPlay = !!current && (hasAccess || current.is_free_preview);
 
+  // Marca la lección actual como completada y refresca el cache de progreso.
+  const markCompleted = async (lessonId: string) => {
+    if (!user?.id) return;
+    await saveLessonProgress(user.id, lessonId, { completed: true });
+    await qc.invalidateQueries({ queryKey: ["my-progress"] });
+  };
+
   const go = (idx: number) => {
     const l = allLessons[idx]; if (!l) return;
+    // Al avanzar a la próxima, auto-marcamos la actual como completada.
+    if (current?.id && idx > currentIndex) {
+      markCompleted(current.id);
+    }
     setCurrentId(l.id);
     navigate({ to: "/ver/$slug", params: { slug }, search: { l: l.id } });
   };
+
+  // ¿Completó todas las lecciones del curso?
+  const allCompleted = allLessons.length > 0 && allLessons.every((l) => completedSet.has(l.id));
+  const isCurrentCompleted = !!current && completedSet.has(current.id);
+  const isLastLesson = currentIndex >= allLessons.length - 1;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100">
@@ -146,8 +171,28 @@ function VerPage() {
               </div>
             )}
 
+            {/* Botón "marcar como completada" sobre la barra de navegación.
+                Si ya está marcada, mostramos confirmación en lugar del botón. */}
+            {current && canPlay && (
+              <div className="mt-6 flex items-center justify-center gap-2 text-sm">
+                {isCurrentCompleted ? (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-4 py-2 text-primary">
+                    <CheckCircle2 className="h-4 w-4" /> Clase completada
+                  </span>
+                ) : (
+                  <Button
+                    variant="outlineGold"
+                    onClick={() => markCompleted(current.id)}
+                    className="bg-transparent text-zinc-100 hover:bg-zinc-800"
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Marcar como completada
+                  </Button>
+                )}
+              </div>
+            )}
+
             {/* Prev / Next */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-6">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-6">
               <Button
                 variant="ghost"
                 onClick={() => go(currentIndex - 1)}
@@ -159,7 +204,7 @@ function VerPage() {
               <p className="text-xs text-zinc-500">
                 Clase {currentIndex + 1} de {allLessons.length}
               </p>
-              {currentIndex >= allLessons.length - 1 ? (
+              {isLastLesson ? (
                 <Button variant="gold" asChild>
                   <Link to="/curso/$slug" params={{ slug }}>
                     Ver curso completo <ChevronRight className="h-4 w-4" />
@@ -171,6 +216,25 @@ function VerPage() {
                 </Button>
               )}
             </div>
+
+            {/* Llamada al certificado — solo cuando completó todas las clases
+                y está en la última lección. Lleva a /certificado/<slug>. */}
+            {isLastLesson && allCompleted && (
+              <div className="mt-8 rounded-xl border border-primary/40 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 p-6 text-center">
+                <Award className="mx-auto h-10 w-10 text-primary" />
+                <h2 className="mt-3 font-serif text-2xl text-zinc-50">
+                  ¡Felicitaciones! Terminaste el curso
+                </h2>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Completaste todas las clases. Ya podés descargar tu certificado.
+                </p>
+                <Button variant="gold" asChild className="mt-4">
+                  <Link to="/certificado/$slug" params={{ slug }}>
+                    <Award className="h-4 w-4" /> Obtener mi certificado
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </main>
 
@@ -211,8 +275,10 @@ function VerPage() {
                                   <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
                                 ) : active ? (
                                   <PlayCircle className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                ) : completedSet.has(l.id) ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
                                 ) : (
-                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-zinc-600" />
+                                  <Circle className="h-3.5 w-3.5 shrink-0 text-zinc-600" />
                                 )}
                                 <span className="truncate">{l.title}</span>
                               </span>

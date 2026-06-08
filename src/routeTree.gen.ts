@@ -23,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerSlugRouteImport } from './routes/ver.$slug'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
+import { Route as CertificadoSlugRouteImport } from './routes/certificado.$slug'
 import { Route as PagoparResultadoHashRouteImport } from './routes/pagopar/resultado.$hash'
 import { Route as CursoSlugTeoriaRouteImport } from './routes/curso.$slug_.teoria'
 
@@ -96,6 +97,11 @@ const CursoSlugRoute = CursoSlugRouteImport.update({
   path: '/curso/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CertificadoSlugRoute = CertificadoSlugRouteImport.update({
+  id: '/certificado/$slug',
+  path: '/certificado/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PagoparResultadoHashRoute = PagoparResultadoHashRouteImport.update({
   id: '/pagopar/resultado/$hash',
   path: '/pagopar/resultado/$hash',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
+  '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
+  '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
   '/sobre': typeof SobreRoute
+  '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug_/teoria': typeof CursoSlugTeoriaRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/registro'
     | '/sobre'
+    | '/certificado/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug/teoria'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/registro'
     | '/sobre'
+    | '/certificado/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug/teoria'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/registro'
     | '/sobre'
+    | '/certificado/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug_/teoria'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PlanesRoute: typeof PlanesRoute
   RegistroRoute: typeof RegistroRoute
   SobreRoute: typeof SobreRoute
+  CertificadoSlugRoute: typeof CertificadoSlugRoute
   CursoSlugRoute: typeof CursoSlugRoute
   VerSlugRoute: typeof VerSlugRoute
   CursoSlugTeoriaRoute: typeof CursoSlugTeoriaRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CursoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/certificado/$slug': {
+      id: '/certificado/$slug'
+      path: '/certificado/$slug'
+      fullPath: '/certificado/$slug'
+      preLoaderRoute: typeof CertificadoSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pagopar/resultado/$hash': {
       id: '/pagopar/resultado/$hash'
       path: '/pagopar/resultado/$hash'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanesRoute: PlanesRoute,
   RegistroRoute: RegistroRoute,
   SobreRoute: SobreRoute,
+  CertificadoSlugRoute: CertificadoSlugRoute,
   CursoSlugRoute: CursoSlugRoute,
   VerSlugRoute: VerSlugRoute,
   CursoSlugTeoriaRoute: CursoSlugTeoriaRoute,
