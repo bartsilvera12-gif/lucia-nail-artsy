@@ -14,7 +14,10 @@ export const Route = createFileRoute("/certificado/$slug")({
 function CertificadoPage() {
   const { slug } = Route.useParams();
   const { data, isLoading } = useCourseBySlug(slug);
-  const { data: progress = [] } = useMyProgress();
+  // isFetching + isLoading nos sirve para no mostrar "no disponible" mientras
+  // los datos de progreso todavía están en vuelo (caso típico: la alumna
+  // marca la última clase y entra al cert antes de que la query refresque).
+  const { data: progress = [], isLoading: progressLoading, isFetching: progressFetching } = useMyProgress();
   const { user, isAuthenticated, loading } = useAuth();
 
   const allLessons = useMemo(() => {
@@ -39,7 +42,7 @@ function CertificadoPage() {
     return new Date(Math.max(...dates)).toISOString();
   }, [progress, allLessons, data]);
 
-  if (loading || isLoading) {
+  if (loading || isLoading || progressLoading || progressFetching) {
     return <div className="flex min-h-screen items-center justify-center">Cargando…</div>;
   }
   if (!isAuthenticated) return <Navigate to="/login" />;
