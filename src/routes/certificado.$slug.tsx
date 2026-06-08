@@ -128,10 +128,15 @@ function CertificadoPage() {
           <div
             className="relative flex flex-col items-center text-center"
             style={{
-              // Halo blanco alrededor de cada glifo para que el texto se lea
-              // bien sobre la foto de Lucía, sin perder el aire del cert.
-              textShadow:
-                "0 0 6px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.9), 0 1px 0 rgba(255,255,255,0.8)",
+              // Halo dorado cálido alrededor del texto: combina con la
+              // paleta de la marca y separa los glifos de la foto de fondo
+              // sin meter blanco frío que rompa el look premium.
+              textShadow: [
+                "0 0 8px rgba(255, 248, 230, 0.95)",   // halo cercano cremoso
+                "0 0 14px rgba(217, 164, 98, 0.55)",    // resplandor dorado amplio
+                "0 1px 0 rgba(255, 255, 255, 0.85)",    // base blanca de apoyo
+                "0 2px 6px rgba(120, 80, 50, 0.18)",    // sombra cálida tenue
+              ].join(", "),
             }}
           >
             <img src={logoLR} alt="Lucía Rojas Studio" className="h-14 w-14 object-contain sm:h-20 sm:w-20" />
