@@ -104,14 +104,15 @@ function CertificadoPage() {
             src={heroBg}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute right-0 top-1/2 -z-0 h-[110%] -translate-y-1/2 opacity-[0.04] mix-blend-multiply sm:opacity-[0.06]"
+            className="pointer-events-none absolute right-0 top-1/2 -z-0 h-[110%] -translate-y-1/2 opacity-40 sm:opacity-60"
             style={{ printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
           />
-          {/* Velo crema sobre la foto: muy opaco para que la silueta de
-              Lucía quede apenas insinuada — el texto siempre prima. */}
+          {/* Velo crema solo sobre el lado izquierdo, para que el texto
+              tenga fondo limpio y la foto se vea con su color natural a
+              la derecha. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-white via-white/95 to-white/85 sm:via-white/92 sm:to-white/75"
+            className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-white via-white/75 to-transparent"
           />
 
           {/* halos decorativos */}
