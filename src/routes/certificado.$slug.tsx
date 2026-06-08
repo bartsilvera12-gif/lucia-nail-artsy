@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCourseBySlug, useMyProgress } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
 import logoLR from "@/assets/logo/logosinletras.png";
+import heroBg from "@/assets/lucia-hero.png";
 
 export const Route = createFileRoute("/certificado/$slug")({
   head: ({ params }) => ({ meta: [{ title: `Certificado — ${params.slug}` }] }),
@@ -97,6 +98,22 @@ function CertificadoPage() {
       {/* Certificado */}
       <div className="cert mx-auto max-w-5xl bg-white p-10 shadow-elegant sm:p-14">
         <div className="cert-frame relative overflow-hidden rounded-2xl border-[6px] border-double border-primary/40 p-8 sm:p-12">
+          {/* Foto de Lucía como marca de agua de fondo. La ponemos a la
+              derecha con opacidad baja para que decore sin tapar el texto. */}
+          <img
+            src={heroBg}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute right-0 top-1/2 -z-0 h-[110%] -translate-y-1/2 opacity-[0.12] mix-blend-multiply"
+            style={{ printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
+          />
+          {/* Velo crema sobre la foto para suavizar el lado izquierdo y que
+              el texto siempre tenga contraste, sin importar el contenido. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-white via-white/85 to-white/30"
+          />
+
           {/* halos decorativos */}
           <div
             aria-hidden
@@ -186,6 +203,12 @@ function CertificadoPage() {
 
           /* Marco interior: paddings más cortos para evitar overflow. */
           .cert-frame { padding: 16px 24px !important; }
+
+          /* Asegurar que las imágenes/backgrounds decorativos se impriman. */
+          .cert, .cert-frame, .cert-frame img, .cert-frame > div {
+            print-color-adjust: exact !important;
+            -webkit-print-color-adjust: exact !important;
+          }
 
           /* Reducimos tamaños tipográficos para que entre cómodo. */
           .cert h1 { font-size: 32px !important; line-height: 1.1 !important; }
