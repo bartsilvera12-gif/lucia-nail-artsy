@@ -96,7 +96,7 @@ function CertificadoPage() {
 
       {/* Certificado */}
       <div className="cert mx-auto max-w-5xl bg-white p-10 shadow-elegant sm:p-14">
-        <div className="relative overflow-hidden rounded-2xl border-[6px] border-double border-primary/40 p-8 sm:p-12">
+        <div className="cert-frame relative overflow-hidden rounded-2xl border-[6px] border-double border-primary/40 p-8 sm:p-12">
           {/* halos decorativos */}
           <div
             aria-hidden
@@ -157,18 +157,48 @@ function CertificadoPage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">
+        <p className="cert-id mt-6 text-center text-[11px] text-muted-foreground">
           ID del certificado: <span className="font-mono">{certId}</span>
         </p>
       </div>
 
-      {/* Estilos solo para impresión: oculta toolbar y deja cert a sangrado. */}
+      {/* Estilos solo para impresión: oculta toolbar, fuerza una sola página
+          A4 horizontal y reduce paddings/tamaños para que todo el certificado
+          (incluido el ID) entre en la primera hoja. */}
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 10mm; }
-          html, body { background: #fff !important; }
+          @page { size: A4 landscape; margin: 0; }
+          html, body { background: #fff !important; height: auto !important; }
           .no-print { display: none !important; }
-          .cert { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; }
+
+          /* Caja contenedora: sin sombras, sin padding de toolbar. */
+          .cert {
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 8mm 12mm !important;
+            margin: 0 !important;
+            page-break-after: avoid;
+            break-after: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Marco interior: paddings más cortos para evitar overflow. */
+          .cert-frame { padding: 16px 24px !important; }
+
+          /* Reducimos tamaños tipográficos para que entre cómodo. */
+          .cert h1 { font-size: 32px !important; line-height: 1.1 !important; }
+          .cert .font-serif { line-height: 1.15 !important; }
+
+          /* El ID del cert va dentro del flujo, no en hoja aparte. */
+          .cert-id { margin-top: 10px !important; }
+
+          /* Margen vertical entre bloques: más compacto. */
+          .cert .my-6 { margin-top: 12px !important; margin-bottom: 12px !important; }
+          .cert .my-8 { margin-top: 14px !important; margin-bottom: 14px !important; }
+          .cert .mt-6 { margin-top: 10px !important; }
+          .cert .mt-4 { margin-top: 6px !important; }
         }
       `}</style>
     </div>
