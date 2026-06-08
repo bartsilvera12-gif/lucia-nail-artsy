@@ -144,14 +144,20 @@ function CertificadoPage() {
             <p className="mt-3 text-[10px] uppercase tracking-[4px] text-primary sm:mt-4 sm:text-xs sm:tracking-[6px]">
               Lucía Rojas Studio
             </p>
-            <h1 className="mt-1 font-serif text-2xl text-foreground sm:text-4xl lg:text-5xl">
+            <h1
+              className="mt-1 font-serif text-2xl text-foreground sm:text-4xl lg:text-5xl"
+              style={{ textShadow: "none" }}
+            >
               Certificado de finalización
             </h1>
 
             <div aria-hidden className="my-4 h-px w-16 bg-primary/50 sm:my-6 sm:w-24" />
 
             <p className="text-xs text-muted-foreground sm:text-sm">Se otorga el presente a</p>
-            <p className="mt-2 font-serif text-xl text-foreground sm:text-3xl lg:text-4xl">
+            <p
+              className="mt-2 font-serif text-xl text-foreground sm:text-3xl lg:text-4xl"
+              style={{ textShadow: "none" }}
+            >
               {fullName}
             </p>
 
@@ -173,14 +179,14 @@ function CertificadoPage() {
                 a izquierda/derecha. */}
             <div className="flex w-full flex-col items-center gap-6 pt-2 text-center sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-8 sm:pt-4 sm:px-6 sm:text-left">
               <div className="flex flex-col items-center sm:items-start">
-                <p className="font-serif text-base text-foreground sm:text-lg">Lucía Rojas</p>
+                <p className="font-serif text-base text-foreground sm:text-lg" style={{ textShadow: "none" }}>Lucía Rojas</p>
                 <div className="mt-1 h-px w-32 bg-foreground/40 sm:w-40" />
                 <p className="mt-1 text-[10px] uppercase tracking-[2px] text-muted-foreground sm:tracking-widest sm:text-[11px]">
                   Directora · Lucía Rojas Studio
                 </p>
               </div>
               <div className="flex flex-col items-center sm:items-end">
-                <p className="font-serif text-base text-foreground sm:text-lg">{issueDateLabel}</p>
+                <p className="font-serif text-base text-foreground sm:text-lg" style={{ textShadow: "none" }}>{issueDateLabel}</p>
                 <div className="mt-1 h-px w-32 bg-foreground/40 sm:w-40" />
                 <p className="mt-1 text-[10px] uppercase tracking-[2px] text-muted-foreground sm:tracking-widest sm:text-[11px]">
                   Fecha de emisión
