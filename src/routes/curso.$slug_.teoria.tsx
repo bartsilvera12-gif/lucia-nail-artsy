@@ -245,15 +245,19 @@ function TeoriaPage() {
                             className="block h-[80vh] w-full"
                             aria-label={current.pdf_name || current.title}
                           >
-                            <div className="flex h-[80vh] flex-col items-center justify-center gap-3 p-8 text-center">
+                            <div className="flex h-[80vh] flex-col items-center justify-center gap-4 p-8 text-center">
                               <FileText className="h-10 w-10 text-muted-foreground" />
                               <p className="text-sm font-medium text-foreground">
                                 Tu navegador no puede mostrar el PDF acá.
                               </p>
                               <p className="max-w-sm text-xs text-muted-foreground">
-                                Probá desactivar el bloqueador de anuncios para este sitio,
-                                o abrir desde Google Chrome o Firefox.
+                                Abrilo en una pestaña nueva para verlo o descargarlo.
                               </p>
+                              <Button asChild variant="gold" className="mt-2">
+                                <a href={viewerUrl} target="_blank" rel="noreferrer">
+                                  <FileText className="h-4 w-4" /> Abrir PDF
+                                </a>
+                              </Button>
                             </div>
                           </object>
                         </div>
