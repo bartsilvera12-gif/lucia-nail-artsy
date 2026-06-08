@@ -82,36 +82,37 @@ function CertificadoPage() {
   const certId = `LR-${(user?.id ?? "").slice(0, 6).toUpperCase()}-${data.course.id.slice(0, 6).toUpperCase()}-${issueDate.toISOString().slice(0, 10).replace(/-/g, "")}`;
 
   return (
-    <div className="min-h-screen bg-gradient-cream py-10">
+    <div className="min-h-screen bg-gradient-cream py-4 sm:py-10">
       {/* Toolbar (no se imprime) */}
-      <div className="no-print mx-auto mb-6 flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4">
-        <Button variant="ghost" asChild>
+      <div className="no-print mx-auto mb-4 flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 sm:mb-6 sm:gap-3 sm:px-4">
+        <Button variant="ghost" size="sm" asChild className="sm:size-default">
           <Link to="/ver/$slug" params={{ slug }}>
             <ArrowLeft className="h-4 w-4" /> Volver al curso
           </Link>
         </Button>
-        <Button variant="hero" onClick={() => window.print()}>
+        <Button variant="hero" size="sm" onClick={() => window.print()} className="sm:size-default">
           <Printer className="h-4 w-4" /> Descargar / Imprimir
         </Button>
       </div>
 
       {/* Certificado */}
-      <div className="cert mx-auto max-w-5xl bg-white p-10 shadow-elegant sm:p-14">
-        <div className="cert-frame relative overflow-hidden rounded-2xl border-[6px] border-double border-primary/40 p-8 sm:p-12">
+      <div className="cert mx-auto max-w-5xl bg-white p-4 shadow-elegant sm:p-10 lg:p-14">
+        <div className="cert-frame relative overflow-hidden rounded-xl border-4 border-double border-primary/40 p-4 sm:rounded-2xl sm:border-[6px] sm:p-8 lg:p-12">
           {/* Foto de Lucía como marca de agua de fondo. La ponemos a la
               derecha con opacidad baja para que decore sin tapar el texto. */}
           <img
             src={heroBg}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute right-0 top-1/2 -z-0 h-[110%] -translate-y-1/2 opacity-[0.12] mix-blend-multiply"
+            className="pointer-events-none absolute right-0 top-1/2 -z-0 h-[110%] -translate-y-1/2 opacity-[0.06] mix-blend-multiply sm:opacity-[0.12]"
             style={{ printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
           />
-          {/* Velo crema sobre la foto para suavizar el lado izquierdo y que
-              el texto siempre tenga contraste, sin importar el contenido. */}
+          {/* Velo crema sobre la foto para suavizar y que el texto siempre
+              tenga contraste. En mobile el velo es casi opaco (la foto se
+              insinúa pero no compite con el texto). */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-white via-white/85 to-white/30"
+            className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-white via-white/95 to-white/80 sm:via-white/85 sm:to-white/30"
           />
 
           {/* halos decorativos */}
@@ -125,48 +126,50 @@ function CertificadoPage() {
           />
 
           <div className="relative flex flex-col items-center text-center">
-            <img src={logoLR} alt="Lucía Rojas Studio" className="h-20 w-20 object-contain" />
+            <img src={logoLR} alt="Lucía Rojas Studio" className="h-14 w-14 object-contain sm:h-20 sm:w-20" />
 
-            <p className="mt-4 text-xs uppercase tracking-[6px] text-primary">
+            <p className="mt-3 text-[10px] uppercase tracking-[4px] text-primary sm:mt-4 sm:text-xs sm:tracking-[6px]">
               Lucía Rojas Studio
             </p>
-            <h1 className="mt-1 font-serif text-4xl text-foreground sm:text-5xl">
+            <h1 className="mt-1 font-serif text-2xl text-foreground sm:text-4xl lg:text-5xl">
               Certificado de finalización
             </h1>
 
-            <div aria-hidden className="my-6 h-px w-24 bg-primary/50" />
+            <div aria-hidden className="my-4 h-px w-16 bg-primary/50 sm:my-6 sm:w-24" />
 
-            <p className="text-sm text-muted-foreground">Se otorga el presente a</p>
-            <p className="mt-2 font-serif text-3xl text-foreground sm:text-4xl">
+            <p className="text-xs text-muted-foreground sm:text-sm">Se otorga el presente a</p>
+            <p className="mt-2 font-serif text-xl text-foreground sm:text-3xl lg:text-4xl">
               {fullName}
             </p>
 
-            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="mt-4 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:mt-6 sm:text-sm lg:text-base">
               Por haber completado satisfactoriamente todas las clases del curso
             </p>
-            <p className="mt-2 font-serif text-2xl text-primary sm:text-3xl">
+            <p className="mt-2 font-serif text-lg text-primary sm:text-2xl lg:text-3xl">
               {data.course.title}
             </p>
             {data.course.category && (
-              <p className="mt-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+              <p className="mt-1 text-[10px] uppercase tracking-[2px] text-muted-foreground sm:tracking-widest sm:text-[11px]">
                 {data.course.category}
               </p>
             )}
 
-            <div aria-hidden className="my-8 h-px w-16 bg-primary/40" />
+            <div aria-hidden className="my-5 h-px w-12 bg-primary/40 sm:my-8 sm:w-16" />
 
-            <div className="flex w-full flex-wrap items-end justify-between gap-8 pt-4 text-left sm:px-6">
-              <div>
-                <p className="font-serif text-lg text-foreground">Lucía Rojas</p>
-                <div className="mt-1 h-px w-40 bg-foreground/40" />
-                <p className="mt-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+            {/* Firmas: en mobile se apilan centradas; en sm+ se separan
+                a izquierda/derecha. */}
+            <div className="flex w-full flex-col items-center gap-6 pt-2 text-center sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-8 sm:pt-4 sm:px-6 sm:text-left">
+              <div className="flex flex-col items-center sm:items-start">
+                <p className="font-serif text-base text-foreground sm:text-lg">Lucía Rojas</p>
+                <div className="mt-1 h-px w-32 bg-foreground/40 sm:w-40" />
+                <p className="mt-1 text-[10px] uppercase tracking-[2px] text-muted-foreground sm:tracking-widest sm:text-[11px]">
                   Directora · Lucía Rojas Studio
                 </p>
               </div>
-              <div className="text-right">
-                <p className="font-serif text-lg text-foreground">{issueDateLabel}</p>
-                <div className="mt-1 ml-auto h-px w-40 bg-foreground/40" />
-                <p className="mt-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+              <div className="flex flex-col items-center sm:items-end">
+                <p className="font-serif text-base text-foreground sm:text-lg">{issueDateLabel}</p>
+                <div className="mt-1 h-px w-32 bg-foreground/40 sm:w-40" />
+                <p className="mt-1 text-[10px] uppercase tracking-[2px] text-muted-foreground sm:tracking-widest sm:text-[11px]">
                   Fecha de emisión
                 </p>
               </div>
