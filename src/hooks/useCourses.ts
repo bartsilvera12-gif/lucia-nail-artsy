@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Resolución de imágenes locales: image_path se trata como un nombre
@@ -644,10 +645,19 @@ export interface LessonProgressRow {
   updated_at: string;
 }
 
-/** Devuelve el progreso de todas las lecciones del usuario autenticado. */
+/** Devuelve el progreso de todas las lecciones del usuario autenticado.
+ *  Importante: gateamos en `user?.id` para evitar el caso (típico en mobile)
+ *  donde la query corre ANTES de que el JWT esté cargado en supabase-js.
+ *  Si eso pasa, RLS devuelve [] y la caché se queda con un array vacío que
+ *  hace que el certificado piense que el curso no está completo. Atando la
+ *  queryKey al user.id, la query no se dispara hasta tener sesión y se
+ *  refetchea automáticamente al loguearse. */
 export function useMyProgress() {
+  const { user, loading } = useAuth();
+  const userId = user?.id ?? null;
   return useQuery({
-    queryKey: ["my-progress"],
+    queryKey: ["my-progress", userId],
+    enabled: !loading && !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lesson_progress")
