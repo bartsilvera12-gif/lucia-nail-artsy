@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Navigate, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { ArrowLeft, Award, Download, Printer } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ArrowLeft, Award, Download, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, useMyProgress } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 import logoLR from "@/assets/logo/logosinletras.png";
 import heroBg from "@/assets/lucia-hero.png";
 
@@ -14,6 +15,8 @@ export const Route = createFileRoute("/certificado/$slug")({
 
 function CertificadoPage() {
   const { slug } = Route.useParams();
+  const certRef = useRef<HTMLDivElement | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const { data, isLoading } = useCourseBySlug(slug);
   // isFetching + isLoading nos sirve para no mostrar "no disponible" mientras
   // los datos de progreso todavía están en vuelo (caso típico: la alumna
@@ -81,6 +84,55 @@ function CertificadoPage() {
   // ID corto y estable para mostrar abajo del cert. Concat user+course+date.
   const certId = `LR-${(user?.id ?? "").slice(0, 6).toUpperCase()}-${data.course.id.slice(0, 6).toUpperCase()}-${issueDate.toISOString().slice(0, 10).replace(/-/g, "")}`;
 
+  // Descarga directa como PDF: capturamos el nodo .cert con html2canvas-pro
+  // (la version "pro" entiende oklch de Tailwind v4; la original explota) y
+  // lo embedeamos en un jsPDF A4 horizontal. Asi la alumna obtiene el PDF de
+  // un click, sin pasar por el dialogo de impresion del navegador.
+  // Imports dinamicos: ambas libs son grandes (~300kb gz combinados) y solo
+  // hacen falta al apretar el boton — no las metemos al bundle inicial.
+  const handleDownload = async () => {
+    if (!certRef.current || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+      const node = certRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 2,                  // 2x para que el PDF salga nitido
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      // Encajamos la imagen manteniendo aspect ratio dentro de la pagina A4.
+      const imgRatio = canvas.width / canvas.height;
+      const pageRatio = pageW / pageH;
+      let drawW = pageW;
+      let drawH = pageH;
+      if (imgRatio > pageRatio) {
+        drawH = pageW / imgRatio;
+      } else {
+        drawW = pageH * imgRatio;
+      }
+      const offsetX = (pageW - drawW) / 2;
+      const offsetY = (pageH - drawH) / 2;
+      pdf.addImage(imgData, "JPEG", offsetX, offsetY, drawW, drawH);
+      const safeName = `${fullName}`.replace(/[^a-zA-Z0-9-_ ]+/g, "").trim().replace(/\s+/g, "-");
+      const safeCourse = data.course.title.replace(/[^a-zA-Z0-9-_ ]+/g, "").trim().replace(/\s+/g, "-");
+      pdf.save(`Certificado-${safeName}-${safeCourse}.pdf`);
+    } catch (err) {
+      console.error("[cert] download error", err);
+      toast.error("No pudimos generar el PDF. Probá imprimir como PDF desde tu navegador.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-cream py-4 sm:py-10">
       {/* Toolbar (no se imprime) */}
@@ -91,22 +143,40 @@ function CertificadoPage() {
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Ambos botones disparan el diálogo nativo de impresión del navegador:
-              desde ahí la alumna elige el destino ("Guardar como PDF" para
-              descargar, una impresora real para imprimir). Separamos los CTAs
-              porque para mucha gente "descargar" e "imprimir" son acciones
-              mentalmente distintas, aunque el flujo técnico sea el mismo. */}
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="sm:size-default">
-            <Download className="h-4 w-4" /> Descargar PDF
+          {/* Descargar: genera el PDF directo desde el DOM con html2canvas-pro +
+              jsPDF y lo baja al equipo. Imprimir: dialogo nativo del navegador
+              (la alumna que quiera puede tambien guardar como PDF desde ahi,
+              pero el camino corto es el primer boton). */}
+          <Button
+            variant="hero"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="sm:size-default"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Generando…
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" /> Descargar PDF
+              </>
+            )}
           </Button>
-          <Button variant="hero" size="sm" onClick={() => window.print()} className="sm:size-default">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="sm:size-default"
+          >
             <Printer className="h-4 w-4" /> Imprimir
           </Button>
         </div>
       </div>
 
       {/* Certificado */}
-      <div className="cert mx-auto max-w-5xl bg-white p-4 shadow-elegant sm:p-10 lg:p-14">
+      <div ref={certRef} className="cert mx-auto max-w-5xl bg-white p-4 shadow-elegant sm:p-10 lg:p-14">
         <div className="cert-frame relative overflow-hidden rounded-xl border-4 border-double border-primary/40 p-4 sm:rounded-2xl sm:border-[6px] sm:p-8 lg:p-12">
           {/* Foto de Lucía como marca de agua de fondo. La ponemos a la
               derecha con opacidad baja para que decore sin tapar el texto. */}
