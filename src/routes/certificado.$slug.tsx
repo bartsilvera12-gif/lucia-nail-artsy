@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, notFound } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { ArrowLeft, Award, Printer } from "lucide-react";
+import { ArrowLeft, Award, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCourseBySlug, useMyProgress } from "@/hooks/useCourses";
 import { useAuth } from "@/lib/auth";
@@ -90,9 +90,19 @@ function CertificadoPage() {
             <ArrowLeft className="h-4 w-4" /> Volver al curso
           </Link>
         </Button>
-        <Button variant="hero" size="sm" onClick={() => window.print()} className="sm:size-default">
-          <Printer className="h-4 w-4" /> Descargar / Imprimir
-        </Button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Ambos botones disparan el diálogo nativo de impresión del navegador:
+              desde ahí la alumna elige el destino ("Guardar como PDF" para
+              descargar, una impresora real para imprimir). Separamos los CTAs
+              porque para mucha gente "descargar" e "imprimir" son acciones
+              mentalmente distintas, aunque el flujo técnico sea el mismo. */}
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="sm:size-default">
+            <Download className="h-4 w-4" /> Descargar PDF
+          </Button>
+          <Button variant="hero" size="sm" onClick={() => window.print()} className="sm:size-default">
+            <Printer className="h-4 w-4" /> Imprimir
+          </Button>
+        </div>
       </div>
 
       {/* Certificado */}
