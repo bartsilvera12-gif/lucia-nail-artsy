@@ -81,9 +81,6 @@ function CertificadoPage() {
     month: "long",
     year: "numeric",
   });
-  // ID corto y estable para mostrar abajo del cert. Concat user+course+date.
-  const certId = `LR-${(user?.id ?? "").slice(0, 6).toUpperCase()}-${data.course.id.slice(0, 6).toUpperCase()}-${issueDate.toISOString().slice(0, 10).replace(/-/g, "")}`;
-
   // Descarga directa como PDF: capturamos el nodo .cert con html2canvas-pro
   // (la version "pro" entiende oklch de Tailwind v4; la original explota) y
   // lo embedeamos en un jsPDF A4 horizontal. Asi la alumna obtiene el PDF de
@@ -275,10 +272,6 @@ function CertificadoPage() {
             </div>
           </div>
         </div>
-
-        <p className="cert-id mt-6 text-center text-[11px] text-muted-foreground">
-          ID del certificado: <span className="font-mono">{certId}</span>
-        </p>
       </div>
 
       {/* Estilos solo para impresión: oculta toolbar, fuerza una sola página
