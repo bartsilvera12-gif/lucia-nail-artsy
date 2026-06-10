@@ -3,16 +3,17 @@
  * Dialog that collects buyer info and initiates a Pagopar payment.
  * Isolated to Lucía Rojas Studio — does not affect any other payment flow.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CreditCard, Loader2, ExternalLink } from "lucide-react";
+import { CreditCard, Loader2, ExternalLink, AlertTriangle, Copy, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { pagoparIniciar, savePagoparContext, type PagoparContext } from "@/lib/pagopar";
 import { formatPYG } from "@/lib/format";
+import { detectInAppBrowser, hostLabel } from "@/lib/inAppBrowser";
 
 // ── Form schema ───────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -50,6 +51,10 @@ interface Props {
 export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNombre }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+  // Detect in-app browser (Instagram/Facebook/TikTok webview) — el checkout
+  // de Pagopar no termina de cargar dentro de estos browsers.
+  const browser = useMemo(() => detectInAppBrowser(), []);
 
   // Pre-fill nombre/apellido from user's display name
   const [defaultFirst, ...rest] = (defaultNombre || "").split(" ");
@@ -161,6 +166,56 @@ export function PagoparCheckout({ open, onClose, item, defaultEmail, defaultNomb
           <p className="font-medium">{item.nombre}</p>
           <p className="text-muted-foreground">{formatPYG(item.precio_pyg)} — pago único</p>
         </div>
+
+        {/* Aviso de navegador in-app. El checkout de Pagopar se queda colgado
+            adentro de Instagram/Facebook/TikTok porque su webview limita JS,
+            cookies y storage. Avisamos antes de que la usuaria pierda 5 min
+            llenando el form para nada. */}
+        {browser.inApp && (
+          <div className="space-y-2 rounded-lg border border-amber-400/50 bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <p className="font-medium">Estás navegando desde {hostLabel(browser.host)}</p>
+                <p className="text-amber-900/85 dark:text-amber-200/85">
+                  El checkout de Pagopar no funciona bien acá. Abrí esta página en{" "}
+                  <b>{browser.platform === "ios" ? "Safari" : "Chrome"}</b>{" "}
+                  para poder pagar.
+                </p>
+                <p className="text-[11px] text-amber-900/70 dark:text-amber-200/70">
+                  {browser.platform === "ios"
+                    ? "Tocá los tres puntos (•••) arriba a la derecha → \"Abrir en navegador\"."
+                    : browser.platform === "android"
+                    ? "Tocá los tres puntos (⋮) arriba a la derecha → \"Abrir en navegador externo\" / \"Abrir en Chrome\"."
+                    : "Copiá el link y pegalo en tu navegador."}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-amber-400/60 bg-white hover:bg-amber-100/60"
+              onClick={async () => {
+                const href = typeof window !== "undefined" ? window.location.href : "";
+                try {
+                  await navigator.clipboard.writeText(href);
+                  setUrlCopied(true);
+                  setTimeout(() => setUrlCopied(false), 2500);
+                } catch {
+                  // En algunos webviews clipboard.writeText falla — fallback: prompt
+                  window.prompt("Copiá este link y pegalo en Chrome/Safari:", href);
+                }
+              }}
+            >
+              {urlCopied ? (
+                <><Check className="h-4 w-4" /> Link copiado</>
+              ) : (
+                <><Copy className="h-4 w-4" /> Copiar link de esta página</>
+              )}
+            </Button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
