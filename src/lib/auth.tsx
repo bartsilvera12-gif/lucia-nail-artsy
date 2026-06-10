@@ -127,7 +127,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: { data: { name } },
     });
-    if (error) return { error: error.message };
+    if (error) {
+      // Caso especial: el email ya existe en `auth.users` (Supabase auth es
+      // global por proyecto, asi que un admin de otro esquema en el mismo
+      // proyecto Supabase aparece como "ya registrado" aunque no tenga
+      // perfil en lucianails.profiles). Intentamos loguearla con el password
+      // que ingreso:
+      //  - si matchea => existia en auth pero no en profiles. Creamos el
+      //    profile a mano (el trigger no corrio para esta usuaria porque no
+      //    hubo signUp nuevo) y la dejamos adentro.
+      //  - si no matchea => la cuenta es de otra persona o el password esta
+      //    mal. Le pedimos que vaya a /login.
+      const msg = (error.message || "").toLowerCase();
+      const alreadyExists = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
+      if (!alreadyExists) return { error: error.message };
+
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInErr || !signInData.session) {
+        return { error: "Ya existe una cuenta con ese email. Iniciá sesión con tu contraseña." };
+      }
+
+      // Asegurar que exista la fila en lucianails.profiles. Si ya existe la
+      // dejamos como esta (no pisamos nombre/rol de un admin existente).
+      const userId = signInData.session.user.id;
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!existingProfile) {
+        await supabase.from("profiles").insert({
+          id: userId,
+          email,
+          name,
+          role: "student",
+        });
+      }
+      await refresh();
+      return {};
+    }
     // Inicia sesión automáticamente si autoconfirm está activo
     await supabase.auth.signInWithPassword({ email, password });
     await refresh();
