@@ -73,8 +73,23 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
         showWarning("📵 No grabes ni captures la pantalla.");
       }
     };
+    // Android Chrome no siempre marca la pagina como hidden cuando se baja
+    // el panel de notificaciones — pero si se pierde el focus de la ventana.
+    // Escuchamos blur tambien, pero ignoramos cuando el activeElement es
+    // nuestro iframe (caso normal: la alumna toca el video para reproducir).
+    const onBlur = () => {
+      // Defer un tick: cuando se toca el iframe, activeElement queda en IFRAME
+      // recien despues del blur sincrono.
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active && active.tagName === "IFRAME") return;
+        if (document.visibilityState === "hidden") return; // ya lo cubrio onVisibility
+        showWarning("📵 No grabes ni captures la pantalla.");
+      }, 0);
+    };
     if (isTouchDevice) {
       document.addEventListener("visibilitychange", onVisibility);
+      window.addEventListener("blur", onBlur);
     }
 
     return () => {
@@ -84,6 +99,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
       document.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
       if (isTouchDevice) {
         document.removeEventListener("visibilitychange", onVisibility);
+        window.removeEventListener("blur", onBlur);
       }
     };
   }, []);
