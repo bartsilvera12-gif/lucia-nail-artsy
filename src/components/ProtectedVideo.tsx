@@ -72,6 +72,13 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
   // bloqueamos el render inicial. El primer useEffect ajusta si es mobile.
   const [warningAccepted, setWarningAccepted] = useState(true);
 
+  // Overlay persistente de pausa por perdida de foco (VSL paso 2). A
+  // diferencia de `warning` (auto-dismiss 4.5s para eventos de teclado en
+  // desktop), este overlay NO se cierra solo. La alumna tiene que tocar
+  // "Continuar reproduccion" para sacarlo. Solo se dispara en mobile y
+  // solo despues de que acepto el modal del paso 1.
+  const [securityPause, setSecurityPause] = useState<{ reason: string } | null>(null);
+
   const showWarning = (message: string) => {
     setWarning(message);
     window.setTimeout(() => setWarning(null), 4500);
@@ -92,6 +99,14 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     // video_play_events. Por ahora la aceptacion vive solo client-side.
   };
 
+  const handleResumePlayback = () => {
+    setSecurityPause(null);
+    // No podemos controlar el iframe de DynTube (cross-origin), asi que
+    // solo escondemos el overlay. Si el OS pauso el video al cambiar de
+    // app, la alumna lo va a tener que reanudar tocando play en el player.
+  };
+
+  // ── Handlers de teclado desktop (PrintScreen / atajos) ─────────────────────
   useEffect(() => {
     const triggerScreenshotWarning = () => {
       navigator.clipboard?.writeText("").catch(() => undefined);
@@ -123,46 +138,79 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     document.addEventListener("keydown", onKey, { capture: true });
     document.addEventListener("keyup", onKey, { capture: true });
 
-    // Mobile: no hay evento de "screen recording" en iOS/Android, pero abrir
-    // el Control Center (para activar la grabacion) o cambiar de app dispara
-    // visibilitychange. Lo usamos como disuasivo en dispositivos touch.
-    const touch = isTouchDevice();
-
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        showWarning("📵 No grabes ni captures la pantalla.");
-      }
-    };
-    // Android Chrome no siempre marca la pagina como hidden cuando se baja
-    // el panel de notificaciones — pero si se pierde el focus de la ventana.
-    // Escuchamos blur tambien, pero ignoramos cuando el activeElement es
-    // nuestro iframe (caso normal: la alumna toca el video para reproducir).
-    const onBlur = () => {
-      // Defer un tick: cuando se toca el iframe, activeElement queda en IFRAME
-      // recien despues del blur sincrono.
-      window.setTimeout(() => {
-        const active = document.activeElement;
-        if (active && active.tagName === "IFRAME") return;
-        if (document.visibilityState === "hidden") return; // ya lo cubrio onVisibility
-        showWarning("📵 No grabes ni captures la pantalla.");
-      }, 0);
-    };
-    if (touch) {
-      document.addEventListener("visibilitychange", onVisibility);
-      window.addEventListener("blur", onBlur);
-    }
-
     return () => {
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
       window.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
       document.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
       document.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
-      if (touch) {
-        document.removeEventListener("visibilitychange", onVisibility);
-        window.removeEventListener("blur", onBlur);
-      }
     };
   }, []);
+
+  // ── Overlay de pausa preventiva en mobile (VSL paso 2) ─────────────────────
+  // Importante: NO es deteccion real de screen recording. Son señales
+  // INDIRECTAS — visibilitychange/blur/pagehide/freeze se disparan al abrir
+  // Control Center o panel notif (que es donde esta el boton de grabar) pero
+  // tambien por llamadas, notificaciones, cambio de app y bloqueo de pantalla.
+  // Tratamos todos esos casos por igual y mostramos el overlay disuasorio.
+  //
+  // Solo se activa cuando:
+  //   - es un dispositivo touch
+  //   - la alumna ya acepto el modal del paso 1 (sino no esta reproduciendo)
+  //   - el overlay no esta ya visible (evitamos re-trigger durante la pausa)
+  useEffect(() => {
+    if (!warningAccepted) return;
+    const touch = isTouchDevice();
+    if (!touch) return;
+
+    const triggerSecurityPause = (reason: string) => {
+      // Si ya hay overlay activo, no lo re-trigereamos. Usamos updater para
+      // leer el valor mas reciente sin meter securityPause en deps.
+      setSecurityPause((curr) => curr ?? { reason });
+      // TODO (VSL paso 6): emitir RPC record_video_event con
+      // event_type="possible_screen_recording_attempt" + metadata={reason}.
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        triggerSecurityPause("visibilitychange");
+      }
+    };
+
+    // Android Chrome no siempre marca la pagina como hidden cuando se baja
+    // el panel de notificaciones — pero si se pierde el focus de la ventana.
+    // Filtramos el caso normal: tocar el iframe transfiere foco al IFRAME,
+    // eso NO debe disparar el overlay.
+    const onBlur = () => {
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active && active.tagName === "IFRAME") return;
+        if (document.visibilityState === "hidden") return; // ya lo cubrio onVisibility
+        triggerSecurityPause("blur");
+      }, 0);
+    };
+
+    // pagehide: se dispara cuando la pagina entra al bfcache o se descarga.
+    // Util para iOS Safari cuando la alumna sale a otra app y vuelve.
+    const onPageHide = () => triggerSecurityPause("pagehide");
+
+    // freeze (Page Lifecycle API): la tab pasa a estado frozen. Solo lo
+    // soportan algunos browsers — si no existe, no hacemos nada.
+    const onFreeze = () => triggerSecurityPause("freeze");
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("pagehide", onPageHide);
+    // `freeze` no esta tipado en lib.dom — addEventListener acepta el string
+    // igual y los browsers que no lo soportan simplemente no lo disparan.
+    document.addEventListener("freeze", onFreeze as EventListener);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("freeze", onFreeze as EventListener);
+    };
+  }, [warningAccepted]);
 
   return (
     <div
@@ -232,6 +280,54 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
               <span className="text-zinc-300"> Lucía Rojas Studio</span>.
               Reproducirlo fuera de la plataforma puede generar la baja
               inmediata de tu acceso.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay persistente de pausa preventiva (VSL paso 2). Solo en mobile,
+          se dispara al perder foco/visibilidad y se queda hasta que la alumna
+          toque "Continuar reproduccion". */}
+      {securityPause && warningAccepted && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center bg-black/95 px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vsl-pause-title"
+        >
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6 text-center shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/40">
+              <ShieldAlert className="h-7 w-7 text-primary" strokeWidth={1.75} />
+            </div>
+
+            <h2
+              id="vsl-pause-title"
+              className="mt-4 font-serif text-lg leading-snug text-white sm:text-xl"
+            >
+              El video fue pausado por seguridad
+            </h2>
+
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+              No está permitido grabar pantalla.
+            </p>
+
+            <div aria-hidden className="my-5 mx-auto h-px w-12 bg-primary/40" />
+
+            <Button
+              type="button"
+              variant="gold"
+              className="w-full"
+              onClick={handleResumePlayback}
+            >
+              Continuar reproducción
+            </Button>
+
+            <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
+              Si esta pausa fue por una notificación o llamada, podés continuar
+              sin problema. Reproducir este contenido fuera de la plataforma
+              puede generar la baja inmediata de tu acceso.
             </p>
           </div>
         </div>
