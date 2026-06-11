@@ -61,11 +61,30 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
     document.addEventListener("keydown", onKey, { capture: true });
     document.addEventListener("keyup", onKey, { capture: true });
 
+    // Mobile: no hay evento de "screen recording" en iOS/Android, pero abrir
+    // el Control Center (para activar la grabacion) o cambiar de app dispara
+    // visibilitychange. Lo usamos como disuasivo en dispositivos touch.
+    const isTouchDevice =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        showWarning("📵 No grabes ni captures la pantalla.");
+      }
+    };
+    if (isTouchDevice) {
+      document.addEventListener("visibilitychange", onVisibility);
+    }
+
     return () => {
       window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
       window.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
       document.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
       document.removeEventListener("keyup", onKey, { capture: true } as EventListenerOptions);
+      if (isTouchDevice) {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
     };
   }, []);
 
