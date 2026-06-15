@@ -894,3 +894,205 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[lrs] Server ready → http://0.0.0.0:${PORT}`);
 });
+
+// ── Reconciliación periódica de pagos pending ────────────────────────────────
+// Cada 10 minutos consulta Pagopar por los `payments` que quedaron en `pending`
+// y, si Pagopar dice `pagado=true`, habilita el curso (course_purchases) y
+// marca el payment como `succeeded`. Si Pagopar dice `cancelado=true`, marca
+// el payment como `failed`. Esto cubre los casos donde el webhook /respuesta
+// no llegó o falló por cualquier motivo.
+//
+// Solo se activa si tenemos PAGOPAR_PRIVATE + SUPABASE_SERVICE_KEY + SUPA_URL,
+// que es la combinación mínima para tocar la DB con el schema correcto.
+const RECONCILIAR_INTERVAL_MS = 10 * 60 * 1000;
+const RECONCILIAR_VENTANA_HORAS = 48;
+
+async function reconciliarPendientes() {
+  if (!PAGOPAR_PRIVATE || !SUPA_SERVICE || !SUPA_URL) return;
+
+  const desdeIso = new Date(Date.now() - RECONCILIAR_VENTANA_HORAS * 3600 * 1000).toISOString();
+  const path =
+    `payments?select=id,user_id,course_id,amount,reference_id` +
+    `&status=eq.pending&method=eq.pagopar&reference_id=not.is.null` +
+    `&course_id=not.is.null&created_at=gte.${encodeURIComponent(desdeIso)}` +
+    `&order=created_at.asc`;
+
+  let pendientes;
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+      headers: {
+        apikey: SUPA_SERVICE,
+        Authorization: `Bearer ${SUPA_SERVICE}`,
+        "Accept-Profile": "lucianails",
+      },
+    });
+    if (!r.ok) {
+      console.warn(`[reconciliar] no se pudo listar pendientes — ${r.status}`);
+      return;
+    }
+    pendientes = await r.json();
+  } catch (e) {
+    console.warn(`[reconciliar] error listando pendientes: ${e.message}`);
+    return;
+  }
+
+  if (!Array.isArray(pendientes) || pendientes.length === 0) return;
+
+  const tokenConsulta = sha1(PAGOPAR_PRIVATE + "CONSULTA");
+  const stats = { habilitados: 0, ya_tenia: 0, cancelados: 0, sin_pagar: 0, errores: 0 };
+
+  for (const p of pendientes) {
+    try {
+      const rPg = await fetch("https://api.pagopar.com/api/pedidos/1.1/traer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: tokenConsulta,
+          token_publico: PAGOPAR_PUBLIC,
+          hash_pedido: p.reference_id,
+        }),
+      });
+      const data = await rPg.json();
+      const detalle = Array.isArray(data?.resultado) ? data.resultado[0] : null;
+      const pagado = detalle?.pagado === true;
+      const cancelado = detalle?.cancelado === true;
+
+      if (pagado) {
+        const existing = await supaRest({
+          table: "course_purchases",
+          method: "GET",
+          match: { user_id: p.user_id, course_id: p.course_id },
+          select: "id",
+        });
+        if (Array.isArray(existing) && existing.length > 0) {
+          await supaRest({
+            table: "payments",
+            method: "PATCH",
+            match: { id: p.id },
+            body: { status: "succeeded" },
+          });
+          stats.ya_tenia++;
+        } else {
+          const insRes = await supaRest({
+            table: "course_purchases",
+            method: "POST",
+            body: {
+              user_id: p.user_id,
+              course_id: p.course_id,
+              price_paid: p.amount,
+              payment_method: "pagopar",
+              notes: "Reconciliado por job periódico",
+            },
+          });
+          if (insRes?._error) {
+            console.warn(`[reconciliar] insert course_purchases falló user=${p.user_id} course=${p.course_id}: ${insRes._error}`);
+            stats.errores++;
+            continue;
+          }
+          await supaRest({
+            table: "payments",
+            method: "PATCH",
+            match: { id: p.id },
+            body: { status: "succeeded", notes: "Reconciliado por job periódico" },
+          });
+          console.log(`[reconciliar] ✅ habilitado user=${p.user_id} course=${p.course_id} payment=${p.id}`);
+          stats.habilitados++;
+        }
+      } else if (cancelado) {
+        await supaRest({
+          table: "payments",
+          method: "PATCH",
+          match: { id: p.id },
+          body: { status: "failed", notes: "Cancelado según Pagopar (job periódico)" },
+        });
+        stats.cancelados++;
+      } else {
+        stats.sin_pagar++;
+      }
+    } catch (e) {
+      console.warn(`[reconciliar] error con hash=${p.reference_id?.slice(0, 12)}…: ${e.message}`);
+      stats.errores++;
+    }
+
+    // Throttle para no saturar Pagopar
+    await new Promise((r) => setTimeout(r, 250));
+  }
+
+  if (stats.habilitados || stats.cancelados || stats.errores) {
+    console.log(
+      `[reconciliar] revisados=${pendientes.length} habilitados=${stats.habilitados} ` +
+      `ya_tenia=${stats.ya_tenia} cancelados=${stats.cancelados} ` +
+      `sin_pagar=${stats.sin_pagar} errores=${stats.errores}`,
+    );
+  }
+}
+
+if (PAGOPAR_PRIVATE && SUPA_SERVICE && SUPA_URL) {
+  console.log(`[reconciliar] job activo — cada ${RECONCILIAR_INTERVAL_MS / 60000} min, ventana ${RECONCILIAR_VENTANA_HORAS}h`);
+  // Primera corrida después de 1 min (deja que el server termine de arrancar)
+  setTimeout(() => {
+    reconciliarPendientes().catch((e) => console.warn("[reconciliar] error:", e.message));
+    setInterval(() => {
+      reconciliarPendientes().catch((e) => console.warn("[reconciliar] error:", e.message));
+    }, RECONCILIAR_INTERVAL_MS);
+  }, 60_000);
+} else {
+  console.warn("[reconciliar] desactivado — faltan PAGOPAR_PRIVATE / SUPABASE_SERVICE_KEY / SUPA_URL");
+}
+
+// ── Limpieza de pendings viejos ──────────────────────────────────────────────
+// Pagopar otorga 24h para completar un pago (fecha_maxima_pago en /iniciar).
+// Después de 7 días un payment 'pending' no tiene chance de confirmarse jamás,
+// son carritos abandonados. Los marcamos 'failed' para mantener la tabla
+// prolija y que las queries de "pendings reales" no se contaminen.
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 1x por día
+const CLEANUP_VENTANA_DIAS = 7;
+
+async function limpiarPendingsViejos() {
+  if (!SUPA_SERVICE || !SUPA_URL) return;
+
+  // supaRest solo soporta operador `eq`, y necesitamos `lt` para created_at,
+  // así que hacemos el PATCH directo contra PostgREST.
+  const cutoffIso = new Date(Date.now() - CLEANUP_VENTANA_DIAS * 86400 * 1000).toISOString();
+  try {
+    const url = new URL(`${SUPA_URL}/rest/v1/payments`);
+    url.searchParams.set("status", "eq.pending");
+    url.searchParams.set("created_at", `lt.${cutoffIso}`);
+    const r = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        apikey: SUPA_SERVICE,
+        Authorization: `Bearer ${SUPA_SERVICE}`,
+        "Accept-Profile": "lucianails",
+        "Content-Profile": "lucianails",
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        status: "failed",
+        notes: `Auto-expirado tras ${CLEANUP_VENTANA_DIAS} días sin confirmación`,
+      }),
+    });
+    if (!r.ok) {
+      console.warn(`[cleanup] PATCH falló — ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      return;
+    }
+    const updated = await r.json();
+    if (Array.isArray(updated) && updated.length > 0) {
+      console.log(`[cleanup] ${updated.length} payments pending viejos marcados como failed`);
+    }
+  } catch (e) {
+    console.warn(`[cleanup] error: ${e.message}`);
+  }
+}
+
+if (SUPA_SERVICE && SUPA_URL) {
+  console.log(`[cleanup] job activo — cada 24h, expira pendings > ${CLEANUP_VENTANA_DIAS}d`);
+  // Primera corrida después de 2 min (después del reconciliar)
+  setTimeout(() => {
+    limpiarPendingsViejos().catch((e) => console.warn("[cleanup] error:", e.message));
+    setInterval(() => {
+      limpiarPendingsViejos().catch((e) => console.warn("[cleanup] error:", e.message));
+    }, CLEANUP_INTERVAL_MS);
+  }, 120_000);
+}
