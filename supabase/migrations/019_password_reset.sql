@@ -22,6 +22,31 @@ create table if not exists lucianails.password_reset_attempts (
 create index if not exists password_reset_attempts_email_time_idx
   on lucianails.password_reset_attempts (lower(email), attempted_at desc);
 
+-- request_ip(): helper para sacar la IP del cliente del header de PostgREST.
+-- Se define tambien aca (con create or replace) para que esta migracion sea
+-- auto-contenida y no dependa de que la 018 se haya corrido antes.
+create or replace function lucianails.request_ip()
+returns text language plpgsql stable as $$
+declare
+  hdrs jsonb;
+  xff  text;
+  rip  text;
+begin
+  begin
+    hdrs := current_setting('request.headers', true)::jsonb;
+  exception when others then
+    return null;
+  end;
+  if hdrs is null then return null; end if;
+  xff := hdrs ->> 'x-forwarded-for';
+  rip := hdrs ->> 'x-real-ip';
+  if xff is not null and xff <> '' then
+    return btrim(split_part(xff, ',', 1));
+  end if;
+  return nullif(rip, '');
+end
+$$;
+
 alter table lucianails.password_reset_attempts enable row level security;
 
 -- Sin policies de SELECT/INSERT/UPDATE/DELETE: el RPC con security definer
