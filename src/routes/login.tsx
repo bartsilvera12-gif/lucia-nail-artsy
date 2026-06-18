@@ -48,7 +48,15 @@ function LoginPage() {
                 <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1" placeholder="vos@email.com" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Contraseña</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Contraseña</label>
+                  <Link
+                    to="/olvide-password"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <Input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
               </div>
               {error && (

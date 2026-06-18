@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PlanesRouteImport } from './routes/planes'
 import { Route as PanelRouteImport } from './routes/panel'
+import { Route as OlvidePasswordRouteImport } from './routes/olvide-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CursosRouteImport } from './routes/cursos'
@@ -32,6 +34,11 @@ const SobreRoute = SobreRouteImport.update({
   path: '/sobre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
+  id: '/restablecer-password',
+  path: '/restablecer-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
@@ -45,6 +52,11 @@ const PlanesRoute = PlanesRouteImport.update({
 const PanelRoute = PanelRouteImport.update({
   id: '/panel',
   path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OlvidePasswordRoute = OlvidePasswordRouteImport.update({
+  id: '/olvide-password',
+  path: '/olvide-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -122,9 +134,11 @@ export interface FileRoutesByFullPath {
   '/cursos': typeof CursosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
@@ -141,9 +155,11 @@ export interface FileRoutesByTo {
   '/cursos': typeof CursosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
@@ -161,9 +177,11 @@ export interface FileRoutesById {
   '/cursos': typeof CursosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
   '/registro': typeof RegistroRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
@@ -182,9 +200,11 @@ export interface FileRouteTypes {
     | '/cursos'
     | '/faq'
     | '/login'
+    | '/olvide-password'
     | '/panel'
     | '/planes'
     | '/registro'
+    | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
     | '/curso/$slug'
@@ -201,9 +221,11 @@ export interface FileRouteTypes {
     | '/cursos'
     | '/faq'
     | '/login'
+    | '/olvide-password'
     | '/panel'
     | '/planes'
     | '/registro'
+    | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
     | '/curso/$slug'
@@ -220,9 +242,11 @@ export interface FileRouteTypes {
     | '/cursos'
     | '/faq'
     | '/login'
+    | '/olvide-password'
     | '/panel'
     | '/planes'
     | '/registro'
+    | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
     | '/curso/$slug'
@@ -240,9 +264,11 @@ export interface RootRouteChildren {
   CursosRoute: typeof CursosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
+  OlvidePasswordRoute: typeof OlvidePasswordRoute
   PanelRoute: typeof PanelRoute
   PlanesRoute: typeof PlanesRoute
   RegistroRoute: typeof RegistroRoute
+  RestablecerPasswordRoute: typeof RestablecerPasswordRoute
   SobreRoute: typeof SobreRoute
   CertificadoSlugRoute: typeof CertificadoSlugRoute
   CursoSlugRoute: typeof CursoSlugRoute
@@ -258,6 +284,13 @@ declare module '@tanstack/react-router' {
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer-password': {
+      id: '/restablecer-password'
+      path: '/restablecer-password'
+      fullPath: '/restablecer-password'
+      preLoaderRoute: typeof RestablecerPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/registro': {
@@ -279,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/panel'
       fullPath: '/panel'
       preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/olvide-password': {
+      id: '/olvide-password'
+      path: '/olvide-password'
+      fullPath: '/olvide-password'
+      preLoaderRoute: typeof OlvidePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -384,9 +424,11 @@ const rootRouteChildren: RootRouteChildren = {
   CursosRoute: CursosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
+  OlvidePasswordRoute: OlvidePasswordRoute,
   PanelRoute: PanelRoute,
   PlanesRoute: PlanesRoute,
   RegistroRoute: RegistroRoute,
+  RestablecerPasswordRoute: RestablecerPasswordRoute,
   SobreRoute: SobreRoute,
   CertificadoSlugRoute: CertificadoSlugRoute,
   CursoSlugRoute: CursoSlugRoute,
