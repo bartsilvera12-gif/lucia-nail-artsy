@@ -2,6 +2,32 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
+// Crea el profile en lucianails.profiles si no existe, o lo marca como
+// 'lucianails' si ya estaba sin source. Lo llamamos desde register() para
+// no depender del trigger global de auth.users (que mezclaba usuarios de
+// otros proyectos del mismo Supabase compartido).
+async function ensureLuciaProfile(userId: string, email: string, name: string) {
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id, source")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    await supabase.from("profiles").insert({
+      id: userId,
+      email,
+      name,
+      role: "student",
+      source: "lucianails",
+    });
+    return;
+  }
+  if (!existing.source) {
+    await supabase.from("profiles").update({ source: "lucianails" }).eq("id", userId);
+  }
+}
+
 export type PlanId = "monthly" | "yearly" | "individual";
 export type UserRole = "student" | "admin";
 
@@ -122,22 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const register = useCallback(async (email: string, name: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name, app: "lucianails" } },
     });
+
+    // Caso 1: el email ya existia en auth.users (Supabase auth es global
+    // por proyecto). Intentamos loguear con el password ingresado: si
+    // matchea, es la misma persona registrandose otra vez con su mismo
+    // password; si no, devolvemos error.
     if (error) {
-      // Caso especial: el email ya existe en `auth.users` (Supabase auth es
-      // global por proyecto, asi que un admin de otro esquema en el mismo
-      // proyecto Supabase aparece como "ya registrado" aunque no tenga
-      // perfil en lucianails.profiles). Intentamos loguearla con el password
-      // que ingreso:
-      //  - si matchea => existia en auth pero no en profiles. Creamos el
-      //    profile a mano (el trigger no corrio para esta usuaria porque no
-      //    hubo signUp nuevo) y la dejamos adentro.
-      //  - si no matchea => la cuenta es de otra persona o el password esta
-      //    mal. Le pedimos que vaya a /login.
       const msg = (error.message || "").toLowerCase();
       const alreadyExists = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
       if (!alreadyExists) return { error: error.message };
@@ -146,38 +167,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signInErr || !signInData.session) {
         return { error: "Ya existe una cuenta con ese email. Iniciá sesión con tu contraseña." };
       }
-
-      // Asegurar que exista la fila en lucianails.profiles. Si ya existe la
-      // dejamos como esta (no pisamos nombre/rol de un admin existente).
-      const userId = signInData.session.user.id;
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userId)
-        .maybeSingle();
-      if (!existingProfile) {
-        await supabase.from("profiles").insert({
-          id: userId,
-          email,
-          name,
-          role: "student",
-          source: "lucianails",
-        });
-      } else {
-        // Ya existia el profile (creado por algun trigger viejo). Marcarlo
-        // como de Lucia si todavia no tiene source — la usuaria efectivamente
-        // se acaba de registrar en /registro.
-        await supabase
-          .from("profiles")
-          .update({ source: "lucianails" })
-          .eq("id", userId)
-          .is("source", null);
-      }
+      await ensureLuciaProfile(signInData.session.user.id, email, name);
       await refresh();
       return {};
     }
-    // Inicia sesión automáticamente si autoconfirm está activo
-    await supabase.auth.signInWithPassword({ email, password });
+
+    // Caso 2: signUp OK. Logueamos (necesario si autoconfirm esta off
+    // tira sesion null, pero igual el siguiente login andara una vez
+    // confirmen el email) y aseguramos el profile en Lucia.
+    const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
+    const userId = signInData?.session?.user.id ?? signUpData.user?.id;
+    if (userId) await ensureLuciaProfile(userId, email, name);
     await refresh();
     return {};
   }, [refresh]);
