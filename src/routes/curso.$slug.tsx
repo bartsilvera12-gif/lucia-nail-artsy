@@ -173,19 +173,7 @@ function CursoDetailPage() {
                           variant="outlineGold"
                           className="w-full"
                           onClick={() => {
-                            // Flag: nuevo checkout unificado en /checkout/:slug.
-                            // Default seguro: si la env no está en "true", se usa
-                            // el flujo viejo intacto (registro → modal Pagopar).
-                            const unified = import.meta.env.VITE_UNIFIED_CHECKOUT_ENABLED === "true";
-                            if (unified) {
-                              window.location.href = `/checkout/${course.slug}`;
-                              return;
-                            }
-                            if (!isAuthenticated) {
-                              window.location.href = `/registro?next=${encodeURIComponent(`/curso/${course.slug}#comprar`)}`;
-                              return;
-                            }
-                            setPagoparOpen(true);
+                            window.location.href = `/checkout/${course.slug}`;
                           }}
                         >
                           <CreditCard className="h-4 w-4" /> Realizar compra
