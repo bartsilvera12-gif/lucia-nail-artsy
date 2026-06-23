@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, AlertCircle, MailCheck } from "lucide-react";
+import { Sparkles, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,11 @@ export const Route = createFileRoute("/olvide-password")({
 
 function OlvidePasswordPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
 
   return (
@@ -27,12 +30,12 @@ function OlvidePasswordPage() {
               <span className="font-serif text-lg">Lucía Rojas Studio</span>
             </div>
 
-            {!sent ? (
+            {!done ? (
               <>
-                <h1 className="mt-6 font-serif text-2xl">Recuperar contraseña</h1>
+                <h1 className="mt-6 font-serif text-2xl">Cambiar contraseña</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Ingresá el email con el que te registraste y te enviamos un link para
-                  crear una nueva contraseña.
+                  Ingresá tu email y elegí una contraseña nueva. Por seguridad solo podés
+                  hacerlo una vez por día.
                 </p>
 
                 <form
@@ -40,43 +43,46 @@ function OlvidePasswordPage() {
                   onSubmit={async (e) => {
                     e.preventDefault();
                     setError(null);
+
+                    if (password.length < 6) {
+                      setError("La contraseña debe tener al menos 6 caracteres.");
+                      return;
+                    }
+                    if (password !== confirm) {
+                      setError("Las contraseñas no coinciden.");
+                      return;
+                    }
+
                     setLoading(true);
+                    const { data, error: rpcErr } = await supabase.rpc("self_reset_password", {
+                      p_email: email,
+                      p_new_password: password,
+                    });
+                    setLoading(false);
 
-                    // 1. Verificar rate limit (1 por dia por email).
-                    const { data: rateData, error: rateErr } = await supabase.rpc(
-                      "request_password_reset",
-                      { p_email: email },
-                    );
-
-                    if (rateErr) {
-                      setLoading(false);
+                    if (rpcErr) {
                       setError("No pudimos procesar tu pedido. Intentá de nuevo en unos segundos.");
                       return;
                     }
 
-                    // rateData es array porque la RPC devuelve TABLE.
-                    const row = Array.isArray(rateData) ? rateData[0] : rateData;
-                    if (!row?.allowed) {
-                      setLoading(false);
-                      const hs = row?.hours_remaining ?? 24;
-                      setError(
-                        `Ya pediste recuperar tu contraseña recientemente. ` +
-                        `Podés volver a intentarlo en ${hs} ${hs === 1 ? "hora" : "horas"}.`,
-                      );
+                    const row = data as { ok: boolean; reason?: string; hours_remaining?: number } | null;
+                    if (!row?.ok) {
+                      if (row?.reason === "rate_limited") {
+                        const hs = row.hours_remaining ?? 24;
+                        setError(
+                          `Ya cambiaste tu contraseña recientemente. Podés volver a intentarlo en ${hs} ${hs === 1 ? "hora" : "horas"}.`,
+                        );
+                      } else if (row?.reason === "password_too_short") {
+                        setError("La contraseña debe tener al menos 6 caracteres.");
+                      } else if (row?.reason === "invalid_email") {
+                        setError("Email inválido.");
+                      } else {
+                        setError("No pudimos cambiar tu contraseña. Probá de nuevo.");
+                      }
                       return;
                     }
 
-                    // 2. Disparar email de reset. resetPasswordForEmail es idempotente
-                    //    y NO revela si el email existe — devuelve OK siempre.
-                    const redirectTo =
-                      typeof window !== "undefined"
-                        ? `${window.location.origin}/restablecer-password`
-                        : undefined;
-
-                    await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-
-                    setLoading(false);
-                    setSent(true);
+                    setDone(true);
                   }}
                 >
                   <div>
@@ -88,15 +94,56 @@ function OlvidePasswordPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="mt-1"
                       placeholder="vos@email.com"
+                      autoComplete="email"
                     />
                   </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground">Nueva contraseña</label>
+                    <div className="relative mt-1">
+                      <Input
+                        required
+                        type={showPwd ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        minLength={6}
+                        placeholder="Mínimo 6 caracteres"
+                        autoComplete="new-password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground">Confirmar contraseña</label>
+                    <Input
+                      required
+                      type={showPwd ? "text" : "password"}
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      minLength={6}
+                      className="mt-1"
+                      placeholder="Repetí la contraseña"
+                      autoComplete="new-password"
+                    />
+                  </div>
+
                   {error && (
                     <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
                     </div>
                   )}
+
                   <Button type="submit" variant="gold" className="w-full" disabled={loading}>
-                    {loading ? "Enviando…" : "Enviar link de recuperación"}
+                    {loading ? "Cambiando…" : "Cambiar contraseña"}
                   </Button>
                 </form>
 
@@ -108,16 +155,15 @@ function OlvidePasswordPage() {
             ) : (
               <>
                 <div className="mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-gold shadow-gold">
-                  <MailCheck className="h-7 w-7 text-foreground" />
+                  <CheckCircle2 className="h-7 w-7 text-foreground" />
                 </div>
-                <h1 className="mt-5 font-serif text-2xl text-center">Revisá tu email</h1>
+                <h1 className="mt-5 font-serif text-2xl text-center">Contraseña cambiada</h1>
                 <p className="mt-3 text-sm text-muted-foreground text-center">
-                  Si <span className="text-foreground">{email}</span> está registrado, te
-                  enviamos un link para crear una nueva contraseña. Puede tardar unos
-                  minutos en llegar — revisá también la carpeta de spam.
+                  Si <span className="text-foreground">{email}</span> está registrado, ya
+                  podés iniciar sesión con la nueva contraseña.
                 </p>
-                <Button asChild variant="outline" className="mt-6 w-full">
-                  <Link to="/login">Volver al login</Link>
+                <Button asChild variant="gold" className="mt-6 w-full">
+                  <Link to="/login">Ir a iniciar sesión</Link>
                 </Button>
               </>
             )}
