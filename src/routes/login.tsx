@@ -6,15 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 
+interface LoginSearch {
+  next?: string;
+  email?: string;
+}
+
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Ingresar — Lucía Rojas Studio" }] }),
+  // Soporta ?next=/checkout/foo&email=alguien@example.com para que el flujo
+  // de checkout pueda mandar a login y volver al mismo punto sin perder el
+  // curso. next sólo se acepta como path interno (empieza con "/") para
+  // evitar open redirect a dominios externos.
+  validateSearch: (s: Record<string, unknown>): LoginSearch => ({
+    next:  typeof s.next  === "string" && s.next.startsWith("/")    ? s.next  : undefined,
+    email: typeof s.email === "string" && s.email.includes("@")     ? s.email : undefined,
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +54,13 @@ function LoginPage() {
                 const { error } = await login(email, password);
                 setLoading(false);
                 if (error) { setError(error); return; }
+                // Si vinimos desde un flujo que necesita volver a un destino
+                // específico (ej: /checkout/:slug), respetar next. Sólo paths
+                // internos pasaron la validación de validateSearch.
+                if (search.next) {
+                  window.location.href = search.next;
+                  return;
+                }
                 navigate({ to: "/panel" });
               }}
             >

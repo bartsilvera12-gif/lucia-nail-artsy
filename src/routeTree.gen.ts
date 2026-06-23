@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as PlanesRouteImport } from './routes/planes'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as OlvidePasswordRouteImport } from './routes/olvide-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as EliminarDatosRouteImport } from './routes/eliminar-datos'
 import { Route as CursosRouteImport } from './routes/cursos'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as ComunidadRouteImport } from './routes/comunidad'
@@ -25,6 +27,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerSlugRouteImport } from './routes/ver.$slug'
 import { Route as CursoSlugRouteImport } from './routes/curso.$slug'
+import { Route as CheckoutSlugRouteImport } from './routes/checkout.$slug'
 import { Route as CertificadoSlugRouteImport } from './routes/certificado.$slug'
 import { Route as PagoparResultadoHashRouteImport } from './routes/pagopar/resultado.$hash'
 import { Route as CursoSlugTeoriaRouteImport } from './routes/curso.$slug_.teoria'
@@ -42,6 +45,11 @@ const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanesRoute = PlanesRouteImport.update({
@@ -67,6 +75,11 @@ const LoginRoute = LoginRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EliminarDatosRoute = EliminarDatosRouteImport.update({
+  id: '/eliminar-datos',
+  path: '/eliminar-datos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CursosRoute = CursosRouteImport.update({
@@ -109,6 +122,11 @@ const CursoSlugRoute = CursoSlugRouteImport.update({
   path: '/curso/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutSlugRoute = CheckoutSlugRouteImport.update({
+  id: '/checkout/$slug',
+  path: '/checkout/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CertificadoSlugRoute = CertificadoSlugRouteImport.update({
   id: '/certificado/$slug',
   path: '/certificado/$slug',
@@ -132,15 +150,18 @@ export interface FileRoutesByFullPath {
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
+  '/eliminar-datos': typeof EliminarDatosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/registro': typeof RegistroRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
@@ -153,15 +174,18 @@ export interface FileRoutesByTo {
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
+  '/eliminar-datos': typeof EliminarDatosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/registro': typeof RegistroRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug/teoria': typeof CursoSlugTeoriaRoute
@@ -175,15 +199,18 @@ export interface FileRoutesById {
   '/comunidad': typeof ComunidadRoute
   '/contacto': typeof ContactoRoute
   '/cursos': typeof CursosRoute
+  '/eliminar-datos': typeof EliminarDatosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/olvide-password': typeof OlvidePasswordRoute
   '/panel': typeof PanelRoute
   '/planes': typeof PlanesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/registro': typeof RegistroRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/sobre': typeof SobreRoute
   '/certificado/$slug': typeof CertificadoSlugRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
   '/curso/$slug': typeof CursoSlugRoute
   '/ver/$slug': typeof VerSlugRoute
   '/curso/$slug_/teoria': typeof CursoSlugTeoriaRoute
@@ -198,15 +225,18 @@ export interface FileRouteTypes {
     | '/comunidad'
     | '/contacto'
     | '/cursos'
+    | '/eliminar-datos'
     | '/faq'
     | '/login'
     | '/olvide-password'
     | '/panel'
     | '/planes'
+    | '/privacidad'
     | '/registro'
     | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
+    | '/checkout/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug/teoria'
@@ -219,15 +249,18 @@ export interface FileRouteTypes {
     | '/comunidad'
     | '/contacto'
     | '/cursos'
+    | '/eliminar-datos'
     | '/faq'
     | '/login'
     | '/olvide-password'
     | '/panel'
     | '/planes'
+    | '/privacidad'
     | '/registro'
     | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
+    | '/checkout/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug/teoria'
@@ -240,15 +273,18 @@ export interface FileRouteTypes {
     | '/comunidad'
     | '/contacto'
     | '/cursos'
+    | '/eliminar-datos'
     | '/faq'
     | '/login'
     | '/olvide-password'
     | '/panel'
     | '/planes'
+    | '/privacidad'
     | '/registro'
     | '/restablecer-password'
     | '/sobre'
     | '/certificado/$slug'
+    | '/checkout/$slug'
     | '/curso/$slug'
     | '/ver/$slug'
     | '/curso/$slug_/teoria'
@@ -262,15 +298,18 @@ export interface RootRouteChildren {
   ComunidadRoute: typeof ComunidadRoute
   ContactoRoute: typeof ContactoRoute
   CursosRoute: typeof CursosRoute
+  EliminarDatosRoute: typeof EliminarDatosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   OlvidePasswordRoute: typeof OlvidePasswordRoute
   PanelRoute: typeof PanelRoute
   PlanesRoute: typeof PlanesRoute
+  PrivacidadRoute: typeof PrivacidadRoute
   RegistroRoute: typeof RegistroRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
   SobreRoute: typeof SobreRoute
   CertificadoSlugRoute: typeof CertificadoSlugRoute
+  CheckoutSlugRoute: typeof CheckoutSlugRoute
   CursoSlugRoute: typeof CursoSlugRoute
   VerSlugRoute: typeof VerSlugRoute
   CursoSlugTeoriaRoute: typeof CursoSlugTeoriaRoute
@@ -298,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/registro'
       fullPath: '/registro'
       preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planes': {
@@ -333,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eliminar-datos': {
+      id: '/eliminar-datos'
+      path: '/eliminar-datos'
+      fullPath: '/eliminar-datos'
+      preLoaderRoute: typeof EliminarDatosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cursos': {
@@ -391,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CursoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/$slug': {
+      id: '/checkout/$slug'
+      path: '/checkout/$slug'
+      fullPath: '/checkout/$slug'
+      preLoaderRoute: typeof CheckoutSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/certificado/$slug': {
       id: '/certificado/$slug'
       path: '/certificado/$slug'
@@ -422,15 +482,18 @@ const rootRouteChildren: RootRouteChildren = {
   ComunidadRoute: ComunidadRoute,
   ContactoRoute: ContactoRoute,
   CursosRoute: CursosRoute,
+  EliminarDatosRoute: EliminarDatosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   OlvidePasswordRoute: OlvidePasswordRoute,
   PanelRoute: PanelRoute,
   PlanesRoute: PlanesRoute,
+  PrivacidadRoute: PrivacidadRoute,
   RegistroRoute: RegistroRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
   SobreRoute: SobreRoute,
   CertificadoSlugRoute: CertificadoSlugRoute,
+  CheckoutSlugRoute: CheckoutSlugRoute,
   CursoSlugRoute: CursoSlugRoute,
   VerSlugRoute: VerSlugRoute,
   CursoSlugTeoriaRoute: CursoSlugTeoriaRoute,
