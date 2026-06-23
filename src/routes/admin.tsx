@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Users, CreditCard, MessageSquare, LogOut, Sparkles,
-  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText, Eye, EyeOff, Quote, FileUp, ExternalLink,
+  Plus, Pencil, Trash2, Pin, X, Tag, Loader2, ChevronUp, ChevronDown, Star, FileText, Eye, EyeOff, Quote, FileUp, ExternalLink, KeyRound, Copy, Check,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { formatPYG } from "@/lib/format";
@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourses, useCourseUpsert, useCourseDelete, useAllStudents,
   usePayments,
-  useSetRole, usePosts, usePostUpsert, usePostDelete,
+  useSetRole, useAdminResetPassword, usePosts, usePostUpsert, usePostDelete,
   useCourseStructure, useModuleUpsert, useModuleDelete,
   useLessonUpsert, useLessonDelete,
   useCourseCategories, useCategoryUpsert, useCategoryDelete,
@@ -1913,6 +1913,7 @@ function StudentsTab() {
   const { data: students = [], isLoading } = useAllStudents();
   const setRole = useSetRole();
   const [q, setQ] = useState("");
+  const [resetTarget, setResetTarget] = useState<{ id: string; email: string; name: string } | null>(null);
 
   const filtered = students.filter((s) =>
     (s.name ?? "").toLowerCase().includes(q.toLowerCase()) ||
@@ -1933,10 +1934,11 @@ function StudentsTab() {
               <th className="px-4 py-3">Alumna</th>
               <th className="px-4 py-3">Rol</th>
               <th className="px-4 py-3">Alta</th>
+              <th className="px-4 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
+            {isLoading && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Cargando…</td></tr>}
             {filtered.map((s) => (
               <tr key={s.id} className="border-t border-border">
                 <td className="px-4 py-3">
@@ -1956,13 +1958,151 @@ function StudentsTab() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setResetTarget({ id: s.id, email: s.email ?? "", name: s.name ?? "" })}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" /> Resetear contraseña
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {resetTarget && (
+        <ResetPasswordModal
+          userId={resetTarget.id}
+          email={resetTarget.email}
+          name={resetTarget.name}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
     </div>
   );
+}
+
+function ResetPasswordModal({ userId, email, name, onClose }: { userId: string; email: string; name: string; onClose: () => void }) {
+  const reset = useAdminResetPassword();
+  const [password, setPassword] = useState(() => generateTempPassword());
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function copyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-elegant"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-serif text-xl">Resetear contraseña</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{name || email}</p>
+            <p className="text-[11px] text-muted-foreground">{email}</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {!done ? (
+          <form
+            className="mt-6 space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(null);
+              try {
+                await reset.mutateAsync({ userId, password });
+                setDone(true);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "No se pudo cambiar la contraseña.");
+              }
+            }}
+          >
+            <div>
+              <label className="text-xs text-muted-foreground">Nueva contraseña</label>
+              <div className="mt-1 flex gap-2">
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="font-mono"
+                  minLength={6}
+                  required
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => setPassword(generateTempPassword())}>
+                  Generar
+                </Button>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Mínimo 6 caracteres. La alumna podrá cambiarla después desde su panel.
+              </p>
+            </div>
+
+            {error && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                {error}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit" variant="gold" disabled={reset.isPending}>
+                {reset.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Resetear
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-6 space-y-4">
+            <div className="rounded-md border border-primary/30 bg-primary/10 p-4">
+              <p className="text-xs font-medium text-foreground">Contraseña actualizada</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Copiá la contraseña y pasásela a la alumna por WhatsApp o email.
+              </p>
+              <div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                <code className="flex-1 font-mono text-sm break-all">{password}</code>
+                <button
+                  type="button"
+                  onClick={copyToClipboard}
+                  className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-secondary"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copiado" : "Copiar"}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={onClose}>Cerrar</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function generateTempPassword(length = 10): string {
+  // Sin caracteres ambiguos (0/O/1/I/l) para que sea fácil dictar por WhatsApp.
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const arr = new Uint32Array(length);
+  crypto.getRandomValues(arr);
+  let out = "";
+  for (let i = 0; i < length; i++) out += chars[arr[i] % chars.length];
+  return out;
 }
 
 // ============================================================

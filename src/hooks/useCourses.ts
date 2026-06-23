@@ -503,6 +503,32 @@ export function useSetRole() {
   });
 }
 
+export function useAdminResetPassword() {
+  return useMutation({
+    mutationFn: async (args: { userId: string; password: string }) => {
+      const { data, error } = await supabase.rpc("admin_reset_user_password", {
+        p_user_id: args.userId,
+        p_password: args.password,
+      });
+      if (error) throw error;
+      const row = data as { ok: boolean; reason?: string; message?: string } | null;
+      if (!row?.ok) {
+        const reasons: Record<string, string> = {
+          not_admin: "No tenés permisos de administrador.",
+          password_too_short: "La contraseña debe tener al menos 6 caracteres.",
+          user_not_found: "No se encontró la alumna.",
+          auth_user_not_found: "No existe el usuario en auth.",
+          insufficient_privilege: "El servidor no tiene permisos para escribir auth.users.",
+          pgcrypto_missing: "Falta la extensión pgcrypto.",
+          auth_update_error: row?.message ?? "Error actualizando la contraseña.",
+        };
+        throw new Error(reasons[row?.reason ?? ""] ?? "No se pudo cambiar la contraseña.");
+      }
+      return row;
+    },
+  });
+}
+
 export function usePostUpsert() {
   const qc = useQueryClient();
   return useMutation({
