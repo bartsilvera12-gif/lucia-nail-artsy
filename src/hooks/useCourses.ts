@@ -138,6 +138,7 @@ export function useAllStudents() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("source", "lucianails")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];

@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name, app: "lucianails" } },
     });
     if (error) {
       // Caso especial: el email ya existe en `auth.users` (Supabase auth es
@@ -161,7 +161,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           name,
           role: "student",
+          source: "lucianails",
         });
+      } else {
+        // Ya existia el profile (creado por algun trigger viejo). Marcarlo
+        // como de Lucia si todavia no tiene source — la usuaria efectivamente
+        // se acaba de registrar en /registro.
+        await supabase
+          .from("profiles")
+          .update({ source: "lucianails" })
+          .eq("id", userId)
+          .is("source", null);
       }
       await refresh();
       return {};
