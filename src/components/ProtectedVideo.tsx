@@ -232,7 +232,7 @@ export function ProtectedVideo({ videoKey, title }: DynTubeVideoProps) {
           allowFullScreen
           scrolling="no"
           className="absolute inset-0 h-full w-full border-0"
-          style={{ border: "none" }}
+          style={{ border: "none", filter: "contrast(1.1) saturate(1.15) brightness(0.95)" }}
         />
       )}
 
